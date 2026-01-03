@@ -1,5 +1,5 @@
 %% @doc EUnit tests for esdb_gater_retry module
-%% @author R. Lefever
+%% @author rgfaber
 
 -module(esdb_gater_retry_tests).
 

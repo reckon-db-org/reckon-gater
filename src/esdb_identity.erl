@@ -23,7 +23,7 @@
 %%   DID = esdb_identity:did(Identity),
 %%   {ok, PubKey} = esdb_identity:public_key_from_did(DID).
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_identity).
 

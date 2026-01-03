@@ -2,7 +2,7 @@
 %%
 %% Defines telemetry event names for the gateway.
 %%
-%% @author R. Lefever
+%% @author rgfaber
 
 -ifndef(ESDB_GATER_TELEMETRY_HRL).
 -define(ESDB_GATER_TELEMETRY_HRL, true).

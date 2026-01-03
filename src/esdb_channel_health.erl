@@ -8,7 +8,7 @@
 %%   health.store.StoreId  - Store health status
 %%   health.cluster        - Overall cluster health
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_health).
 -behaviour(esdb_channel).

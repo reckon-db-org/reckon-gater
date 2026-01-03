@@ -8,7 +8,7 @@
 %%   metrics.stream.StreamId  - Stream metrics
 %%   metrics.gateway          - Gateway metrics
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_metrics).
 -behaviour(esdb_channel).

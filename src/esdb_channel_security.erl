@@ -8,7 +8,7 @@
 %%   security.access  - Access control events
 %%   security.audit   - Security audit events
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_security).
 -behaviour(esdb_channel).

@@ -11,7 +11,7 @@
 %%
 %% Note: esdb_gater_api is a stateless API module, not a supervised process.
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(reckon_gater_sup).
 -behaviour(supervisor).

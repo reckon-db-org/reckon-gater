@@ -8,7 +8,7 @@
 %%   alerts.warning   - Warning alerts
 %%   alerts.info      - Informational alerts
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_alerts).
 -behaviour(esdb_channel).

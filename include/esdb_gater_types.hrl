@@ -6,7 +6,7 @@
 %% Consumers of the gateway (like evoq) should include this file
 %% to work with events, snapshots, and subscriptions.
 %%
-%% @author R. Lefever
+%% @author rgfaber
 
 -ifndef(ESDB_GATER_TYPES_HRL).
 -define(ESDB_GATER_TYPES_HRL, true).

@@ -4,7 +4,7 @@
 %% - Worker registry (Ra-based distributed registry)
 %% - Cluster monitor (node health monitoring)
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_cluster_sup).
 -behaviour(supervisor).

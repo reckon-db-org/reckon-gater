@@ -8,7 +8,7 @@
 %%   events.store.StoreId    - All events for a store
 %%   events.type.EventType   - Events by type
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_events).
 -behaviour(esdb_channel).

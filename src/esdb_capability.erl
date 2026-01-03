@@ -29,7 +29,7 @@
 %%   SignedCap = esdb_capability:sign(Cap, esdb_identity:private_key(Issuer)),
 %%   Token = esdb_capability:encode(SignedCap, jwt).
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_capability).
 

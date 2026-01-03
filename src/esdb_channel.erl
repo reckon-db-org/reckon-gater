@@ -9,7 +9,7 @@
 %% - normal: metrics, system
 %% - low: logging, diagnostics
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel).
 

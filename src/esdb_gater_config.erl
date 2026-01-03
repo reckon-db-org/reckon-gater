@@ -16,7 +16,7 @@
 %% requires_capability/0 returning true, that channel always
 %% requires capabilities regardless of the global setting.
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_config).
 

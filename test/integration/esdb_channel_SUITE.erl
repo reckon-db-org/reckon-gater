@@ -7,7 +7,7 @@
 %% - Rate limiting
 %% - HMAC verification
 %%
-%% @author R. Lefever
+%% @author rgfaber
 
 -module(esdb_channel_SUITE).
 

@@ -8,7 +8,7 @@
 %%   system.config       - Configuration changes
 %%   system.maintenance  - Maintenance notifications
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_system).
 -behaviour(esdb_channel).

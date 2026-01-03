@@ -23,7 +23,7 @@
 %%   ok = esdb_gater_api:record_snapshot(my_store, SourceId, StreamId, Version, Data).
 %%   {ok, Snapshot} = esdb_gater_api:read_snapshot(my_store, SourceId, StreamId, Version).
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_api).
 

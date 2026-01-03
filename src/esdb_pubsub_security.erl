@@ -14,7 +14,7 @@
 %% Verify with explicit secret:
 %%   ok = esdb_pubsub_security:verify(SignedMsg, Secret).
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_pubsub_security).
 

@@ -8,7 +8,7 @@
 %%   lifecycle.node.NodeName    - Node lifecycle events
 %%   lifecycle.worker           - Worker lifecycle events
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_lifecycle).
 -behaviour(esdb_channel).

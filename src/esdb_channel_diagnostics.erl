@@ -8,7 +8,7 @@
 %%   diag.profile  - Profiling data
 %%   diag.debug    - Debug information
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_diagnostics).
 -behaviour(esdb_channel).

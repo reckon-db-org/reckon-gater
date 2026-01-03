@@ -14,7 +14,7 @@
 %% Emit an event:
 %%   esdb_gater_telemetry:emit(?GATER_REQUEST_STOP, #{duration => 1000}, #{store_id => my_store}).
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_telemetry).
 

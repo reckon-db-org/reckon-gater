@@ -12,7 +12,7 @@
 %% - esdb_channel_logging (low priority)
 %% - esdb_channel_diagnostics (low priority)
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_sup).
 -behaviour(supervisor).

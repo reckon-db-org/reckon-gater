@@ -24,7 +24,7 @@
 %% - base58_decode/1: Base58btc decoding for DID parsing (5-10x faster)
 %% - match_resource_pattern/2: Resource URI pattern matching (3-5x faster)
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_crypto_nif).
 

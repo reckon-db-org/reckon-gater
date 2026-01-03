@@ -3,7 +3,7 @@
 %% The gateway provides distributed worker registration and
 %% load balancing for reckon-db event stores.
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(reckon_gater_app).
 -behaviour(application).

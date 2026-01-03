@@ -51,7 +51,7 @@
 %%   exit, quit, q       Exit REPL
 %% '''
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_repl).
 

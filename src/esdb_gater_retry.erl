@@ -6,7 +6,7 @@
 %% - Maximum retry count
 %% - Telemetry integration
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_retry).
 

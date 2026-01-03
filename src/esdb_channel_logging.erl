@@ -9,7 +9,7 @@
 %%   log.warning  - Warning level logs
 %%   log.error    - Error level logs
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_logging).
 -behaviour(esdb_channel).

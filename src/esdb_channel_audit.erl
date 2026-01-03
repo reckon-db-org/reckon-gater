@@ -8,7 +8,7 @@
 %%   audit.user.UserId    - User actions audit
 %%   audit.admin          - Administrative actions audit
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_audit).
 -behaviour(esdb_channel).

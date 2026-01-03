@@ -5,7 +5,7 @@
 %% - Emits telemetry for cluster changes
 %% - Maintains connected node list
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_cluster_monitor).
 -behaviour(gen_server).

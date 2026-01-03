@@ -39,7 +39,7 @@
 %% - Automatic cleanup on node failure (pg membership)
 %% - Load balancing via round-robin worker selection
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_gater_worker_registry).
 -behaviour(gen_server).

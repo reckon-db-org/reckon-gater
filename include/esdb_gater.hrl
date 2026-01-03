@@ -2,7 +2,7 @@
 %%
 %% Contains record definitions and macros for the gateway.
 %%
-%% @author R. Lefever
+%% @author rgfaber
 
 -ifndef(ESDB_GATER_HRL).
 -define(ESDB_GATER_HRL, true).

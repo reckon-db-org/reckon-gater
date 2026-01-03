@@ -9,7 +9,7 @@
 %% - HMAC signature verification (for critical channels)
 %% - Telemetry integration
 %%
-%% @author Reckon-DB
+%% @author rgfaber
 
 -module(esdb_channel_server).
 -behaviour(gen_server).

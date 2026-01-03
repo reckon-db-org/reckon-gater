@@ -1,5 +1,5 @@
 %% @doc EUnit tests for esdb_pubsub_security module
-%% @author R. Lefever
+%% @author rgfaber
 
 -module(esdb_pubsub_security_tests).
 
