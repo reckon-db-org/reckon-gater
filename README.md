@@ -40,7 +40,7 @@ For NIF-accelerated performance (5-10x faster crypto operations), add the `recko
 ```erlang
 {deps, [
     {reckon_gater, "0.1.0"},
-    {reckon_nifs, "0.1.0"}
+    {reckon_nifs, {git, "https://github.com/reckon-db-org/reckon-nifs.git", {tag, "v0.1.0"}}}
 ]}.
 ```
 
