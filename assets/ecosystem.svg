@@ -30,12 +30,12 @@
 
   <!-- Framework Layer -->
   <rect x="50" y="140" width="160" height="70" rx="8" fill="url(#frameworkGrad)" stroke="#2196f3" stroke-width="2"/>
-  <text x="130" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1565c0">erl-evoq</text>
+  <text x="130" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1565c0">evoq</text>
   <text x="130" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976d2">CQRS Framework</text>
 
   <!-- Adapter -->
   <rect x="220" y="140" width="160" height="70" rx="8" fill="url(#frameworkGrad)" stroke="#2196f3" stroke-width="2"/>
-  <text x="300" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1565c0">erl-evoq-esdb</text>
+  <text x="300" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1565c0">reckon-evoq</text>
   <text x="300" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976d2">Adapter</text>
 
   <!-- Gateway Layer -->
