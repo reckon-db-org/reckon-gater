@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7b1fa2"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">Causation Visualization Workflow</text>
+
+  <!-- Step 1: Query -->
+  <rect x="30" y="60" width="180" height="100" rx="6" fill="#fff3e0" stroke="#ef6c00" stroke-width="2" filter="url(#shadow)"/>
+  <text x="120" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ef6c00">1. Query Event</text>
+  <rect x="45" y="100" width="150" height="45" rx="4" fill="#2d2d2d"/>
+  <text x="120" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#0f0">esdb> graph evt-100</text>
+  <text x="120" y="135" text-anchor="middle" font-family="monospace" font-size="9" fill="#888">or: chain, effects</text>
+
+  <!-- Arrow 1->2 -->
+  <line x1="210" y1="110" x2="250" y2="110" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: Build Graph -->
+  <rect x="260" y="60" width="180" height="100" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="350" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1976d2">2. Build Graph</text>
+  <text x="350" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Traverse causation_id</text>
+  <text x="350" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Collect nodes + edges</text>
+  <text x="350" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#888">esdb_gater_api</text>
+
+  <!-- Arrow 2->3 -->
+  <line x1="440" y1="110" x2="480" y2="110" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: Display -->
+  <rect x="490" y="60" width="180" height="100" rx="6" fill="#e8f5e9" stroke="#388e3c" stroke-width="2" filter="url(#shadow)"/>
+  <text x="580" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#388e3c">3. Display</text>
+  <text x="580" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Terminal output</text>
+  <text x="580" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Nodes: 5, Edges: 4</text>
+  <text x="580" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#888">Human-readable</text>
+
+  <!-- Arrow 3->4 (optional) -->
+  <line x1="670" y1="110" x2="710" y2="110" stroke="#7b1fa2" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-purple)"/>
+
+  <!-- Step 4: Export (Optional) -->
+  <rect x="720" y="60" width="60" height="100" rx="6" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="750" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#7b1fa2">4.</text>
+  <text x="750" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7b1fa2">DOT</text>
+  <text x="750" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7b1fa2">Export</text>
+
+  <!-- DOT Example -->
+  <text x="50" y="200" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">DOT Export Example</text>
+
+  <rect x="50" y="220" width="300" height="150" rx="4" fill="#263238"/>
+  <text x="60" y="245" font-family="monospace" font-size="10" fill="#89ddff">digraph</text>
+  <text x="105" y="245" font-family="monospace" font-size="10" fill="#c3e88d">causation</text>
+  <text x="175" y="245" font-family="monospace" font-size="10" fill="#eee">{</text>
+  <text x="70" y="265" font-family="monospace" font-size="10" fill="#eee">rankdir=TB;</text>
+  <text x="70" y="285" font-family="monospace" font-size="10" fill="#ffcb6b">evt_100</text>
+  <text x="120" y="285" font-family="monospace" font-size="10" fill="#eee">[label=</text>
+  <text x="170" y="285" font-family="monospace" font-size="10" fill="#c3e88d">"order_created"</text>
+  <text x="270" y="285" font-family="monospace" font-size="10" fill="#eee">];</text>
+  <text x="70" y="305" font-family="monospace" font-size="10" fill="#ffcb6b">evt_101</text>
+  <text x="120" y="305" font-family="monospace" font-size="10" fill="#eee">[label=</text>
+  <text x="170" y="305" font-family="monospace" font-size="10" fill="#c3e88d">"payment_processed"</text>
+  <text x="290" y="305" font-family="monospace" font-size="10" fill="#eee">];</text>
+  <text x="70" y="325" font-family="monospace" font-size="10" fill="#ffcb6b">evt_100</text>
+  <text x="120" y="325" font-family="monospace" font-size="10" fill="#89ddff">-></text>
+  <text x="140" y="325" font-family="monospace" font-size="10" fill="#ffcb6b">evt_101</text>
+  <text x="190" y="325" font-family="monospace" font-size="10" fill="#eee">;</text>
+  <text x="60" y="355" font-family="monospace" font-size="10" fill="#eee">}</text>
+
+  <!-- Rendered Graph -->
+  <text x="420" y="200" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Rendered with Graphviz</text>
+
+  <rect x="420" y="220" width="280" height="150" rx="6" fill="#fafafa" stroke="#ccc" stroke-width="1"/>
+
+  <!-- Causation graph visualization -->
+  <rect x="500" y="245" width="100" height="35" rx="4" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+  <text x="550" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1976d2">order_created</text>
+  <text x="550" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#666">evt-100</text>
+
+  <!-- Arrow down -->
+  <line x1="550" y1="280" x2="550" y2="310" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="500" y="315" width="100" height="35" rx="4" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="550" y="335" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#388e3c">payment_processed</text>
+  <text x="550" y="345" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#666">evt-101</text>
+
+  <!-- Command hint -->
+  <rect x="630" y="280" width="60" height="30" rx="4" fill="#fff8e1" stroke="#f9a825" stroke-width="1"/>
+  <text x="660" y="300" text-anchor="middle" font-family="monospace" font-size="9" fill="#f9a825">dot -Tpng</text>
+
+</svg>

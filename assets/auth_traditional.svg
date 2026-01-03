@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="200" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="300" y="30" text-anchor="middle" fill="#e94560" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Traditional Centralized Authorization</text>
+
+  <!-- Client -->
+  <rect x="40" y="70" width="100" height="60" rx="8" fill="#0f3460" filter="url(#shadow)"/>
+  <text x="90" y="105" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Client</text>
+
+  <!-- Arrow to Auth -->
+  <path d="M140 100 L200 100" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,95 205,100 195,105" fill="#60a5fa"/>
+  <text x="170" y="90" text-anchor="middle" fill="#888" font-family="Arial" font-size="8">1. request</text>
+
+  <!-- Auth Server -->
+  <rect x="210" y="60" width="140" height="80" rx="8" fill="#7f1d1d" filter="url(#shadow)"/>
+  <text x="280" y="95" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Auth Server</text>
+  <text x="280" y="115" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="9">(Single Point of Failure)</text>
+
+  <!-- Arrow to Resource -->
+  <path d="M350 100 L410 100" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="405,95 415,100 405,105" fill="#60a5fa"/>
+  <text x="380" y="90" text-anchor="middle" fill="#888" font-family="Arial" font-size="8">2. forward</text>
+
+  <!-- Resource -->
+  <rect x="420" y="70" width="100" height="60" rx="8" fill="#0f3460" filter="url(#shadow)"/>
+  <text x="470" y="105" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Resource</text>
+
+  <!-- Problems -->
+  <text x="300" y="170" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="10">Network dependency | Partition intolerance | Scalability bottleneck</text>
+</svg>

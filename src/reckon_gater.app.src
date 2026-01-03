@@ -1,0 +1,26 @@
+{application, reckon_gater, [
+    {description, "Gateway for reckon-db event store with capability-based security"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, {reckon_gater_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        crypto,
+        telemetry
+    ]},
+    {env, [
+        {cluster, [
+            {port, 45893},
+            {multicast_addr, {239, 255, 0, 2}}
+        ]},
+        {retry, [
+            {base_delay_ms, 100},
+            {max_delay_ms, 30000},
+            {max_retries, 10}
+        ]}
+    ]},
+    {modules, []},
+    {licenses, ["Apache-2.0"]},
+    {links, [{"GitHub", "https://github.com/reckon-db-org/reckon-gater"}]}
+]}.
