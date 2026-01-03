@@ -1,6 +1,6 @@
 # Shared Types
 
-reckon-gater defines common data structures used across the event sourcing ecosystem. These types provide a consistent interface between reckon-db, erl-evoq, and adapter implementations.
+reckon-gater defines common data structures used across the event sourcing ecosystem. These types provide a consistent interface between reckon-db, evoq, and adapter implementations.
 
 ## Including the Types
 
@@ -181,8 +181,8 @@ These types are used by:
 
 - **reckon-db**: Core event store implementation (server-side)
 - **reckon-gater**: Gateway API for distributed access (client-side)
-- **erl-evoq**: CQRS/Event Sourcing framework
-- **erl-evoq-esdb**: Adapter connecting erl-evoq to reckon-db
+- **evoq**: CQRS/Event Sourcing framework
+- **reckon-evoq**: Adapter connecting evoq to reckon-db
 
 By depending on reckon-gater for types, higher-level libraries avoid direct coupling to the core event store implementation.
 

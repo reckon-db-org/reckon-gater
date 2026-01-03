@@ -517,7 +517,7 @@ reckon-db includes reckon-gater as a dependency. Starting reckon-db automaticall
 
 ```erlang
 %% Start reckon-db (includes gater)
-application:ensure_all_started(erl_esdb).
+application:ensure_all_started(reckon_db).
 
 %% Gateway workers auto-register with the pg-based registry
 %% Use the gater API for all operations
@@ -565,8 +565,8 @@ See the [Shared Types Guide](guides/shared_types.md) for detailed usage.
 | Project | Description |
 |---------|-------------|
 | [reckon-db](https://github.com/reckon-db-org/reckon-db) | Core event store built on Khepri/Ra |
-| [erl-evoq](https://github.com/reckon-db-org/erl-evoq) | CQRS/Event Sourcing framework |
-| [erl-evoq-esdb](https://github.com/reckon-db-org/erl-evoq-esdb) | Adapter connecting erl-evoq to reckon-db |
+| [evoq](https://github.com/reckon-db-org/evoq) | CQRS/Event Sourcing framework |
+| [reckon-evoq](https://github.com/reckon-db-org/reckon-evoq) | Adapter connecting evoq to reckon-db |
 
 ## License
 

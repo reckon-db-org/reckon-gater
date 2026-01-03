@@ -2,7 +2,7 @@
 %%
 %% Contains record definitions and macros for the gateway.
 %%
-%% @author Macula.io
+%% @author R. Lefever
 
 -ifndef(ESDB_GATER_HRL).
 -define(ESDB_GATER_HRL, true).

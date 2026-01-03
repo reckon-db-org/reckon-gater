@@ -1,6 +1,6 @@
 %% @doc Unit tests for esdb_gater_api module
 %% Tests the API function signatures and request formatting
-%% @author Macula.io
+%% @author R. Lefever
 
 -module(esdb_gater_api_tests).
 

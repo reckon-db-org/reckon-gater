@@ -1,5 +1,5 @@
 %% @doc EUnit tests for esdb_gater_telemetry module
-%% @author Macula.io
+%% @author R. Lefever
 
 -module(esdb_gater_telemetry_tests).
 

@@ -2,7 +2,7 @@
 %%
 %% Defines telemetry event names for the gateway.
 %%
-%% @author Macula.io
+%% @author R. Lefever
 
 -ifndef(ESDB_GATER_TELEMETRY_HRL).
 -define(ESDB_GATER_TELEMETRY_HRL, true).

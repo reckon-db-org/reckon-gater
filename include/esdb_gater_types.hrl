@@ -3,10 +3,10 @@
 %% Contains record definitions used across the reckon-db ecosystem.
 %% These records define the data structures exchanged via the gateway API.
 %%
-%% Consumers of the gateway (like erl-evoq) should include this file
+%% Consumers of the gateway (like evoq) should include this file
 %% to work with events, snapshots, and subscriptions.
 %%
-%% @author Macula.io
+%% @author R. Lefever
 
 -ifndef(ESDB_GATER_TYPES_HRL).
 -define(ESDB_GATER_TYPES_HRL, true).

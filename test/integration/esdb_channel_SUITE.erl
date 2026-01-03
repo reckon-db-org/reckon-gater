@@ -7,7 +7,7 @@
 %% - Rate limiting
 %% - HMAC verification
 %%
-%% @author Macula.io
+%% @author R. Lefever
 
 -module(esdb_channel_SUITE).
 

@@ -14,7 +14,7 @@
 %% - UCAN Specification: https://github.com/ucan-wg/spec
 %% - DID Key Method: https://w3c-ccg.github.io/did-method-key/
 %%
-%% @author Macula.io
+%% @author R. Lefever
 
 -ifndef(ESDB_CAPABILITY_TYPES_HRL).
 -define(ESDB_CAPABILITY_TYPES_HRL, true).
