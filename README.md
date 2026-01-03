@@ -25,7 +25,7 @@ Add to your `rebar.config`:
 
 ```erlang
 {deps, [
-    {reckon_gater, "0.1.0"}
+    {reckon_gater, "1.0.0"}
 ]}.
 ```
 
