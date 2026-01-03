@@ -21,8 +21,6 @@ reckon-gater is an Erlang gateway service providing:
 
 ## Installation
 
-### Community Edition (hex.pm)
-
 Add to your `rebar.config`:
 
 ```erlang
@@ -32,21 +30,6 @@ Add to your `rebar.config`:
 ```
 
 Pure Erlang implementation - works everywhere, no native dependencies.
-
-### Enterprise Edition (optional NIF acceleration)
-
-For NIF-accelerated performance (5-10x faster crypto operations), add the `reckon_nifs` package:
-
-```erlang
-{deps, [
-    {reckon_gater, "0.1.0"},
-    {reckon_nifs, {git, "https://github.com/reckon-db-org/reckon-nifs.git", {tag, "v0.1.0"}}}
-]}.
-```
-
-Requires Rust toolchain: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-
-The NIF provides accelerated Base58 encoding/decoding for DID operations and resource pattern matching. When unavailable, pure Erlang fallbacks are used automatically.
 
 ## Quick Start
 
