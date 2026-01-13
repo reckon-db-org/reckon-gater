@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>esdb_gater_crypto_nif — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">esdb_gater_crypto_nif</span> 
+      <small class="app-vsn" translate="no">(reckon_gater v1.0.0)</small>
+
+    </h1>
+
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_crypto_nif.erl#L29" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p>NIF acceleration for cryptographic operations (Enterprise Edition)</p><p>This module provides high-performance native implementations of compute-intensive cryptographic operations used in capability tokens.</p><h3 id="module-community-vs-enterprise-edition" class="section-heading"><a href="#module-community-vs-enterprise-edition" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Community_vs_Enterprise_Edition">Community vs Enterprise Edition</a></span></h3><p>- Community Edition (hex.pm): NIF not available, pure Erlang fallbacks used - Enterprise Edition: Add reckon_nifs dependency for 5-10x faster NIFs</p><p>The NIF is optional and auto-detected at runtime. All operations have pure Erlang fallbacks in their respective modules (esdb_identity, etc.).</p><h3 id="module-enabling-nif-acceleration" class="section-heading"><a href="#module-enabling-nif-acceleration" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Enabling_NIF_Acceleration">Enabling NIF Acceleration</a></span></h3><p>Add reckon_nifs to your dependencies: {reckon_nifs, &quot;0.1.0&quot;}</p><p>The NIFs are automatically loaded when the reckon_nifs application starts.</p><h3 id="module-functions" class="section-heading"><a href="#module-functions" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Functions">Functions</a></span></h3><p>- base58_encode/1: Base58btc encoding for DIDs (5-10x faster) - base58_decode/1: Base58btc decoding for DID parsing (5-10x faster) - match_resource_pattern/2: Resource URI pattern matching (3-5x faster)</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#base58_decode/1" data-no-tooltip="" translate="no">base58_decode(Base58)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Decode Base58 to binary</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#base58_encode/1" data-no-tooltip="" translate="no">base58_encode(Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Encode binary to Base58 (Bitcoin alphabet)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#is_loaded/0" data-no-tooltip="" translate="no">is_loaded()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Check if NIF acceleration is available</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#match_resource_pattern/2" data-no-tooltip="" translate="no">match_resource_pattern(Pattern, Resource)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Match a resource pattern against a resource URI</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="base58_decode/1">
+
+  <div class="detail-header">
+    <a href="#base58_decode/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">base58_decode(Base58)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_crypto_nif.erl#L124" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> base58_decode(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Decode Base58 to binary</p><p>Fast native implementation of Base58 decoding for DID parsing. Falls back to esdb_identity:base58_decode/1 if NIF unavailable.</p>
+  </section>
+</section>
+<section class="detail" id="base58_encode/1">
+
+  <div class="detail-header">
+    <a href="#base58_encode/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">base58_encode(Data)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_crypto_nif.erl#L113" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> base58_encode(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>().</pre>
+
+      </div>
+
+<p>Encode binary to Base58 (Bitcoin alphabet)</p><p>Fast native implementation of Base58 encoding for DID generation. Falls back to esdb_identity:base58_encode/1 if NIF unavailable.</p>
+  </section>
+</section>
+<section class="detail" id="is_loaded/0">
+
+  <div class="detail-header">
+    <a href="#is_loaded/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">is_loaded()</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_crypto_nif.erl#L102" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> is_loaded() -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:boolean/0">boolean</a>().</pre>
+
+      </div>
+
+<p>Check if NIF acceleration is available</p><p>Returns true if the Rust NIF is loaded, false otherwise. Use this to check before calling NIF functions directly.</p>
+  </section>
+</section>
+<section class="detail" id="match_resource_pattern/2">
+
+  <div class="detail-header">
+    <a href="#match_resource_pattern/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">match_resource_pattern(Pattern, Resource)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_crypto_nif.erl#L138" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> match_resource_pattern(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:boolean/0">boolean</a>().</pre>
+
+      </div>
+
+<p>Match a resource pattern against a resource URI</p><p>Supports: - Exact match: Pattern equals Resource - Wildcard suffix: &quot;esdb://realm/*&quot; matches any path - Prefix match: &quot;esdb://realm/orders-*&quot; matches prefix</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

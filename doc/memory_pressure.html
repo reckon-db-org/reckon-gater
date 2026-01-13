@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>Memory Pressure — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Memory Pressure</h1>
+
+
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/guides/memory_pressure.md#L1" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>This guide explains how to monitor and respond to system memory pressure, enabling your application to adapt its behavior and prevent out-of-memory conditions.</p><h2 id="prerequisites" class="section-heading"><a href="#prerequisites" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Prerequisites</span></h2><p>Before reading this guide, you should understand:</p><ul><li>Basic Erlang/OTP memory concepts (processes, ETS, binaries)</li><li>Subscription patterns (<a href="subscriptions.html">Subscriptions Guide</a>)</li><li>Why backpressure matters in event-driven systems</li></ul><h2 id="the-problem-unbounded-memory-growth" class="section-heading"><a href="#the-problem-unbounded-memory-growth" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The Problem: Unbounded Memory Growth</span></h2><p>Event-driven systems can experience memory pressure from many sources:</p><ul><li><strong>Slow consumers</strong> - Events queue up faster than they're processed</li><li><strong>Large projections</strong> - Read models grow beyond available memory</li><li><strong>Binary accumulation</strong> - Large event payloads aren't garbage collected</li><li><strong>Cache bloat</strong> - Unbounded caches grow indefinitely</li></ul><p>Without monitoring, these issues lead to OOM crashes, taking down your entire node.</p><h2 id="the-solution-adaptive-behavior" class="section-heading"><a href="#the-solution-adaptive-behavior" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The Solution: Adaptive Behavior</span></h2><p>Memory pressure monitoring enables:</p><ol><li><strong>Early warning</strong> - Detect problems before they crash the system</li><li><strong>Graceful degradation</strong> - Reduce load when memory is scarce</li><li><strong>Automatic recovery</strong> - Resume normal operation when pressure eases</li></ol><pre><code class="makeup erlang" translate="no"><span class="n">Memory</span><span class="w"> </span><span class="n">Usage</span><span class="p">:</span><span class="w">
+</span><span class="mi">100</span><span class="c1">% ┌─────────────────────────────────────────────────────────────┐</span><span class="w">
+     </span><span class="err">│</span><span class="w">                                              </span><span class="err">▓</span><span class="err">▓</span><span class="err">▓</span><span class="w"> </span><span class="n">CRITICAL</span><span class="w">  </span><span class="err">│</span><span class="w">
+ </span><span class="mi">85</span><span class="c1">% │─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│</span><span class="w">
+     </span><span class="err">│</span><span class="w">                              </span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="err">█</span><span class="w">               </span><span class="err">│</span><span class="w">
+ </span><span class="mi">70</span><span class="c1">% │─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│</span><span class="w">
+     </span><span class="err">│</span><span class="w">        </span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="w">              </span><span class="n">ELEVATED</span><span class="w">        </span><span class="err">│</span><span class="w">
+     </span><span class="err">│</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="err">░</span><span class="w">                                                    </span><span class="err">│</span><span class="w">
+  </span><span class="mi">0</span><span class="c1">% │                               NORMAL                       │</span><span class="w">
+     </span><span class="err">└</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┘</span><span class="w">
+      </span><span class="n">Time</span><span class="w"> </span><span class="err">→</span></code></pre><hr class="thin"/><h2 id="where-does-this-code-run" class="section-heading"><a href="#where-does-this-code-run" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Where Does This Code Run?</span></h2><table><thead><tr><th style="text-align: left;">Operation</th><th style="text-align: left;">Location</th><th style="text-align: left;">Module</th></tr></thead><tbody><tr><td style="text-align: left;">Query pressure level</td><td style="text-align: left;">Your Application</td><td style="text-align: left;"><code class="inline">esdb_gater_api</code></td></tr><tr><td style="text-align: left;">Monitor memory</td><td style="text-align: left;">reckon-db Server</td><td style="text-align: left;"><code class="inline">reckon_db_memory</code></td></tr><tr><td style="text-align: left;">Emit telemetry</td><td style="text-align: left;">reckon-db Server</td><td style="text-align: left;"><code class="inline">reckon_db_telemetry</code></td></tr><tr><td style="text-align: left;">Adaptive behavior</td><td style="text-align: left;">Your Application</td><td style="text-align: left;">Your handlers</td></tr></tbody></table><hr class="thin"/><h2 id="api-reference" class="section-heading"><a href="#api-reference" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">API Reference</span></h2><h3 id="get-memory-level" class="section-heading"><a href="#get-memory-level" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Get Memory Level</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Check current memory pressure level</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="p" data-group-id="2169219396-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p" data-group-id="2169219396-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="2169219396-2">(</span><span class="ss">my_store</span><span class="p" data-group-id="2169219396-2">)</span><span class="p">.</span><span class="w">
+</span><span class="c1">%% =&gt; {ok, normal}</span><span class="w">
+</span><span class="c1">%% =&gt; {ok, elevated}</span><span class="w">
+</span><span class="c1">%% =&gt; {ok, critical}</span></code></pre><h3 id="get-detailed-memory-stats" class="section-heading"><a href="#get-detailed-memory-stats" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Get Detailed Memory Stats</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Get detailed memory breakdown</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="p" data-group-id="3558267292-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Stats</span><span class="p" data-group-id="3558267292-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_stats</span><span class="p" data-group-id="3558267292-2">(</span><span class="ss">my_store</span><span class="p" data-group-id="3558267292-2">)</span><span class="p">.</span><span class="w">
+</span><span class="c1">%% =&gt; #{</span><span class="w">
+</span><span class="c1">%%     level =&gt; normal,</span><span class="w">
+</span><span class="c1">%%     used =&gt; 4294967296,        %% 4 GB total used</span><span class="w">
+</span><span class="c1">%%     total =&gt; 17179869184,      %% 16 GB total available</span><span class="w">
+</span><span class="c1">%%     percentage =&gt; 25.0,        %% 25% used</span><span class="w">
+</span><span class="c1">%%     processes =&gt; 1073741824,   %% 1 GB in Erlang processes</span><span class="w">
+</span><span class="c1">%%     binary =&gt; 536870912,       %% 512 MB in binaries</span><span class="w">
+</span><span class="c1">%%     ets =&gt; 268435456,          %% 256 MB in ETS tables</span><span class="w">
+</span><span class="c1">%%     atom =&gt; 1048576            %% 1 MB in atoms</span><span class="w">
+</span><span class="c1">%% }</span></code></pre><hr class="thin"/><h2 id="pressure-levels" class="section-heading"><a href="#pressure-levels" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Pressure Levels</span></h2><table><thead><tr><th style="text-align: left;">Level</th><th style="text-align: left;">Threshold</th><th style="text-align: left;">Description</th><th style="text-align: left;">Recommended Action</th></tr></thead><tbody><tr><td style="text-align: left;"><code class="inline">normal</code></td><td style="text-align: left;">&lt; 70%</td><td style="text-align: left;">System operating normally</td><td style="text-align: left;">No action needed</td></tr><tr><td style="text-align: left;"><code class="inline">elevated</code></td><td style="text-align: left;">70-85%</td><td style="text-align: left;">Memory usage is high</td><td style="text-align: left;">Reduce batch sizes, evict caches</td></tr><tr><td style="text-align: left;"><code class="inline">critical</code></td><td style="text-align: left;">&gt; 85%</td><td style="text-align: left;">Memory pressure severe</td><td style="text-align: left;">Pause subscriptions, aggressive cleanup</td></tr></tbody></table><hr class="thin"/><h2 id="configuration" class="section-heading"><a href="#configuration" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Configuration</span></h2><p>Configure thresholds in <code class="inline">sys.config</code>:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This configuration lives in: sys.config (deployment)</span><span class="w">
+</span><span class="c1">%% Purpose: Set memory pressure thresholds</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="p" data-group-id="0583229912-1">[</span><span class="p" data-group-id="0583229912-2">{</span><span class="ss">reckon_db</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0583229912-3">[</span><span class="w">
+    </span><span class="p" data-group-id="0583229912-4">{</span><span class="ss">memory_pressure</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0583229912-5">[</span><span class="w">
+        </span><span class="p" data-group-id="0583229912-6">{</span><span class="ss">elevated_threshold</span><span class="p">,</span><span class="w"> </span><span class="mf">0.70</span><span class="p" data-group-id="0583229912-6">}</span><span class="p">,</span><span class="w">   </span><span class="c1">%% 70% = elevated</span><span class="w">
+        </span><span class="p" data-group-id="0583229912-7">{</span><span class="ss">critical_threshold</span><span class="p">,</span><span class="w"> </span><span class="mf">0.85</span><span class="p" data-group-id="0583229912-7">}</span><span class="p">,</span><span class="w">   </span><span class="c1">%% 85% = critical</span><span class="w">
+        </span><span class="p" data-group-id="0583229912-8">{</span><span class="ss">check_interval</span><span class="p">,</span><span class="w"> </span><span class="mi">10000</span><span class="p" data-group-id="0583229912-8">}</span><span class="w">       </span><span class="c1">%% Check every 10 seconds</span><span class="w">
+    </span><span class="p" data-group-id="0583229912-5">]</span><span class="p" data-group-id="0583229912-4">}</span><span class="w">
+</span><span class="p" data-group-id="0583229912-3">]</span><span class="p" data-group-id="0583229912-2">}</span><span class="p" data-group-id="0583229912-1">]</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="use-cases" class="section-heading"><a href="#use-cases" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Use Cases</span></h2><h3 id="1-adaptive-batch-sizes" class="section-heading"><a href="#1-adaptive-batch-sizes" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">1. Adaptive Batch Sizes</span></h3><p>Reduce processing load when memory is constrained:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Adjust batch sizes based on memory pressure</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="5187371930-1">(</span><span class="ss">adaptive_processor</span><span class="p" data-group-id="5187371930-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">get_batch_size</span><span class="p" data-group-id="5187371930-2">(</span><span class="n">StoreId</span><span class="p" data-group-id="5187371930-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="5187371930-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p" data-group-id="5187371930-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="5187371930-4">(</span><span class="n">StoreId</span><span class="p" data-group-id="5187371930-4">)</span><span class="p">,</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="ss">normal</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w">    </span><span class="c1">%% Full speed</span><span class="w">
+        </span><span class="ss">elevated</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="mi">500</span><span class="p">;</span><span class="w">   </span><span class="c1">%% Half speed</span><span class="w">
+        </span><span class="ss">critical</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="mi">100</span><span class="w">    </span><span class="c1">%% Minimal processing</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">process_events</span><span class="p" data-group-id="5187371930-5">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p" data-group-id="5187371930-5">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="n">BatchSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">get_batch_size</span><span class="p" data-group-id="5187371930-6">(</span><span class="n">StoreId</span><span class="p" data-group-id="5187371930-6">)</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="5187371930-7">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="5187371930-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">stream_forward</span><span class="p" data-group-id="5187371930-8">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">BatchSize</span><span class="p" data-group-id="5187371930-8">)</span><span class="p">,</span><span class="w">
+    </span><span class="nc">lists</span><span class="p">:</span><span class="nf">foreach</span><span class="p" data-group-id="5187371930-9">(</span><span class="k">fun</span><span class="w"> </span><span class="ss">process_event</span><span class="p">/</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="5187371930-9">)</span><span class="p">.</span></code></pre><h3 id="2-memory-aware-caching" class="section-heading"><a href="#2-memory-aware-caching" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">2. Memory-Aware Caching</span></h3><p>Evict caches when memory pressure rises:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Clear caches based on memory pressure</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="0405937938-1">(</span><span class="ss">cache_manager</span><span class="p" data-group-id="0405937938-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">handle_memory_pressure</span><span class="p" data-group-id="0405937938-2">(</span><span class="ss">normal</span><span class="p" data-group-id="0405937938-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="ss">ok</span><span class="p">;</span><span class="w">  </span><span class="c1">%% Keep caches</span><span class="w">
+
+</span><span class="nf">handle_memory_pressure</span><span class="p" data-group-id="0405937938-3">(</span><span class="ss">elevated</span><span class="p" data-group-id="0405937938-3">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="c1">%% Evict 50% of cache</span><span class="w">
+    </span><span class="nc">cache</span><span class="p">:</span><span class="nf">evict_percentage</span><span class="p" data-group-id="0405937938-4">(</span><span class="mi">50</span><span class="p" data-group-id="0405937938-4">)</span><span class="p">,</span><span class="w">
+    </span><span class="nc">logger</span><span class="p">:</span><span class="nf">info</span><span class="p" data-group-id="0405937938-5">(</span><span class="s">&quot;Evicted 50% of cache due to elevated memory pressure&quot;</span><span class="p" data-group-id="0405937938-5">)</span><span class="p">;</span><span class="w">
+
+</span><span class="nf">handle_memory_pressure</span><span class="p" data-group-id="0405937938-6">(</span><span class="ss">critical</span><span class="p" data-group-id="0405937938-6">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="c1">%% Clear entire cache</span><span class="w">
+    </span><span class="nc">cache</span><span class="p">:</span><span class="nf">clear</span><span class="p" data-group-id="0405937938-7">(</span><span class="p" data-group-id="0405937938-7">)</span><span class="p">,</span><span class="w">
+    </span><span class="nc">logger</span><span class="p">:</span><span class="nf">warning</span><span class="p" data-group-id="0405937938-8">(</span><span class="s">&quot;Cleared cache due to critical memory pressure&quot;</span><span class="p" data-group-id="0405937938-8">)</span><span class="p">.</span></code></pre><h3 id="3-gating-expensive-operations" class="section-heading"><a href="#3-gating-expensive-operations" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">3. Gating Expensive Operations</span></h3><p>Reject expensive operations when memory is scarce:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Refuse expensive work during memory pressure</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="6636972211-1">(</span><span class="ss">resource_guard</span><span class="p" data-group-id="6636972211-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">maybe_run_expensive_operation</span><span class="p" data-group-id="6636972211-2">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">Fun</span><span class="p" data-group-id="6636972211-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="6636972211-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p" data-group-id="6636972211-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="6636972211-4">(</span><span class="n">StoreId</span><span class="p" data-group-id="6636972211-4">)</span><span class="p">,</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="ss">critical</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="p" data-group-id="6636972211-5">{</span><span class="ss">error</span><span class="p">,</span><span class="w"> </span><span class="ss">memory_pressure</span><span class="p" data-group-id="6636972211-5">}</span><span class="p">;</span><span class="w">
+        </span><span class="p">_</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="n">Fun</span><span class="p" data-group-id="6636972211-6">(</span><span class="p" data-group-id="6636972211-6">)</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Usage</span><span class="w">
+</span><span class="nf">handle_request</span><span class="p" data-group-id="6636972211-7">(</span><span class="n">Req</span><span class="p" data-group-id="6636972211-7">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="nf">maybe_run_expensive_operation</span><span class="p" data-group-id="6636972211-8">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="nf">fun</span><span class="p" data-group-id="6636972211-9">(</span><span class="p" data-group-id="6636972211-9">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+        </span><span class="nf">process_large_report</span><span class="p" data-group-id="6636972211-10">(</span><span class="n">Req</span><span class="p" data-group-id="6636972211-10">)</span><span class="w">
+    </span><span class="k">end</span><span class="p" data-group-id="6636972211-8">)</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="p" data-group-id="6636972211-11">{</span><span class="ss">error</span><span class="p">,</span><span class="w"> </span><span class="ss">memory_pressure</span><span class="p" data-group-id="6636972211-11">}</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="p" data-group-id="6636972211-12">{</span><span class="mi">503</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="6636972211-13">&lt;&lt;</span><span class="s">&quot;Service temporarily unavailable due to memory pressure&quot;</span><span class="p" data-group-id="6636972211-13">&gt;&gt;</span><span class="p" data-group-id="6636972211-12">}</span><span class="p">;</span><span class="w">
+        </span><span class="n">Result</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="n">Result</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span></code></pre><h3 id="4-process-manager-deferral" class="section-heading"><a href="#4-process-manager-deferral" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">4. Process Manager Deferral</span></h3><p>Pause saga processing during pressure:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION (process manager)</span><span class="w">
+</span><span class="c1">%% Purpose: Defer event processing when memory is critical</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="4327574403-1">(</span><span class="ss">order_saga</span><span class="p" data-group-id="4327574403-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">handle_event</span><span class="p" data-group-id="4327574403-2">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="4327574403-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="4327574403-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p" data-group-id="4327574403-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="4327574403-4">(</span><span class="n">State</span><span class="o">#</span><span class="ss">state</span><span class="p">.</span><span class="ss">store_id</span><span class="p" data-group-id="4327574403-4">)</span><span class="p">,</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="ss">critical</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="c1">%% Defer processing until memory recovers</span><span class="w">
+            </span><span class="nc">logger</span><span class="p">:</span><span class="nf">info</span><span class="p" data-group-id="4327574403-5">(</span><span class="s">&quot;Deferring event due to memory pressure&quot;</span><span class="p" data-group-id="4327574403-5">)</span><span class="p">,</span><span class="w">
+            </span><span class="p" data-group-id="4327574403-6">{</span><span class="ss">defer</span><span class="p">,</span><span class="w"> </span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="4327574403-6">}</span><span class="p">;</span><span class="w">
+        </span><span class="p">_</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="nf">do_handle_event</span><span class="p" data-group-id="4327574403-7">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="4327574403-7">)</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="monitoring-with-telemetry" class="section-heading"><a href="#monitoring-with-telemetry" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Monitoring with Telemetry</span></h2><p>Memory pressure changes emit telemetry events:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION (startup)</span><span class="w">
+</span><span class="c1">%% Purpose: Alert on memory pressure changes</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="nf">setup_memory_alerts</span><span class="p" data-group-id="0391460612-1">(</span><span class="p" data-group-id="0391460612-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="nc">telemetry</span><span class="p">:</span><span class="nf">attach</span><span class="p" data-group-id="0391460612-2">(</span><span class="w">
+        </span><span class="p" data-group-id="0391460612-3">&lt;&lt;</span><span class="s">&quot;memory-pressure-handler&quot;</span><span class="p" data-group-id="0391460612-3">&gt;&gt;</span><span class="p">,</span><span class="w">
+        </span><span class="p" data-group-id="0391460612-4">[</span><span class="ss">reckon_db</span><span class="p">,</span><span class="w"> </span><span class="nb">memory</span><span class="p">,</span><span class="w"> </span><span class="ss">pressure_changed</span><span class="p" data-group-id="0391460612-4">]</span><span class="p">,</span><span class="w">
+        </span><span class="k">fun</span><span class="w"> </span><span class="ss">handle_pressure_change</span><span class="p">/</span><span class="mi">4</span><span class="p">,</span><span class="w">
+        </span><span class="p" data-group-id="0391460612-5">#{</span><span class="p" data-group-id="0391460612-5">}</span><span class="w">
+    </span><span class="p" data-group-id="0391460612-2">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">handle_pressure_change</span><span class="p" data-group-id="0391460612-6">(</span><span class="w">
+    </span><span class="p">_</span><span class="n">Event</span><span class="p">,</span><span class="w">
+    </span><span class="p">_</span><span class="n">Measurements</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="0391460612-7">#{</span><span class="ss">old_level</span><span class="w"> </span><span class="p">:=</span><span class="w"> </span><span class="n">Old</span><span class="p">,</span><span class="w"> </span><span class="ss">new_level</span><span class="w"> </span><span class="p">:=</span><span class="w"> </span><span class="n">New</span><span class="p" data-group-id="0391460612-7">}</span><span class="p">,</span><span class="w">
+    </span><span class="p">_</span><span class="n">Config</span><span class="w">
+</span><span class="p" data-group-id="0391460612-6">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="n">New</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="ss">critical</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="nf">send_alert</span><span class="p" data-group-id="0391460612-8">(</span><span class="s">&quot;CRITICAL: Memory pressure is severe&quot;</span><span class="p" data-group-id="0391460612-8">)</span><span class="p">,</span><span class="w">
+            </span><span class="nc">logger</span><span class="p">:</span><span class="nf">error</span><span class="p" data-group-id="0391460612-9">(</span><span class="s">&quot;Memory pressure: </span><span class="si">~p</span><span class="s"> -&gt; </span><span class="si">~p</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0391460612-10">[</span><span class="n">Old</span><span class="p">,</span><span class="w"> </span><span class="n">New</span><span class="p" data-group-id="0391460612-10">]</span><span class="p" data-group-id="0391460612-9">)</span><span class="p">;</span><span class="w">
+        </span><span class="ss">elevated</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="nc">logger</span><span class="p">:</span><span class="nf">warning</span><span class="p" data-group-id="0391460612-11">(</span><span class="s">&quot;Memory pressure: </span><span class="si">~p</span><span class="s"> -&gt; </span><span class="si">~p</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0391460612-12">[</span><span class="n">Old</span><span class="p">,</span><span class="w"> </span><span class="n">New</span><span class="p" data-group-id="0391460612-12">]</span><span class="p" data-group-id="0391460612-11">)</span><span class="p">;</span><span class="w">
+        </span><span class="ss">normal</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="nc">logger</span><span class="p">:</span><span class="nf">info</span><span class="p" data-group-id="0391460612-13">(</span><span class="s">&quot;Memory pressure returned to normal&quot;</span><span class="p" data-group-id="0391460612-13">)</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="common-pitfalls" class="section-heading"><a href="#common-pitfalls" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Common Pitfalls</span></h2><h3 id="1-ignoring-memory-levels" class="section-heading"><a href="#1-ignoring-memory-levels" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">1. Ignoring Memory Levels</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Processing without checking memory</span><span class="w">
+</span><span class="nf">process_all_events</span><span class="p" data-group-id="2722984774-1">(</span><span class="n">StoreId</span><span class="p" data-group-id="2722984774-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="2722984774-2">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="2722984774-2">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">stream_forward</span><span class="p" data-group-id="2722984774-3">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">Stream</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10000</span><span class="p" data-group-id="2722984774-3">)</span><span class="p">,</span><span class="w">
+    </span><span class="nc">lists</span><span class="p">:</span><span class="nf">foreach</span><span class="p" data-group-id="2722984774-4">(</span><span class="k">fun</span><span class="w"> </span><span class="ss">process</span><span class="p">/</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="2722984774-4">)</span><span class="p">.</span><span class="w">  </span><span class="c1">%% May OOM!</span><span class="w">
+
+</span><span class="c1">%% GOOD: Respect memory pressure</span><span class="w">
+</span><span class="nf">process_all_events</span><span class="p" data-group-id="2722984774-5">(</span><span class="n">StoreId</span><span class="p" data-group-id="2722984774-5">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="2722984774-6">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p" data-group-id="2722984774-6">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="2722984774-7">(</span><span class="n">StoreId</span><span class="p" data-group-id="2722984774-7">)</span><span class="p">,</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="ss">critical</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="p" data-group-id="2722984774-8">{</span><span class="ss">error</span><span class="p">,</span><span class="w"> </span><span class="ss">memory_pressure</span><span class="p" data-group-id="2722984774-8">}</span><span class="p">;</span><span class="w">
+        </span><span class="p">_</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="n">BatchSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">get_batch_size</span><span class="p" data-group-id="2722984774-9">(</span><span class="n">Level</span><span class="p" data-group-id="2722984774-9">)</span><span class="p">,</span><span class="w">
+            </span><span class="p" data-group-id="2722984774-10">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="2722984774-10">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">stream_forward</span><span class="p" data-group-id="2722984774-11">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">Stream</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">BatchSize</span><span class="p" data-group-id="2722984774-11">)</span><span class="p">,</span><span class="w">
+            </span><span class="nc">lists</span><span class="p">:</span><span class="nf">foreach</span><span class="p" data-group-id="2722984774-12">(</span><span class="k">fun</span><span class="w"> </span><span class="ss">process</span><span class="p">/</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="2722984774-12">)</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span></code></pre><h3 id="2-polling-too-frequently" class="section-heading"><a href="#2-polling-too-frequently" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">2. Polling Too Frequently</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Checking memory on every operation</span><span class="w">
+</span><span class="nf">process_event</span><span class="p" data-group-id="4119877553-1">(</span><span class="n">Event</span><span class="p" data-group-id="4119877553-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="4119877553-2">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="p">_</span><span class="p" data-group-id="4119877553-2">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="4119877553-3">(</span><span class="n">Store</span><span class="p" data-group-id="4119877553-3">)</span><span class="p">,</span><span class="w">  </span><span class="c1">%% Every event!</span><span class="w">
+    </span><span class="nf">do_process</span><span class="p" data-group-id="4119877553-4">(</span><span class="n">Event</span><span class="p" data-group-id="4119877553-4">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% GOOD: Check periodically or rely on telemetry</span><span class="w">
+</span><span class="p">-</span><span class="na">record</span><span class="p" data-group-id="4119877553-5">(</span><span class="ss">state</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4119877553-6">{</span><span class="ss">memory_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">normal</span><span class="p" data-group-id="4119877553-6">}</span><span class="p" data-group-id="4119877553-5">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">init</span><span class="p" data-group-id="4119877553-7">(</span><span class="p" data-group-id="4119877553-7">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="nc">telemetry</span><span class="p">:</span><span class="nf">attach</span><span class="p" data-group-id="4119877553-8">(</span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="p">,</span><span class="w"> </span><span class="k">fun</span><span class="w"> </span><span class="ss">update_cached_level</span><span class="p">/</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="p" data-group-id="4119877553-8">)</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="4119877553-9">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="o">#</span><span class="ss">state</span><span class="p" data-group-id="4119877553-10">{</span><span class="p" data-group-id="4119877553-10">}</span><span class="p" data-group-id="4119877553-9">}</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">process_event</span><span class="p" data-group-id="4119877553-11">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="o">#</span><span class="ss">state</span><span class="p" data-group-id="4119877553-12">{</span><span class="ss">memory_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">critical</span><span class="p" data-group-id="4119877553-12">}</span><span class="p" data-group-id="4119877553-11">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="4119877553-13">{</span><span class="ss">defer</span><span class="p">,</span><span class="w"> </span><span class="n">Event</span><span class="p" data-group-id="4119877553-13">}</span><span class="p">;</span><span class="w">
+</span><span class="nf">process_event</span><span class="p" data-group-id="4119877553-14">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="4119877553-14">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="nf">do_process</span><span class="p" data-group-id="4119877553-15">(</span><span class="n">Event</span><span class="p" data-group-id="4119877553-15">)</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="4119877553-16">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="4119877553-16">}</span><span class="p">.</span></code></pre><h3 id="3-not-recovering-from-pressure" class="section-heading"><a href="#3-not-recovering-from-pressure" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">3. Not Recovering from Pressure</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Entering degraded mode permanently</span><span class="w">
+</span><span class="nf">handle_pressure</span><span class="p" data-group-id="1152218300-1">(</span><span class="ss">critical</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="1152218300-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="n">State</span><span class="o">#</span><span class="ss">state</span><span class="p" data-group-id="1152218300-2">{</span><span class="ss">degraded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">true</span><span class="p" data-group-id="1152218300-2">}</span><span class="p">.</span><span class="w">  </span><span class="c1">%% Never recovers!</span><span class="w">
+
+</span><span class="c1">%% GOOD: State based on current level</span><span class="w">
+</span><span class="nf">handle_event</span><span class="p" data-group-id="1152218300-3">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="1152218300-3">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="p" data-group-id="1152218300-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Level</span><span class="p" data-group-id="1152218300-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_memory_level</span><span class="p" data-group-id="1152218300-5">(</span><span class="n">Store</span><span class="p" data-group-id="1152218300-5">)</span><span class="p">,</span><span class="w">
+    </span><span class="k">case</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="k">of</span><span class="w">
+        </span><span class="ss">critical</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="p" data-group-id="1152218300-6">{</span><span class="ss">defer</span><span class="p">,</span><span class="w"> </span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="1152218300-6">}</span><span class="p">;</span><span class="w">
+        </span><span class="ss">elevated</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nf">process_slowly</span><span class="p" data-group-id="1152218300-7">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="1152218300-7">)</span><span class="p">;</span><span class="w">
+        </span><span class="ss">normal</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nf">process_normally</span><span class="p" data-group-id="1152218300-8">(</span><span class="n">Event</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="1152218300-8">)</span><span class="w">
+    </span><span class="k">end</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="when-not-to-query-memory-pressure" class="section-heading"><a href="#when-not-to-query-memory-pressure" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">When NOT to Query Memory Pressure</span></h2><ul><li><strong>On every event</strong> - Too expensive; use cached level or telemetry</li><li><strong>In tight loops</strong> - Check once at start of batch, not per-item</li><li><strong>For simple operations</strong> - Only matters for memory-intensive work</li></ul><hr class="thin"/><h2 id="best-practices" class="section-heading"><a href="#best-practices" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Best Practices</span></h2><ol><li><strong>Monitor pressure levels</strong> - Alert on elevated/critical via telemetry</li><li><strong>Implement adaptive behavior</strong> - Reduce load automatically when pressure rises</li><li><strong>Test under pressure</strong> - Verify system handles high memory gracefully</li><li><strong>Set appropriate thresholds</strong> - Tune based on your hardware and workload</li><li><strong>Use backpressure</strong> - Slow down producers instead of dropping work</li><li><strong>Cache the level</strong> - Don't query on every operation</li></ol><hr class="thin"/><h2 id="related-guides" class="section-heading"><a href="#related-guides" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Related Guides</span></h2><ul><li><a href="subscriptions.html">Subscriptions</a> - Backpressure in subscriptions</li><li><a href="stream_links.html">Stream Links</a> - Links adapt to memory pressure</li><li><a href="scavenging.html">Scavenging</a> - Free memory by removing old events</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="stream_links.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Stream Links
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+  </div>
+</div>
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+              (<a href="https://preview.hex.pm/preview/reckon_gater/1.0.0/show/guides/memory_pressure.md">current file</a>)
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>esdb_gater_api — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">esdb_gater_api</span> 
+      <small class="app-vsn" translate="no">(reckon_gater v1.0.0)</small>
+
+    </h1>
+
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L28" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p>Main API for reckon-gater</p><p>Provides the primary interface for accessing reckon-db event stores through the gateway with automatic load balancing and retry.</p><p>This module mirrors the ExESDBGater.API pattern from the original Elixir implementation, providing specific functions for each operation rather than a generic call interface.</p><h3 id="module-stream-operations" class="section-heading"><a href="#module-stream-operations" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Stream_Operations">Stream Operations</a></span></h3><p>{ok, Version} = esdb_gater_api:append_events(my_store, StreamId, Events). {ok, Events} = esdb_gater_api:get_events(my_store, StreamId, 0, 100, forward). {ok, Version} = esdb_gater_api:get_version(my_store, StreamId).</p><h3 id="module-subscription-operations" class="section-heading"><a href="#module-subscription-operations" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Subscription_Operations">Subscription Operations</a></span></h3><p>ok = esdb_gater_api:save_subscription(my_store, by_stream, Selector, Name). ok = esdb_gater_api:remove_subscription(my_store, by_stream, Selector, Name).</p><h3 id="module-snapshot-operations" class="section-heading"><a href="#module-snapshot-operations" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Snapshot_Operations">Snapshot Operations</a></span></h3><p>ok = esdb_gater_api:record_snapshot(my_store, SourceId, StreamId, Version, Data). {ok, Snapshot} = esdb_gater_api:read_snapshot(my_store, SourceId, StreamId, Version).</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-types summary">
+  <h2>
+    <a href="#types">Types</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:worker_entry/0" data-no-tooltip="" translate="no">worker_entry/0</a>
+
+      </div>
+
+    </div>
+
+</div>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#ack_event/4" data-no-tooltip="" translate="no">ack_event(StoreId, SubscriptionName, SubscriberPid, Event)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Acknowledge receipt of an event by a subscriber</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#append_events/3" data-no-tooltip="" translate="no">append_events(StoreId, StreamId, Events)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Append events to a stream (auto-versioned)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#append_events/4" data-no-tooltip="" translate="no">append_events(StoreId, StreamId, ExpectedVersion, Events)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Append events to a stream with expected version</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#build_causation_graph/2" data-no-tooltip="" translate="no">build_causation_graph(StoreId, Id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Build a causation graph for visualization</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#check_raft_log_consistency/1" data-no-tooltip="" translate="no">check_raft_log_consistency(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Check Raft log consistency for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#create_link/2" data-no-tooltip="" translate="no">create_link(StoreId, LinkSpec)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a new link</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#delete_link/2" data-no-tooltip="" translate="no">delete_link(StoreId, LinkName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Delete a link</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#delete_snapshot/4" data-no-tooltip="" translate="no">delete_snapshot(StoreId, SourceUuid, StreamUuid, Version)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Delete a snapshot</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#delete_stream/2" data-no-tooltip="" translate="no">delete_stream(StoreId, StreamId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Delete a stream and all its events</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_causation_chain/2" data-no-tooltip="" translate="no">get_causation_chain(StoreId, EventId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the full causation chain for an event</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_cause/2" data-no-tooltip="" translate="no">get_cause(StoreId, EventId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the event that caused another</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_correlated/2" data-no-tooltip="" translate="no">get_correlated(StoreId, CorrelationId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get all events with the same correlation ID</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_effects/2" data-no-tooltip="" translate="no">get_effects(StoreId, EventId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get events caused by an event</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_events/5" data-no-tooltip="" translate="no">get_events(StoreId, StreamId, StartVersion, Count, Direction)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get events from a stream</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_link/2" data-no-tooltip="" translate="no">get_link(StoreId, LinkName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get a link by name</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_memory_level/1" data-no-tooltip="" translate="no">get_memory_level(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get current memory pressure level</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_memory_stats/1" data-no-tooltip="" translate="no">get_memory_stats(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get memory statistics</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_schema/2" data-no-tooltip="" translate="no">get_schema(StoreId, EventType)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get a schema by event type</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_schema_version/2" data-no-tooltip="" translate="no">get_schema_version(StoreId, EventType)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the version of a schema</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_streams/1" data-no-tooltip="" translate="no">get_streams(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get all streams in a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_subscription/2" data-no-tooltip="" translate="no">get_subscription(StoreId, SubscriptionName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get a specific subscription by name</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_subscriptions/1" data-no-tooltip="" translate="no">get_subscriptions(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get all subscriptions for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_version/2" data-no-tooltip="" translate="no">get_version(StoreId, StreamId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the current version of a stream</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get_workers/1" data-no-tooltip="" translate="no">get_workers(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get all registered workers for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#health/0" data-no-tooltip="" translate="no">health()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get gateway health status</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#link_info/2" data-no-tooltip="" translate="no">link_info(StoreId, LinkName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get detailed info about a link</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list_links/1" data-no-tooltip="" translate="no">list_links(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>List all links</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list_schemas/1" data-no-tooltip="" translate="no">list_schemas(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>List all schemas</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list_snapshots/3" data-no-tooltip="" translate="no">list_snapshots(StoreId, SourceUuid, StreamUuid)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>List snapshots</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list_stores/0" data-no-tooltip="" translate="no">list_stores()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>List all managed stores in the cluster</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#quick_health_check/1" data-no-tooltip="" translate="no">quick_health_check(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Quick health check for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#read_by_event_types/3" data-no-tooltip="" translate="no">read_by_event_types(StoreId, EventTypes, BatchSize)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Read events by type using native Khepri filtering</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#read_range/4" data-no-tooltip="" translate="no">read_range(StoreId, StreamId, FromTimestamp, ToTimestamp)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Read events in a time range</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#read_range/5" data-no-tooltip="" translate="no">read_range(StoreId, StreamId, FromTimestamp, ToTimestamp, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Read events in a time range with options</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#read_snapshot/4" data-no-tooltip="" translate="no">read_snapshot(StoreId, SourceUuid, StreamUuid, Version)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Read a snapshot</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#read_until/3" data-no-tooltip="" translate="no">read_until(StoreId, StreamId, Timestamp)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Read events up to a timestamp</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#read_until/4" data-no-tooltip="" translate="no">read_until(StoreId, StreamId, Timestamp, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Read events up to a timestamp with options</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#record_snapshot/5" data-no-tooltip="" translate="no">record_snapshot(StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Record a snapshot</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#register_schema/3" data-no-tooltip="" translate="no">register_schema(StoreId, EventType, Schema)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Register a schema</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#register_worker/1" data-no-tooltip="" translate="no">register_worker(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Register current process as a worker for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#register_worker/2" data-no-tooltip="" translate="no">register_worker(StoreId, Pid)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Register a specific process as a worker for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#remove_subscription/4" data-no-tooltip="" translate="no">remove_subscription(StoreId, Type, Selector, SubscriptionName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Remove a subscription</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#save_subscription/6" data-no-tooltip="" translate="no">save_subscription(StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Save a subscription</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#scavenge/3" data-no-tooltip="" translate="no">scavenge(StoreId, StreamId, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Scavenge a stream (delete old events)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#scavenge_dry_run/3" data-no-tooltip="" translate="no">scavenge_dry_run(StoreId, StreamId, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Dry-run scavenge (preview what would be deleted)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#scavenge_matching/3" data-no-tooltip="" translate="no">scavenge_matching(StoreId, Pattern, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Scavenge streams matching a pattern</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_link/2" data-no-tooltip="" translate="no">start_link(StoreId, LinkName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Start a link</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stop_link/2" data-no-tooltip="" translate="no">stop_link(StoreId, LinkName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Stop a link</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stream_backward/4" data-no-tooltip="" translate="no">stream_backward(StoreId, StreamId, StartVersion, Count)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Stream events backward from a version</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stream_forward/4" data-no-tooltip="" translate="no">stream_forward(StoreId, StreamId, StartVersion, Count)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Stream events forward from a version</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#unregister_schema/2" data-no-tooltip="" translate="no">unregister_schema(StoreId, EventType)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Unregister a schema</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#unregister_worker/1" data-no-tooltip="" translate="no">unregister_worker(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Unregister current process as a worker for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#unregister_worker/2" data-no-tooltip="" translate="no">unregister_worker(StoreId, Pid)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Unregister a specific process as a worker for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#upcast_events/2" data-no-tooltip="" translate="no">upcast_events(StoreId, Events)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Upcast events to current schema version</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#verify_cluster_consistency/1" data-no-tooltip="" translate="no">verify_cluster_consistency(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Verify cluster consistency for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#verify_membership_consensus/1" data-no-tooltip="" translate="no">verify_membership_consensus(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Verify membership consensus for a store</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#version_at/3" data-no-tooltip="" translate="no">version_at(StoreId, StreamId, Timestamp)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get stream version at a specific timestamp</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="types" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h1>
+    <div class="types-list">
+<section class="detail" id="t:worker_entry/0">
+
+  <div class="detail-header">
+    <a href="#t:worker_entry/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">worker_entry/0</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/_build/default/lib/reckon_gater/include/esdb_gater.hrl#L45" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> worker_entry() ::
+          #worker_entry{store_id :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), node :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:node/0">node</a>(), pid :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pid/0">pid</a>(), registered_at :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()}.</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="ack_event/4">
+
+  <div class="detail-header">
+    <a href="#ack_event/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">ack_event(StoreId, SubscriptionName, SubscriberPid, Event)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L255" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> ack_event(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pid/0">pid</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Acknowledge receipt of an event by a subscriber</p>
+  </section>
+</section>
+<section class="detail" id="append_events/3">
+
+  <div class="detail-header">
+    <a href="#append_events/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">append_events(StoreId, StreamId, Events)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L175" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> append_events(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Append events to a stream (auto-versioned)</p>
+  </section>
+</section>
+<section class="detail" id="append_events/4">
+
+  <div class="detail-header">
+    <a href="#append_events/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">append_events(StoreId, StreamId, ExpectedVersion, Events)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L181" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> append_events(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>() | any, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()) ->
+                       {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()} | {error, {wrong_expected_version, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()}}.</pre>
+
+      </div>
+
+<p>Append events to a stream with expected version</p>
+  </section>
+</section>
+<section class="detail" id="build_causation_graph/2">
+
+  <div class="detail-header">
+    <a href="#build_causation_graph/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">build_causation_graph(StoreId, Id)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L432" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> build_causation_graph(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Build a causation graph for visualization</p>
+  </section>
+</section>
+<section class="detail" id="check_raft_log_consistency/1">
+
+  <div class="detail-header">
+    <a href="#check_raft_log_consistency/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">check_raft_log_consistency(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L355" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> check_raft_log_consistency(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Check Raft log consistency for a store</p>
+  </section>
+</section>
+<section class="detail" id="create_link/2">
+
+  <div class="detail-header">
+    <a href="#create_link/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">create_link(StoreId, LinkSpec)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L491" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> create_link(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Create a new link</p>
+  </section>
+</section>
+<section class="detail" id="delete_link/2">
+
+  <div class="detail-header">
+    <a href="#delete_link/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">delete_link(StoreId, LinkName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L497" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> delete_link(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Delete a link</p>
+  </section>
+</section>
+<section class="detail" id="delete_snapshot/4">
+
+  <div class="detail-header">
+    <a href="#delete_snapshot/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">delete_snapshot(StoreId, SourceUuid, StreamUuid, Version)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L271" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> delete_snapshot(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:non_neg_integer/0">non_neg_integer</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Delete a snapshot</p>
+  </section>
+</section>
+<section class="detail" id="delete_stream/2">
+
+  <div class="detail-header">
+    <a href="#delete_stream/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">delete_stream(StoreId, StreamId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L214" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> delete_stream(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> ok | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Delete a stream and all its events</p>
+  </section>
+</section>
+<section class="detail" id="get_causation_chain/2">
+
+  <div class="detail-header">
+    <a href="#get_causation_chain/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_causation_chain(StoreId, EventId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L422" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_causation_chain(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get the full causation chain for an event</p>
+  </section>
+</section>
+<section class="detail" id="get_cause/2">
+
+  <div class="detail-header">
+    <a href="#get_cause/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_cause(StoreId, EventId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L417" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_cause(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get the event that caused another</p>
+  </section>
+</section>
+<section class="detail" id="get_correlated/2">
+
+  <div class="detail-header">
+    <a href="#get_correlated/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_correlated(StoreId, CorrelationId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L427" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_correlated(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get all events with the same correlation ID</p>
+  </section>
+</section>
+<section class="detail" id="get_effects/2">
+
+  <div class="detail-header">
+    <a href="#get_effects/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_effects(StoreId, EventId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L412" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_effects(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get events caused by an event</p>
+  </section>
+</section>
+<section class="detail" id="get_events/5">
+
+  <div class="detail-header">
+    <a href="#get_events/5" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_events(StoreId, StreamId, StartVersion, Count, Direction)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L187" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_events(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), forward | backward) ->
+                    {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get events from a stream</p>
+  </section>
+</section>
+<section class="detail" id="get_link/2">
+
+  <div class="detail-header">
+    <a href="#get_link/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_link(StoreId, LinkName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L503" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_link(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get a link by name</p>
+  </section>
+</section>
+<section class="detail" id="get_memory_level/1">
+
+  <div class="detail-header">
+    <a href="#get_memory_level/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_memory_level(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L477" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_memory_level(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get current memory pressure level</p>
+  </section>
+</section>
+<section class="detail" id="get_memory_stats/1">
+
+  <div class="detail-header">
+    <a href="#get_memory_stats/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_memory_stats(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L482" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_memory_stats(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get memory statistics</p>
+  </section>
+</section>
+<section class="detail" id="get_schema/2">
+
+  <div class="detail-header">
+    <a href="#get_schema/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_schema(StoreId, EventType)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L441" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_schema(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get a schema by event type</p>
+  </section>
+</section>
+<section class="detail" id="get_schema_version/2">
+
+  <div class="detail-header">
+    <a href="#get_schema_version/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_schema_version(StoreId, EventType)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L451" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_schema_version(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get the version of a schema</p>
+  </section>
+</section>
+<section class="detail" id="get_streams/1">
+
+  <div class="detail-header">
+    <a href="#get_streams/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_streams(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L209" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_streams(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get all streams in a store</p>
+  </section>
+</section>
+<section class="detail" id="get_subscription/2">
+
+  <div class="detail-header">
+    <a href="#get_subscription/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_subscription(StoreId, SubscriptionName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L238" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_subscription(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get a specific subscription by name</p><p>Returns the subscription details including the checkpoint.</p>
+  </section>
+</section>
+<section class="detail" id="get_subscriptions/1">
+
+  <div class="detail-header">
+    <a href="#get_subscriptions/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_subscriptions(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L231" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_subscriptions(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get all subscriptions for a store</p>
+  </section>
+</section>
+<section class="detail" id="get_version/2">
+
+  <div class="detail-header">
+    <a href="#get_version/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_version(StoreId, StreamId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L204" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_version(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get the current version of a stream</p>
+  </section>
+</section>
+<section class="detail" id="get_workers/1">
+
+  <div class="detail-header">
+    <a href="#get_workers/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get_workers(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L166" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> get_workers(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, [<a href="#t:worker_entry/0">worker_entry</a>()]} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get all registered workers for a store</p>
+  </section>
+</section>
+<section class="detail" id="health/0">
+
+  <div class="detail-header">
+    <a href="#health/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">health()</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L312" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> health() -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()}.</pre>
+
+      </div>
+
+<p>Get gateway health status</p>
+  </section>
+</section>
+<section class="detail" id="link_info/2">
+
+  <div class="detail-header">
+    <a href="#link_info/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">link_info(StoreId, LinkName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L525" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> link_info(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get detailed info about a link</p>
+  </section>
+</section>
+<section class="detail" id="list_links/1">
+
+  <div class="detail-header">
+    <a href="#list_links/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list_links(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L508" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> list_links(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>List all links</p>
+  </section>
+</section>
+<section class="detail" id="list_schemas/1">
+
+  <div class="detail-header">
+    <a href="#list_schemas/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list_schemas(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L446" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> list_schemas(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>List all schemas</p>
+  </section>
+</section>
+<section class="detail" id="list_snapshots/3">
+
+  <div class="detail-header">
+    <a href="#list_snapshots/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list_snapshots(StoreId, SourceUuid, StreamUuid)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L284" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> list_snapshots(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>() | any, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>() | any) -> {ok, [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()]} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>List snapshots</p>
+  </section>
+</section>
+<section class="detail" id="list_stores/0">
+
+  <div class="detail-header">
+    <a href="#list_stores/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list_stores()</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L293" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> list_stores() -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>List all managed stores in the cluster</p>
+  </section>
+</section>
+<section class="detail" id="quick_health_check/1">
+
+  <div class="detail-header">
+    <a href="#quick_health_check/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">quick_health_check(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L345" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> quick_health_check(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Quick health check for a store</p>
+  </section>
+</section>
+<section class="detail" id="read_by_event_types/3">
+
+  <div class="detail-header">
+    <a href="#read_by_event_types/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">read_by_event_types(StoreId, EventTypes, BatchSize)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L222" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> read_by_event_types(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()], <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pos_integer/0">pos_integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Read events by type using native Khepri filtering</p><p>This uses the server-side read_by_event_types which performs efficient filtering at the database level rather than loading all events.</p>
+  </section>
+</section>
+<section class="detail" id="read_range/4">
+
+  <div class="detail-header">
+    <a href="#read_range/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">read_range(StoreId, StreamId, FromTimestamp, ToTimestamp)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L374" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> read_range(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Read events in a time range</p>
+  </section>
+</section>
+<section class="detail" id="read_range/5">
+
+  <div class="detail-header">
+    <a href="#read_range/5" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">read_range(StoreId, StreamId, FromTimestamp, ToTimestamp, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L379" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> read_range(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Read events in a time range with options</p>
+  </section>
+</section>
+<section class="detail" id="read_snapshot/4">
+
+  <div class="detail-header">
+    <a href="#read_snapshot/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">read_snapshot(StoreId, SourceUuid, StreamUuid, Version)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L278" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> read_snapshot(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:non_neg_integer/0">non_neg_integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Read a snapshot</p>
+  </section>
+</section>
+<section class="detail" id="read_until/3">
+
+  <div class="detail-header">
+    <a href="#read_until/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">read_until(StoreId, StreamId, Timestamp)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L364" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> read_until(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Read events up to a timestamp</p>
+  </section>
+</section>
+<section class="detail" id="read_until/4">
+
+  <div class="detail-header">
+    <a href="#read_until/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">read_until(StoreId, StreamId, Timestamp, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L369" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> read_until(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Read events up to a timestamp with options</p>
+  </section>
+</section>
+<section class="detail" id="record_snapshot/5">
+
+  <div class="detail-header">
+    <a href="#record_snapshot/5" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">record_snapshot(StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L265" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> record_snapshot(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:non_neg_integer/0">non_neg_integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Record a snapshot</p>
+  </section>
+</section>
+<section class="detail" id="register_schema/3">
+
+  <div class="detail-header">
+    <a href="#register_schema/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">register_schema(StoreId, EventType, Schema)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L461" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> register_schema(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Register a schema</p>
+  </section>
+</section>
+<section class="detail" id="register_worker/1">
+
+  <div class="detail-header">
+    <a href="#register_worker/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">register_worker(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L146" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> register_worker(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> ok | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Register current process as a worker for a store</p>
+  </section>
+</section>
+<section class="detail" id="register_worker/2">
+
+  <div class="detail-header">
+    <a href="#register_worker/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">register_worker(StoreId, Pid)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L151" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> register_worker(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pid/0">pid</a>()) -> ok | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Register a specific process as a worker for a store</p>
+  </section>
+</section>
+<section class="detail" id="remove_subscription/4">
+
+  <div class="detail-header">
+    <a href="#remove_subscription/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">remove_subscription(StoreId, Type, Selector, SubscriptionName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L249" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> remove_subscription(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>() | <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Remove a subscription</p>
+  </section>
+</section>
+<section class="detail" id="save_subscription/6">
+
+  <div class="detail-header">
+    <a href="#save_subscription/6" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">save_subscription(StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L243" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> save_subscription(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(),
+                        <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(),
+                        <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>() | <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>(),
+                        <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(),
+                        <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:non_neg_integer/0">non_neg_integer</a>(),
+                        <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pid/0">pid</a>() | undefined) ->
+                           ok.</pre>
+
+      </div>
+
+<p>Save a subscription</p>
+  </section>
+</section>
+<section class="detail" id="scavenge/3">
+
+  <div class="detail-header">
+    <a href="#scavenge/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">scavenge(StoreId, StreamId, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L393" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> scavenge(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Scavenge a stream (delete old events)</p>
+  </section>
+</section>
+<section class="detail" id="scavenge_dry_run/3">
+
+  <div class="detail-header">
+    <a href="#scavenge_dry_run/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">scavenge_dry_run(StoreId, StreamId, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L403" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> scavenge_dry_run(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Dry-run scavenge (preview what would be deleted)</p>
+  </section>
+</section>
+<section class="detail" id="scavenge_matching/3">
+
+  <div class="detail-header">
+    <a href="#scavenge_matching/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">scavenge_matching(StoreId, Pattern, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L398" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> scavenge_matching(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Scavenge streams matching a pattern</p>
+  </section>
+</section>
+<section class="detail" id="start_link/2">
+
+  <div class="detail-header">
+    <a href="#start_link/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start_link(StoreId, LinkName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L513" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> start_link(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Start a link</p>
+  </section>
+</section>
+<section class="detail" id="stop_link/2">
+
+  <div class="detail-header">
+    <a href="#stop_link/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stop_link(StoreId, LinkName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L519" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> stop_link(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Stop a link</p>
+  </section>
+</section>
+<section class="detail" id="stream_backward/4">
+
+  <div class="detail-header">
+    <a href="#stream_backward/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stream_backward(StoreId, StreamId, StartVersion, Count)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L199" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> stream_backward(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:non_neg_integer/0">non_neg_integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Stream events backward from a version</p>
+  </section>
+</section>
+<section class="detail" id="stream_forward/4">
+
+  <div class="detail-header">
+    <a href="#stream_forward/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stream_forward(StoreId, StreamId, StartVersion, Count)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L193" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> stream_forward(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Stream events forward from a version</p>
+  </section>
+</section>
+<section class="detail" id="unregister_schema/2">
+
+  <div class="detail-header">
+    <a href="#unregister_schema/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">unregister_schema(StoreId, EventType)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L467" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> unregister_schema(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> ok.</pre>
+
+      </div>
+
+<p>Unregister a schema</p>
+  </section>
+</section>
+<section class="detail" id="unregister_worker/1">
+
+  <div class="detail-header">
+    <a href="#unregister_worker/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">unregister_worker(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L156" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> unregister_worker(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> ok | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Unregister current process as a worker for a store</p>
+  </section>
+</section>
+<section class="detail" id="unregister_worker/2">
+
+  <div class="detail-header">
+    <a href="#unregister_worker/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">unregister_worker(StoreId, Pid)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L161" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> unregister_worker(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pid/0">pid</a>()) -> ok | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Unregister a specific process as a worker for a store</p>
+  </section>
+</section>
+<section class="detail" id="upcast_events/2">
+
+  <div class="detail-header">
+    <a href="#upcast_events/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">upcast_events(StoreId, Events)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L456" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> upcast_events(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:list/0">list</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Upcast events to current schema version</p>
+  </section>
+</section>
+<section class="detail" id="verify_cluster_consistency/1">
+
+  <div class="detail-header">
+    <a href="#verify_cluster_consistency/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">verify_cluster_consistency(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L340" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> verify_cluster_consistency(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Verify cluster consistency for a store</p>
+  </section>
+</section>
+<section class="detail" id="verify_membership_consensus/1">
+
+  <div class="detail-header">
+    <a href="#verify_membership_consensus/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">verify_membership_consensus(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L350" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> verify_membership_consensus(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Verify membership consensus for a store</p>
+  </section>
+</section>
+<section class="detail" id="version_at/3">
+
+  <div class="detail-header">
+    <a href="#version_at/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">version_at(StoreId, StreamId, Timestamp)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_gater_api.erl#L384" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> version_at(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Get stream version at a specific timestamp</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

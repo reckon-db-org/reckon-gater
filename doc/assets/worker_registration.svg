@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 280">
+  <defs>
+    <linearGradient id="clientGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="gaterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff3e0"/>
+      <stop offset="100%" style="stop-color:#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fce4ec"/>
+      <stop offset="100%" style="stop-color:#f8bbd9"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#666"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="275" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Automatic Worker Registration</text>
+
+  <!-- Client Applications -->
+  <rect x="75" y="35" width="400" height="55" rx="8" fill="url(#clientGrad)" stroke="#4caf50" stroke-width="2"/>
+  <text x="275" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2e7d32">Client Applications</text>
+  <text x="275" y="78" text-anchor="middle" font-family="monospace" font-size="9" fill="#388e3c">esdb_gater_api:call(my_store, {append, StreamId, -1, Events})</text>
+
+  <!-- Arrow down -->
+  <line x1="275" y1="90" x2="275" y2="115" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- reckon-gater -->
+  <rect x="75" y="120" width="400" height="55" rx="8" fill="url(#gaterGrad)" stroke="#ff9800" stroke-width="2"/>
+  <text x="275" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e65100">reckon-gater</text>
+  <text x="130" y="162" font-family="Arial, sans-serif" font-size="9" fill="#f57c00">Worker Registry</text>
+  <text x="180" y="162" font-family="Arial, sans-serif" font-size="9" fill="#666">→</text>
+  <text x="230" y="162" font-family="Arial, sans-serif" font-size="9" fill="#f57c00">Load Balancer</text>
+  <text x="295" y="162" font-family="Arial, sans-serif" font-size="9" fill="#666">→</text>
+  <text x="360" y="162" font-family="Arial, sans-serif" font-size="9" fill="#f57c00">Retry Handler</text>
+  <text x="130" y="172" font-family="Arial, sans-serif" font-size="8" fill="#999">(pg groups)</text>
+  <text x="230" y="172" font-family="Arial, sans-serif" font-size="8" fill="#999">(round-robin)</text>
+  <text x="360" y="172" font-family="Arial, sans-serif" font-size="8" fill="#999">(exponential backoff)</text>
+
+  <!-- Arrow down with branches -->
+  <line x1="275" y1="175" x2="275" y2="195" stroke="#666" stroke-width="2"/>
+  <line x1="120" y1="195" x2="430" y2="195" stroke="#666" stroke-width="2"/>
+  <line x1="120" y1="195" x2="120" y2="215" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="275" y1="195" x2="275" y2="215" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="430" y1="195" x2="430" y2="215" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- reckon-db nodes -->
+  <rect x="50" y="220" width="140" height="50" rx="6" fill="url(#nodeGrad)" stroke="#e91e63" stroke-width="2"/>
+  <text x="120" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#ad1457">reckon-db Node 1</text>
+  <text x="120" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#c2185b">Gateway Worker</text>
+  <text x="120" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#999">(registered)</text>
+
+  <rect x="205" y="220" width="140" height="50" rx="6" fill="url(#nodeGrad)" stroke="#e91e63" stroke-width="2"/>
+  <text x="275" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#ad1457">reckon-db Node 2</text>
+  <text x="275" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#c2185b">Gateway Worker</text>
+  <text x="275" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#999">(registered)</text>
+
+  <rect x="360" y="220" width="140" height="50" rx="6" fill="url(#nodeGrad)" stroke="#e91e63" stroke-width="2"/>
+  <text x="430" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#ad1457">reckon-db Node 3</text>
+  <text x="430" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#c2185b">Gateway Worker</text>
+  <text x="430" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#999">(registered)</text>
+</svg>

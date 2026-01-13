@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>esdb_capability — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">esdb_capability</span> 
+      <small class="app-vsn" translate="no">(reckon_gater v1.0.0)</small>
+
+    </h1>
+
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L34" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p>Capability token creation, signing, and delegation</p><p>Provides functions for creating UCAN-inspired capability tokens that grant specific permissions to specific audiences. Tokens can be delegated with attenuation (reduced permissions).</p><h3 id="module-token-lifecycle" class="section-heading"><a href="#module-token-lifecycle" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Token_Lifecycle">Token Lifecycle</a></span></h3><p>1. Create: Build a capability with issuer, audience, and grants 2. Sign: Sign with issuer's private key 3. Encode: Serialize to JWT or Erlang binary format 4. Transmit: Send with request to server 5. (Server) Verify: Check signature, expiry, revocation, permissions</p><h3 id="module-delegation" class="section-heading"><a href="#module-delegation" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Delegation">Delegation</a></span></h3><p>Tokens can be delegated to create child tokens with reduced permissions. The child token includes a proof reference to the parent token. Permissions can only be attenuated (reduced), never expanded.</p><h3 id="module-example" class="section-heading"><a href="#module-example" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Example">Example</a></span></h3><p>Create and sign a capability:</p><p>Issuer = esdb_identity:generate(), Audience = esdb_identity:generate(), Grants = [esdb_capability:grant(Resource, Action)], Cap = esdb_capability:create(Issuer, Audience, Grants, #{ttl =&gt; 900}), SignedCap = esdb_capability:sign(Cap, esdb_identity:private_key(Issuer)), Token = esdb_capability:encode(SignedCap, jwt).</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-types summary">
+  <h2>
+    <a href="#types">Types</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:capability/0" data-no-tooltip="" translate="no">capability/0</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:capability_grant/0" data-no-tooltip="" translate="no">capability_grant/0</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:identity/0" data-no-tooltip="" translate="no">identity/0</a>
+
+      </div>
+
+    </div>
+
+</div>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#attenuate/2" data-no-tooltip="" translate="no">attenuate(ChildGrants, ParentGrants)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Check if grants are attenuated (subset of parent)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#audience/1" data-no-tooltip="" translate="no">audience(Capability)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the audience DID</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#create/3" data-no-tooltip="" translate="no">create(Issuer, Audience, Grants)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a capability token with default TTL</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#create/4" data-no-tooltip="" translate="no">create(Issuer, Audience, Grants, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a capability token with options</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#decode/1" data-no-tooltip="" translate="no">decode(Bin)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Decode a capability from either format (auto-detected)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#delegate/3" data-no-tooltip="" translate="no">delegate(ParentCap, NewAudience, AttenuatedGrants)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Delegate a capability to a new audience with attenuated grants</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#delegate/4" data-no-tooltip="" translate="no">delegate(Capability, NewAudience, AttenuatedGrants, Opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Delegate with options</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#encode/1" data-no-tooltip="" translate="no">encode(Cap)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Encode capability to default format (Erlang binary)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#encode/2" data-no-tooltip="" translate="no">encode(Capability, Format)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Encode capability to specified format</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#expires_at/1" data-no-tooltip="" translate="no">expires_at(Capability)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the expiration timestamp</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#grant/2" data-no-tooltip="" translate="no">grant(Resource, Action)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a capability grant</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#grants/1" data-no-tooltip="" translate="no">grants(Capability)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the capability grants</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#is_expired/1" data-no-tooltip="" translate="no">is_expired(Capability)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Check if the capability is expired</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#issuer/1" data-no-tooltip="" translate="no">issuer(Capability)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the issuer DID</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#proof_chain/1" data-no-tooltip="" translate="no">proof_chain(Capability)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Get the proof chain (parent token CIDs)</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#sign/2" data-no-tooltip="" translate="no">sign(Capability, PrivateKey)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Sign a capability token with the issuer's private key</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="types" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h1>
+    <div class="types-list">
+<section class="detail" id="t:capability/0">
+
+  <div class="detail-header">
+    <a href="#t:capability/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">capability/0</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/_build/default/lib/reckon_gater/include/esdb_capability_types.hrl#L61" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> capability() ::
+          #capability{alg :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(),
+                      typ :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(),
+                      iss :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(),
+                      aud :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(),
+                      nbf :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>() | undefined,
+                      exp :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(),
+                      iat :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>(),
+                      nnc :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(),
+                      att :: [<a href="#t:capability_grant/0">capability_grant</a>()],
+                      fct :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>(),
+                      prf :: [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()],
+                      sig :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>() | undefined}.</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:capability_grant/0">
+
+  <div class="detail-header">
+    <a href="#t:capability_grant/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">capability_grant/0</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/_build/default/lib/reckon_gater/include/esdb_capability_types.hrl#L71" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> capability_grant() :: #{with := <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), can := <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()}.</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:identity/0">
+
+  <div class="detail-header">
+    <a href="#t:identity/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">identity/0</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/_build/default/lib/reckon_gater/include/esdb_capability_types.hrl#L90" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> identity() ::
+          #identity{did :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), public_key :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), private_key :: <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>() | undefined}.</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="attenuate/2">
+
+  <div class="detail-header">
+    <a href="#attenuate/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">attenuate(ChildGrants, ParentGrants)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L276" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> attenuate([<a href="#t:capability_grant/0">capability_grant</a>()], [<a href="#t:capability_grant/0">capability_grant</a>()]) ->
+                   {ok, [<a href="#t:capability_grant/0">capability_grant</a>()]} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Check if grants are attenuated (subset of parent)</p>
+  </section>
+</section>
+<section class="detail" id="audience/1">
+
+  <div class="detail-header">
+    <a href="#audience/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">audience(Capability)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L245" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> audience(<a href="#t:capability/0">capability</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>().</pre>
+
+      </div>
+
+<p>Get the audience DID</p>
+  </section>
+</section>
+<section class="detail" id="create/3">
+
+  <div class="detail-header">
+    <a href="#create/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">create(Issuer, Audience, Grants)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L80" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> create(<a href="#t:identity/0">identity</a>(), <a href="#t:identity/0">identity</a>() | <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), [<a href="#t:capability_grant/0">capability_grant</a>()]) -> <a href="#t:capability/0">capability</a>().</pre>
+
+      </div>
+
+<p>Create a capability token with default TTL</p>
+  </section>
+</section>
+<section class="detail" id="create/4">
+
+  <div class="detail-header">
+    <a href="#create/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">create(Issuer, Audience, Grants, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L90" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> create(<a href="#t:identity/0">identity</a>(), <a href="#t:identity/0">identity</a>() | <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), [<a href="#t:capability_grant/0">capability_grant</a>()], <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> <a href="#t:capability/0">capability</a>().</pre>
+
+      </div>
+
+<p>Create a capability token with options</p><p>Options: - ttl: Time to live in seconds (default: 900 = 15 minutes) - nbf: Not before timestamp (default: now) - facts: Additional claims map (default: #{})</p>
+  </section>
+</section>
+<section class="detail" id="decode/1">
+
+  <div class="detail-header">
+    <a href="#decode/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">decode(Bin)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L215" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> decode(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="#t:capability/0">capability</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Decode a capability from either format (auto-detected)</p>
+  </section>
+</section>
+<section class="detail" id="delegate/3">
+
+  <div class="detail-header">
+    <a href="#delegate/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">delegate(ParentCap, NewAudience, AttenuatedGrants)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L144" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> delegate(<a href="#t:capability/0">capability</a>(), <a href="#t:identity/0">identity</a>() | <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), [<a href="#t:capability_grant/0">capability_grant</a>()]) -> <a href="#t:capability/0">capability</a>().</pre>
+
+      </div>
+
+<p>Delegate a capability to a new audience with attenuated grants</p><p>The new capability will include a proof reference to the parent capability. The grants must be a subset of (or equal to) the parent's grants.</p>
+  </section>
+</section>
+<section class="detail" id="delegate/4">
+
+  <div class="detail-header">
+    <a href="#delegate/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">delegate(Capability, NewAudience, AttenuatedGrants, Opts)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L149" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> delegate(<a href="#t:capability/0">capability</a>(), <a href="#t:identity/0">identity</a>() | <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), [<a href="#t:capability_grant/0">capability_grant</a>()], <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()) -> <a href="#t:capability/0">capability</a>().</pre>
+
+      </div>
+
+<p>Delegate with options</p>
+  </section>
+</section>
+<section class="detail" id="encode/1">
+
+  <div class="detail-header">
+    <a href="#encode/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">encode(Cap)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L197" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> encode(<a href="#t:capability/0">capability</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>().</pre>
+
+      </div>
+
+<p>Encode capability to default format (Erlang binary)</p>
+  </section>
+</section>
+<section class="detail" id="encode/2">
+
+  <div class="detail-header">
+    <a href="#encode/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">encode(Capability, Format)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L206" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> encode(<a href="#t:capability/0">capability</a>(), binary | jwt) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>().</pre>
+
+      </div>
+
+<p>Encode capability to specified format</p><p>Formats: - binary: Erlang term_to_binary (compact, fast, BEAM-only) - jwt: JSON Web Token format (interoperable)</p>
+  </section>
+</section>
+<section class="detail" id="expires_at/1">
+
+  <div class="detail-header">
+    <a href="#expires_at/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">expires_at(Capability)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L253" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> expires_at(<a href="#t:capability/0">capability</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:integer/0">integer</a>().</pre>
+
+      </div>
+
+<p>Get the expiration timestamp</p>
+  </section>
+</section>
+<section class="detail" id="grant/2">
+
+  <div class="detail-header">
+    <a href="#grant/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">grant(Resource, Action)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L270" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> grant(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> <a href="#t:capability_grant/0">capability_grant</a>().</pre>
+
+      </div>
+
+<p>Create a capability grant</p>
+  </section>
+</section>
+<section class="detail" id="grants/1">
+
+  <div class="detail-header">
+    <a href="#grants/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">grants(Capability)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L249" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> grants(<a href="#t:capability/0">capability</a>()) -> [<a href="#t:capability_grant/0">capability_grant</a>()].</pre>
+
+      </div>
+
+<p>Get the capability grants</p>
+  </section>
+</section>
+<section class="detail" id="is_expired/1">
+
+  <div class="detail-header">
+    <a href="#is_expired/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">is_expired(Capability)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L257" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> is_expired(<a href="#t:capability/0">capability</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:boolean/0">boolean</a>().</pre>
+
+      </div>
+
+<p>Check if the capability is expired</p>
+  </section>
+</section>
+<section class="detail" id="issuer/1">
+
+  <div class="detail-header">
+    <a href="#issuer/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">issuer(Capability)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L241" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> issuer(<a href="#t:capability/0">capability</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>().</pre>
+
+      </div>
+
+<p>Get the issuer DID</p>
+  </section>
+</section>
+<section class="detail" id="proof_chain/1">
+
+  <div class="detail-header">
+    <a href="#proof_chain/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">proof_chain(Capability)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L262" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> proof_chain(<a href="#t:capability/0">capability</a>()) -> [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()].</pre>
+
+      </div>
+
+<p>Get the proof chain (parent token CIDs)</p>
+  </section>
+</section>
+<section class="detail" id="sign/2">
+
+  <div class="detail-header">
+    <a href="#sign/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">sign(Capability, PrivateKey)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/src/esdb_capability.erl#L126" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> sign(<a href="#t:capability/0">capability</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> <a href="#t:capability/0">capability</a>().</pre>
+
+      </div>
+
+<p>Sign a capability token with the issuer's private key</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

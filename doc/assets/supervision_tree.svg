@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 320">
+  <defs>
+    <linearGradient id="rootGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="clusterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff3e0"/>
+      <stop offset="100%" style="stop-color:#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="channelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="workerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fce4ec"/>
+      <stop offset="100%" style="stop-color:#f8bbd9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="275" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Supervision Tree</text>
+
+  <!-- Root supervisor -->
+  <rect x="175" y="35" width="200" height="30" rx="5" fill="url(#rootGrad)" stroke="#2196f3" stroke-width="2"/>
+  <text x="275" y="55" text-anchor="middle" font-family="monospace" font-size="11" fill="#1565c0">reckon_gater_sup</text>
+  <text x="390" y="55" font-family="Arial, sans-serif" font-size="9" fill="#666">(one_for_one)</text>
+
+  <!-- Lines from root -->
+  <line x1="225" y1="65" x2="225" y2="85" stroke="#666" stroke-width="1.5"/>
+  <line x1="225" y1="85" x2="140" y2="85" stroke="#666" stroke-width="1.5"/>
+  <line x1="140" y1="85" x2="140" y2="100" stroke="#666" stroke-width="1.5"/>
+  <line x1="225" y1="85" x2="400" y2="85" stroke="#666" stroke-width="1.5"/>
+  <line x1="400" y1="85" x2="400" y2="100" stroke="#666" stroke-width="1.5"/>
+
+  <!-- Cluster supervisor -->
+  <rect x="40" y="100" width="200" height="30" rx="5" fill="url(#clusterGrad)" stroke="#ff9800" stroke-width="2"/>
+  <text x="140" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#e65100">esdb_gater_cluster_sup</text>
+  <text x="255" y="120" font-family="Arial, sans-serif" font-size="9" fill="#666">(rest_for_one)</text>
+
+  <!-- Channel supervisor -->
+  <rect x="300" y="100" width="200" height="30" rx="5" fill="url(#channelGrad)" stroke="#4caf50" stroke-width="2"/>
+  <text x="400" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#2e7d32">esdb_channel_sup</text>
+  <text x="515" y="120" font-family="Arial, sans-serif" font-size="9" fill="#666">(one_for_one)</text>
+
+  <!-- Lines from cluster sup -->
+  <line x1="100" y1="130" x2="100" y2="150" stroke="#666" stroke-width="1.5"/>
+  <line x1="100" y1="150" x2="70" y2="150" stroke="#666" stroke-width="1.5"/>
+  <line x1="70" y1="150" x2="70" y2="165" stroke="#666" stroke-width="1.5"/>
+  <line x1="100" y1="150" x2="180" y2="150" stroke="#666" stroke-width="1.5"/>
+  <line x1="180" y1="150" x2="180" y2="165" stroke="#666" stroke-width="1.5"/>
+
+  <!-- Cluster workers -->
+  <rect x="10" y="165" width="120" height="25" rx="4" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="70" y="182" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">worker_registry</text>
+
+  <rect x="140" y="165" width="120" height="25" rx="4" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="200" y="182" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">cluster_monitor</text>
+
+  <!-- Lines from channel sup -->
+  <line x1="400" y1="130" x2="400" y2="145" stroke="#666" stroke-width="1.5"/>
+
+  <!-- Channel workers - two columns -->
+  <rect x="300" y="150" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="345" y="165" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">alerts</text>
+
+  <rect x="400" y="150" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="445" y="165" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">security</text>
+
+  <rect x="300" y="177" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="345" y="192" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">events</text>
+
+  <rect x="400" y="177" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="445" y="192" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">health</text>
+
+  <rect x="300" y="204" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="345" y="219" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">system</text>
+
+  <rect x="400" y="204" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="445" y="219" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">metrics</text>
+
+  <rect x="300" y="231" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="345" y="246" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">audit</text>
+
+  <rect x="400" y="231" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="445" y="246" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">lifecycle</text>
+
+  <rect x="300" y="258" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="345" y="273" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">logging</text>
+
+  <rect x="400" y="258" width="90" height="22" rx="3" fill="url(#workerGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="445" y="273" text-anchor="middle" font-family="monospace" font-size="8" fill="#ad1457">diagnostics</text>
+
+  <!-- Connecting lines for channels -->
+  <line x1="345" y1="145" x2="345" y2="150" stroke="#666" stroke-width="1"/>
+  <line x1="445" y1="145" x2="445" y2="150" stroke="#666" stroke-width="1"/>
+  <line x1="345" y1="145" x2="445" y2="145" stroke="#666" stroke-width="1"/>
+</svg>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>API Reference — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>API Reference <small class="app-vsn">reckon_gater v#1.0.0</small></h1>
+
+      <a href="https://github.com/reckon-db-org/reckon-gater" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+    <section class="details-list">
+      <h2 id="modules" class="section-heading">Modules</h2>
+      <div class="summary">
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_capability.html" translate="no">esdb_capability</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Capability token creation, signing, and delegation</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel.html" translate="no">esdb_channel</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Channel behavior for reckon-gater PubSub API SET</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_alerts.html" translate="no">esdb_channel_alerts</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Alerts channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_audit.html" translate="no">esdb_channel_audit</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Audit channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_diagnostics.html" translate="no">esdb_channel_diagnostics</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Diagnostics channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_events.html" translate="no">esdb_channel_events</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Events channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_health.html" translate="no">esdb_channel_health</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Health channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_lifecycle.html" translate="no">esdb_channel_lifecycle</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Lifecycle channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_logging.html" translate="no">esdb_channel_logging</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Logging channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_metrics.html" translate="no">esdb_channel_metrics</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Metrics channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_security.html" translate="no">esdb_channel_security</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Security channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_server.html" translate="no">esdb_channel_server</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Generic channel server for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_sup.html" translate="no">esdb_channel_sup</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Channel supervisor for reckon-gater PubSub API SET</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_channel_system.html" translate="no">esdb_channel_system</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>System channel for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_api.html" translate="no">esdb_gater_api</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Main API for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_cluster_monitor.html" translate="no">esdb_gater_cluster_monitor</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Cluster monitor for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_cluster_sup.html" translate="no">esdb_gater_cluster_sup</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Cluster supervisor for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_config.html" translate="no">esdb_gater_config</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Global configuration for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_crypto_nif.html" translate="no">esdb_gater_crypto_nif</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>NIF acceleration for cryptographic operations (Enterprise Edition)</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_repl.html" translate="no">esdb_gater_repl</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Interactive REPL for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_retry.html" translate="no">esdb_gater_retry</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Retry logic with exponential backoff for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_telemetry.html" translate="no">esdb_gater_telemetry</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Telemetry handler for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_gater_worker_registry.html" translate="no">esdb_gater_worker_registry</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>pg-based distributed worker registry for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_identity.html" translate="no">esdb_identity</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Identity management for capability-based security</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="esdb_pubsub_security.html" translate="no">esdb_pubsub_security</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>HMAC security utilities for reckon-gater PubSub</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="reckon_gater_app.html" translate="no">reckon_gater_app</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Application module for reckon-gater</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="reckon_gater_sup.html" translate="no">reckon_gater_sup</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Top-level supervisor for reckon-gater</p></div>
+
+</div>
+
+      </div>
+    </section>
+
+
+</div>
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

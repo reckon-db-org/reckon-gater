@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>Temporal Queries — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Temporal Queries</h1>
+
+
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/guides/temporal_queries.md#L1" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>This guide explains how to query events by timestamp, enabling point-in-time reconstruction and historical analysis.</p><h2 id="prerequisites" class="section-heading"><a href="#prerequisites" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Prerequisites</span></h2><p>Before reading this guide, you should understand:</p><ul><li>Event sourcing concepts (<a href="event_sourcing.html">Event Sourcing Guide</a>)</li><li>How events are stored with versions and timestamps</li><li>Aggregate reconstruction from events</li></ul><h2 id="the-problem-version-numbers-aren-t-always-enough" class="section-heading"><a href="#the-problem-version-numbers-aren-t-always-enough" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The Problem: Version Numbers Aren't Always Enough</span></h2><p>In event sourcing, you typically read events by version number:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%% &quot;Give me events 0-100 from this stream&quot;</span><span class="w">
+</span><span class="p" data-group-id="8210495850-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="8210495850-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">stream_forward</span><span class="p" data-group-id="8210495850-2">(</span><span class="n">Store</span><span class="p">,</span><span class="w"> </span><span class="n">Stream</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p" data-group-id="8210495850-2">)</span><span class="p">.</span></code></pre><p>But sometimes you need to answer <strong>time-based</strong> questions:</p><ul><li>&quot;What was the account balance at end of Q3?&quot; (compliance/auditing)</li><li>&quot;Show me all events during the outage window&quot; (debugging)</li><li>&quot;Reconstruct state as of the backup timestamp&quot; (disaster recovery)</li></ul><p>Version numbers don't help here because you don't know which version corresponds to which time.</p><h2 id="the-solution-temporal-queries" class="section-heading"><a href="#the-solution-temporal-queries" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The Solution: Temporal Queries</span></h2><p>Temporal queries filter events by their <code class="inline">epoch_us</code> timestamp (microseconds since Unix epoch):</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Query events by timestamp instead of version</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="c1">%% Read all events up to a specific moment</span><span class="w">
+</span><span class="p" data-group-id="8740406429-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="8740406429-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_until</span><span class="p" data-group-id="8740406429-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="8740406429-3">&lt;&lt;</span><span class="s">&quot;account-123&quot;</span><span class="p" data-group-id="8740406429-3">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Timestamp</span><span class="p" data-group-id="8740406429-2">)</span><span class="p">.</span></code></pre><h3 id="how-it-works" class="section-heading"><a href="#how-it-works" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">How It Works</span></h3><pre><code class="makeup erlang" translate="no"><span class="n">Events</span><span class="w"> </span><span class="ss">in</span><span class="w"> </span><span class="nc">stream</span><span class="p">:</span><span class="w">
+</span><span class="err">┌</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┐</span><span class="w">
+</span><span class="err">│</span><span class="w"> </span><span class="ss">v0</span><span class="w">        </span><span class="ss">v1</span><span class="w">        </span><span class="ss">v2</span><span class="w">        </span><span class="ss">v3</span><span class="w">        </span><span class="ss">v4</span><span class="w">        </span><span class="ss">v5</span><span class="w">        </span><span class="ss">v6</span><span class="w">   </span><span class="err">│</span><span class="w">
+</span><span class="err">│</span><span class="w"> </span><span class="mi">10</span><span class="p">:</span><span class="mi">00</span><span class="w">     </span><span class="mi">10</span><span class="p">:</span><span class="mi">15</span><span class="w">     </span><span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="w">     </span><span class="mi">10</span><span class="p">:</span><span class="mi">45</span><span class="w">     </span><span class="mi">11</span><span class="p">:</span><span class="mi">00</span><span class="w">     </span><span class="mi">11</span><span class="p">:</span><span class="mi">15</span><span class="w">     </span><span class="mi">11</span><span class="p">:</span><span class="mi">30</span><span class="err">│</span><span class="w">
+</span><span class="err">└</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┘</span><span class="w">
+                           </span><span class="err">▲</span><span class="w">
+                           </span><span class="err">│</span><span class="w">
+              </span><span class="nf">read_until</span><span class="p" data-group-id="3756831162-1">(</span><span class="mi">10</span><span class="p">:</span><span class="mi">45</span><span class="p" data-group-id="3756831162-1">)</span><span class="w"> </span><span class="ss">returns</span><span class="w"> </span><span class="ss">v0</span><span class="p">,</span><span class="w"> </span><span class="ss">v1</span><span class="p">,</span><span class="w"> </span><span class="ss">v2</span><span class="p">,</span><span class="w"> </span><span class="ss">v3</span></code></pre><hr class="thin"/><h2 id="where-does-this-code-run" class="section-heading"><a href="#where-does-this-code-run" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Where Does This Code Run?</span></h2><table><thead><tr><th style="text-align: left;">Operation</th><th style="text-align: left;">Location</th><th style="text-align: left;">Module</th></tr></thead><tbody><tr><td style="text-align: left;">Query events by timestamp</td><td style="text-align: left;">Your Application</td><td style="text-align: left;"><code class="inline">esdb_gater_api</code></td></tr><tr><td style="text-align: left;">Aggregate reconstruction</td><td style="text-align: left;">Your Application</td><td style="text-align: left;">Your aggregate logic</td></tr><tr><td style="text-align: left;">Timestamp storage</td><td style="text-align: left;">reckon-db Server</td><td style="text-align: left;">Automatic with each event</td></tr></tbody></table><hr class="thin"/><h2 id="api-reference" class="section-heading"><a href="#api-reference" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">API Reference</span></h2><h3 id="read-until" class="section-heading"><a href="#read-until" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Read Until</span></h3><p>Read all events up to (and including) a timestamp:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Get events up to a specific point in time</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="c1">%% Basic usage - timestamp in microseconds since Unix epoch</span><span class="w">
+</span><span class="n">Timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1703001600000000</span><span class="p">,</span><span class="w">  </span><span class="c1">%% Dec 19, 2025 12:00:00 UTC</span><span class="w">
+</span><span class="p" data-group-id="4353634633-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="4353634633-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_until</span><span class="p" data-group-id="4353634633-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4353634633-3">&lt;&lt;</span><span class="s">&quot;account-123&quot;</span><span class="p" data-group-id="4353634633-3">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Timestamp</span><span class="p" data-group-id="4353634633-2">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% With options</span><span class="w">
+</span><span class="p" data-group-id="4353634633-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="4353634633-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_until</span><span class="p" data-group-id="4353634633-5">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4353634633-6">&lt;&lt;</span><span class="s">&quot;account-123&quot;</span><span class="p" data-group-id="4353634633-6">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Timestamp</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4353634633-7">#{</span><span class="w">
+    </span><span class="ss">max_count</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1000</span><span class="w">       </span><span class="c1">%% Limit number of events returned</span><span class="w">
+</span><span class="p" data-group-id="4353634633-7">}</span><span class="p" data-group-id="4353634633-5">)</span><span class="p">.</span></code></pre><h3 id="read-range" class="section-heading"><a href="#read-range" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Read Range</span></h3><p>Read events within a time window:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Get events between two timestamps</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="n">FromTimestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1703001600000000</span><span class="p">,</span><span class="w">  </span><span class="c1">%% Dec 19, 2025 12:00:00 UTC</span><span class="w">
+</span><span class="n">ToTimestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1703005200000000</span><span class="p">,</span><span class="w">    </span><span class="c1">%% Dec 19, 2025 13:00:00 UTC</span><span class="w">
+
+</span><span class="p" data-group-id="3799832278-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="3799832278-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_range</span><span class="p" data-group-id="3799832278-2">(</span><span class="w">
+    </span><span class="ss">my_store</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="3799832278-3">&lt;&lt;</span><span class="s">&quot;account-123&quot;</span><span class="p" data-group-id="3799832278-3">&gt;&gt;</span><span class="p">,</span><span class="w">
+    </span><span class="n">FromTimestamp</span><span class="p">,</span><span class="w">
+    </span><span class="n">ToTimestamp</span><span class="w">
+</span><span class="p" data-group-id="3799832278-2">)</span><span class="p">.</span></code></pre><h3 id="version-at-timestamp" class="section-heading"><a href="#version-at-timestamp" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Version at Timestamp</span></h3><p>Get the stream version at a specific point in time (without fetching events):</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Find what version the stream was at a given time</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="p" data-group-id="9869262470-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Version</span><span class="p" data-group-id="9869262470-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">version_at</span><span class="p" data-group-id="9869262470-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="9869262470-3">&lt;&lt;</span><span class="s">&quot;account-123&quot;</span><span class="p" data-group-id="9869262470-3">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Timestamp</span><span class="p" data-group-id="9869262470-2">)</span><span class="p">.</span><span class="w">
+</span><span class="c1">%% =&gt; {ok, 42}</span><span class="w">
+
+</span><span class="c1">%% Useful for:</span><span class="w">
+</span><span class="c1">%% - Loading a snapshot at that version</span><span class="w">
+</span><span class="c1">%% - Understanding stream growth over time</span><span class="w">
+</span><span class="c1">%% - Correlating with external systems</span></code></pre><hr class="thin"/><h2 id="use-cases" class="section-heading"><a href="#use-cases" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Use Cases</span></h2><h3 id="1-point-in-time-aggregate-reconstruction" class="section-heading"><a href="#1-point-in-time-aggregate-reconstruction" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">1. Point-in-Time Aggregate Reconstruction</span></h3><p>Rebuild an aggregate's state as it was at a specific moment:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Answer &quot;what was the state at time X?&quot;</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="8000623722-1">(</span><span class="ss">my_aggregate</span><span class="p" data-group-id="8000623722-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Reconstruct state at a specific timestamp</span><span class="w">
+</span><span class="nf">reconstruct_at</span><span class="p" data-group-id="8000623722-2">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="n">Timestamp</span><span class="p" data-group-id="8000623722-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="c1">%% Get all events up to that moment</span><span class="w">
+    </span><span class="p" data-group-id="8000623722-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="8000623722-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_until</span><span class="p" data-group-id="8000623722-4">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="n">Timestamp</span><span class="p" data-group-id="8000623722-4">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Fold them into state (same as normal reconstruction)</span><span class="w">
+    </span><span class="n">State</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">reckon_db_aggregator</span><span class="p">:</span><span class="nf">foldl</span><span class="p" data-group-id="8000623722-5">(</span><span class="n">Events</span><span class="p" data-group-id="8000623722-5">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Finalize tagged values</span><span class="w">
+    </span><span class="nc">reckon_db_aggregator</span><span class="p">:</span><span class="nf">finalize</span><span class="p" data-group-id="8000623722-6">(</span><span class="n">State</span><span class="p" data-group-id="8000623722-6">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Example usage:</span><span class="w">
+</span><span class="c1">%% EndOfQ3 = timestamp_for({{2025, 9, 30}, {23, 59, 59}}),</span><span class="w">
+</span><span class="c1">%% State = my_aggregate:reconstruct_at(my_store, &lt;&lt;&quot;account-123&quot;&gt;&gt;, EndOfQ3),</span><span class="w">
+</span><span class="c1">%% Balance = maps:get(balance, State).</span></code></pre><h3 id="2-compliance-and-auditing" class="section-heading"><a href="#2-compliance-and-auditing" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">2. Compliance and Auditing</span></h3><p>Answer regulatory questions about historical state:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Generate compliance reports for a specific date</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="2596457580-1">(</span><span class="ss">compliance_report</span><span class="p" data-group-id="2596457580-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">generate_eod_report</span><span class="p" data-group-id="2596457580-2">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">Date</span><span class="p" data-group-id="2596457580-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="c1">%% End of day timestamp</span><span class="w">
+    </span><span class="n">EndOfDay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">end_of_day_timestamp</span><span class="p" data-group-id="2596457580-3">(</span><span class="n">Date</span><span class="p" data-group-id="2596457580-3">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Get all account streams</span><span class="w">
+    </span><span class="p" data-group-id="2596457580-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Streams</span><span class="p" data-group-id="2596457580-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">get_streams</span><span class="p" data-group-id="2596457580-5">(</span><span class="n">StoreId</span><span class="p" data-group-id="2596457580-5">)</span><span class="p">,</span><span class="w">
+    </span><span class="n">AccountStreams</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="2596457580-6">[</span><span class="n">S</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="n">S</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">Streams</span><span class="p">,</span><span class="w"> </span><span class="nf">is_account_stream</span><span class="p" data-group-id="2596457580-7">(</span><span class="n">S</span><span class="p" data-group-id="2596457580-7">)</span><span class="p" data-group-id="2596457580-6">]</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Reconstruct each account at end of day</span><span class="w">
+    </span><span class="n">Reports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">lists</span><span class="p">:</span><span class="nf">map</span><span class="p" data-group-id="2596457580-8">(</span><span class="w">
+        </span><span class="nf">fun</span><span class="p" data-group-id="2596457580-9">(</span><span class="n">StreamId</span><span class="p" data-group-id="2596457580-9">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="n">State</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">reconstruct_at</span><span class="p" data-group-id="2596457580-10">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="n">EndOfDay</span><span class="p" data-group-id="2596457580-10">)</span><span class="p">,</span><span class="w">
+            </span><span class="p" data-group-id="2596457580-11">#{</span><span class="w">
+                </span><span class="ss">account_id</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w">
+                </span><span class="ss">balance</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nc">maps</span><span class="p">:</span><span class="nf">get</span><span class="p" data-group-id="2596457580-12">(</span><span class="ss">balance</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p" data-group-id="2596457580-12">)</span><span class="p">,</span><span class="w">
+                </span><span class="ss">as_of</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Date</span><span class="w">
+            </span><span class="p" data-group-id="2596457580-11">}</span><span class="w">
+        </span><span class="k">end</span><span class="p">,</span><span class="w">
+        </span><span class="n">AccountStreams</span><span class="w">
+    </span><span class="p" data-group-id="2596457580-8">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="p" data-group-id="2596457580-13">#{</span><span class="ss">date</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Date</span><span class="p">,</span><span class="w"> </span><span class="ss">accounts</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Reports</span><span class="p" data-group-id="2596457580-13">}</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">end_of_day_timestamp</span><span class="p" data-group-id="2596457580-14">(</span><span class="n">Date</span><span class="p" data-group-id="2596457580-14">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="n">DateTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="2596457580-15">{</span><span class="n">Date</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2596457580-16">{</span><span class="mi">23</span><span class="p">,</span><span class="w"> </span><span class="mi">59</span><span class="p">,</span><span class="w"> </span><span class="mi">59</span><span class="p" data-group-id="2596457580-16">}</span><span class="p" data-group-id="2596457580-15">}</span><span class="p">,</span><span class="w">
+    </span><span class="n">GregorianSecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">calendar</span><span class="p">:</span><span class="nf">datetime_to_gregorian_seconds</span><span class="p" data-group-id="2596457580-17">(</span><span class="n">DateTime</span><span class="p" data-group-id="2596457580-17">)</span><span class="p">,</span><span class="w">
+    </span><span class="n">UnixSecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GregorianSecs</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">62167219200</span><span class="p">,</span><span class="w">  </span><span class="c1">%% Gregorian to Unix offset</span><span class="w">
+    </span><span class="n">UnixSecs</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p">.</span><span class="w">  </span><span class="c1">%% Convert to microseconds</span></code></pre><h3 id="3-incident-investigation" class="section-heading"><a href="#3-incident-investigation" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">3. Incident Investigation</span></h3><p>Examine what happened during a specific time window:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Debug by examining events during an incident</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="0796039854-1">(</span><span class="ss">incident_debug</span><span class="p" data-group-id="0796039854-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">investigate</span><span class="p" data-group-id="0796039854-2">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamPattern</span><span class="p">,</span><span class="w"> </span><span class="n">IncidentStart</span><span class="p">,</span><span class="w"> </span><span class="n">IncidentEnd</span><span class="p" data-group-id="0796039854-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="c1">%% Get events during the incident window</span><span class="w">
+    </span><span class="p" data-group-id="0796039854-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Events</span><span class="p" data-group-id="0796039854-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_range</span><span class="p" data-group-id="0796039854-4">(</span><span class="w">
+        </span><span class="n">StoreId</span><span class="p">,</span><span class="w">
+        </span><span class="n">StreamPattern</span><span class="p">,</span><span class="w">
+        </span><span class="n">IncidentStart</span><span class="p">,</span><span class="w">
+        </span><span class="n">IncidentEnd</span><span class="w">
+    </span><span class="p" data-group-id="0796039854-4">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Analyze what happened</span><span class="w">
+    </span><span class="p" data-group-id="0796039854-5">#{</span><span class="w">
+        </span><span class="ss">event_count</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nf">length</span><span class="p" data-group-id="0796039854-6">(</span><span class="n">Events</span><span class="p" data-group-id="0796039854-6">)</span><span class="p">,</span><span class="w">
+        </span><span class="ss">event_types</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nf">count_by_type</span><span class="p" data-group-id="0796039854-7">(</span><span class="n">Events</span><span class="p" data-group-id="0796039854-7">)</span><span class="p">,</span><span class="w">
+        </span><span class="ss">timeline</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nf">build_timeline</span><span class="p" data-group-id="0796039854-8">(</span><span class="n">Events</span><span class="p" data-group-id="0796039854-8">)</span><span class="p">,</span><span class="w">
+        </span><span class="ss">first_event</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nf">hd</span><span class="p" data-group-id="0796039854-9">(</span><span class="n">Events</span><span class="p" data-group-id="0796039854-9">)</span><span class="p">,</span><span class="w">
+        </span><span class="ss">last_event</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nc">lists</span><span class="p">:</span><span class="nf">last</span><span class="p" data-group-id="0796039854-10">(</span><span class="n">Events</span><span class="p" data-group-id="0796039854-10">)</span><span class="w">
+    </span><span class="p" data-group-id="0796039854-5">}</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">count_by_type</span><span class="p" data-group-id="0796039854-11">(</span><span class="n">Events</span><span class="p" data-group-id="0796039854-11">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="nc">lists</span><span class="p">:</span><span class="nf">foldl</span><span class="p" data-group-id="0796039854-12">(</span><span class="w">
+        </span><span class="nf">fun</span><span class="p" data-group-id="0796039854-13">(</span><span class="p" data-group-id="0796039854-14">#{</span><span class="ss">event_type</span><span class="w"> </span><span class="p">:=</span><span class="w"> </span><span class="n">Type</span><span class="p" data-group-id="0796039854-14">}</span><span class="p">,</span><span class="w"> </span><span class="n">Acc</span><span class="p" data-group-id="0796039854-13">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+            </span><span class="nc">maps</span><span class="p">:</span><span class="nf">update_with</span><span class="p" data-group-id="0796039854-15">(</span><span class="n">Type</span><span class="p">,</span><span class="w"> </span><span class="nf">fun</span><span class="p" data-group-id="0796039854-16">(</span><span class="n">N</span><span class="p" data-group-id="0796039854-16">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">end</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Acc</span><span class="p" data-group-id="0796039854-15">)</span><span class="w">
+        </span><span class="k">end</span><span class="p">,</span><span class="w">
+        </span><span class="p" data-group-id="0796039854-17">#{</span><span class="p" data-group-id="0796039854-17">}</span><span class="p">,</span><span class="w">
+        </span><span class="n">Events</span><span class="w">
+    </span><span class="p" data-group-id="0796039854-12">)</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="working-with-timestamps" class="section-heading"><a href="#working-with-timestamps" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Working with Timestamps</span></h2><p>reckon-db uses <strong>microseconds since Unix epoch</strong> for all timestamps.</p><h3 id="getting-current-time" class="section-heading"><a href="#getting-current-time" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Getting Current Time</span></h3><pre><code class="makeup erlang" translate="no"><span class="n">Now</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="1185203294-1">(</span><span class="ss">microsecond</span><span class="p" data-group-id="1185203294-1">)</span><span class="p">.</span><span class="w">
+</span><span class="c1">%% =&gt; 1703001600000000</span></code></pre><h3 id="converting-from-calendar-datetime" class="section-heading"><a href="#converting-from-calendar-datetime" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Converting from Calendar Datetime</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Helper to convert Erlang datetime to microseconds</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="nf">datetime_to_micros</span><span class="p" data-group-id="9125887847-1">(</span><span class="p" data-group-id="9125887847-2">{</span><span class="p" data-group-id="9125887847-3">{</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">D</span><span class="p" data-group-id="9125887847-3">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="9125887847-4">{</span><span class="n">H</span><span class="p">,</span><span class="w"> </span><span class="n">Min</span><span class="p">,</span><span class="w"> </span><span class="n">S</span><span class="p" data-group-id="9125887847-4">}</span><span class="p" data-group-id="9125887847-2">}</span><span class="p" data-group-id="9125887847-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="n">GregorianSecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">calendar</span><span class="p">:</span><span class="nf">datetime_to_gregorian_seconds</span><span class="p" data-group-id="9125887847-5">(</span><span class="p" data-group-id="9125887847-6">{</span><span class="p" data-group-id="9125887847-7">{</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">D</span><span class="p" data-group-id="9125887847-7">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="9125887847-8">{</span><span class="n">H</span><span class="p">,</span><span class="w"> </span><span class="n">Min</span><span class="p">,</span><span class="w"> </span><span class="n">S</span><span class="p" data-group-id="9125887847-8">}</span><span class="p" data-group-id="9125887847-6">}</span><span class="p" data-group-id="9125887847-5">)</span><span class="p">,</span><span class="w">
+    </span><span class="n">UnixSecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GregorianSecs</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">62167219200</span><span class="p">,</span><span class="w">  </span><span class="c1">%% Gregorian epoch to Unix epoch</span><span class="w">
+    </span><span class="n">UnixSecs</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Example:</span><span class="w">
+</span><span class="c1">%% Timestamp = datetime_to_micros({{2025, 12, 19}, {12, 0, 0}}).</span><span class="w">
+</span><span class="c1">%% =&gt; 1703001600000000</span></code></pre><h3 id="converting-from-iso-8601-string" class="section-heading"><a href="#converting-from-iso-8601-string" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Converting from ISO 8601 String</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Parse ISO 8601 timestamp</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="nf">iso8601_to_micros</span><span class="p" data-group-id="0316699480-1">(</span><span class="n">IsoString</span><span class="p" data-group-id="0316699480-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="c1">%% &quot;2025-12-19T12:00:00Z&quot;</span><span class="w">
+    </span><span class="p" data-group-id="0316699480-2">[</span><span class="n">DatePart</span><span class="p">,</span><span class="w"> </span><span class="n">TimePart</span><span class="p" data-group-id="0316699480-2">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">binary</span><span class="p">:</span><span class="nf">split</span><span class="p" data-group-id="0316699480-3">(</span><span class="n">IsoString</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0316699480-4">&lt;&lt;</span><span class="s">&quot;T&quot;</span><span class="p" data-group-id="0316699480-4">&gt;&gt;</span><span class="p" data-group-id="0316699480-3">)</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="0316699480-5">[</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">D</span><span class="p" data-group-id="0316699480-5">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="0316699480-6">[</span><span class="nf">binary_to_integer</span><span class="p" data-group-id="0316699480-7">(</span><span class="n">X</span><span class="p" data-group-id="0316699480-7">)</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="n">X</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nc">binary</span><span class="p">:</span><span class="nf">split</span><span class="p" data-group-id="0316699480-8">(</span><span class="n">DatePart</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0316699480-9">&lt;&lt;</span><span class="s">&quot;-&quot;</span><span class="p" data-group-id="0316699480-9">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0316699480-10">[</span><span class="ss">global</span><span class="p" data-group-id="0316699480-10">]</span><span class="p" data-group-id="0316699480-8">)</span><span class="p" data-group-id="0316699480-6">]</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="0316699480-11">[</span><span class="n">H</span><span class="p">,</span><span class="w"> </span><span class="n">Min</span><span class="p">,</span><span class="w"> </span><span class="n">SecZ</span><span class="p" data-group-id="0316699480-11">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">binary</span><span class="p">:</span><span class="nf">split</span><span class="p" data-group-id="0316699480-12">(</span><span class="n">TimePart</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0316699480-13">&lt;&lt;</span><span class="s">&quot;:&quot;</span><span class="p" data-group-id="0316699480-13">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0316699480-14">[</span><span class="ss">global</span><span class="p" data-group-id="0316699480-14">]</span><span class="p" data-group-id="0316699480-12">)</span><span class="p">,</span><span class="w">
+    </span><span class="n">S</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">binary_to_integer</span><span class="p" data-group-id="0316699480-15">(</span><span class="nc">binary</span><span class="p">:</span><span class="nf">part</span><span class="p" data-group-id="0316699480-16">(</span><span class="n">SecZ</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p" data-group-id="0316699480-16">)</span><span class="p" data-group-id="0316699480-15">)</span><span class="p">,</span><span class="w">
+    </span><span class="nf">datetime_to_micros</span><span class="p" data-group-id="0316699480-17">(</span><span class="p" data-group-id="0316699480-18">{</span><span class="p" data-group-id="0316699480-19">{</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">D</span><span class="p" data-group-id="0316699480-19">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="0316699480-20">{</span><span class="n">H</span><span class="p">,</span><span class="w"> </span><span class="n">Min</span><span class="p">,</span><span class="w"> </span><span class="n">S</span><span class="p" data-group-id="0316699480-20">}</span><span class="p" data-group-id="0316699480-18">}</span><span class="p" data-group-id="0316699480-17">)</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="performance-considerations" class="section-heading"><a href="#performance-considerations" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Performance Considerations</span></h2><h3 id="temporal-queries-vs-version-queries" class="section-heading"><a href="#temporal-queries-vs-version-queries" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Temporal Queries vs. Version Queries</span></h3><table><thead><tr><th style="text-align: left;">Query Type</th><th style="text-align: left;">Use When</th><th style="text-align: left;">Performance</th></tr></thead><tbody><tr><td style="text-align: left;">Version-based</td><td style="text-align: left;">You know the version range</td><td style="text-align: left;">Fastest (direct index)</td></tr><tr><td style="text-align: left;">Temporal</td><td style="text-align: left;">You need time-based filtering</td><td style="text-align: left;">Slower (scan + filter)</td></tr></tbody></table><h3 id="optimization-tips" class="section-heading"><a href="#optimization-tips" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Optimization Tips</span></h3><ol><li><p><strong>Use max_count</strong> - Limit results for large streams:</p><pre><code class="makeup erlang" translate="no"><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_until</span><span class="p" data-group-id="6949648784-1">(</span><span class="n">Store</span><span class="p">,</span><span class="w"> </span><span class="n">Stream</span><span class="p">,</span><span class="w"> </span><span class="n">Ts</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="6949648784-2">#{</span><span class="ss">max_count</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1000</span><span class="p" data-group-id="6949648784-2">}</span><span class="p" data-group-id="6949648784-1">)</span><span class="p">.</span></code></pre></li><li><p><strong>Combine with snapshots</strong> - For aggregate reconstruction, load snapshot first:</p><pre><code class="makeup erlang" translate="no"><span class="p" data-group-id="2704020626-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Snapshot</span><span class="p" data-group-id="2704020626-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_snapshot</span><span class="p" data-group-id="2704020626-2">(</span><span class="n">Store</span><span class="p">,</span><span class="w"> </span><span class="n">Source</span><span class="p">,</span><span class="w"> </span><span class="n">Stream</span><span class="p">,</span><span class="w"> </span><span class="n">Version</span><span class="p" data-group-id="2704020626-2">)</span><span class="p">,</span><span class="w">
+</span><span class="n">SnapshotTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">maps</span><span class="p">:</span><span class="nf">get</span><span class="p" data-group-id="2704020626-3">(</span><span class="ss">timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">Snapshot</span><span class="p" data-group-id="2704020626-3">)</span><span class="p">,</span><span class="w">
+</span><span class="p" data-group-id="2704020626-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">NewEvents</span><span class="p" data-group-id="2704020626-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">read_range</span><span class="p" data-group-id="2704020626-5">(</span><span class="n">Store</span><span class="p">,</span><span class="w"> </span><span class="n">Stream</span><span class="p">,</span><span class="w"> </span><span class="n">SnapshotTime</span><span class="p">,</span><span class="w"> </span><span class="n">TargetTime</span><span class="p" data-group-id="2704020626-5">)</span><span class="p">.</span></code></pre></li><li><p><strong>Index awareness</strong> - Events are sorted by version, not timestamp. Temporal queries may scan more events than version queries.</p></li></ol><hr class="thin"/><h2 id="common-pitfalls" class="section-heading"><a href="#common-pitfalls" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Common Pitfalls</span></h2><h3 id="1-wrong-timestamp-units" class="section-heading"><a href="#1-wrong-timestamp-units" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">1. Wrong Timestamp Units</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Seconds instead of microseconds</span><span class="w">
+</span><span class="n">Timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1703001600</span><span class="p">.</span><span class="w">  </span><span class="c1">%% This is seconds!</span><span class="w">
+
+</span><span class="c1">%% GOOD: Microseconds</span><span class="w">
+</span><span class="n">Timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1703001600000000</span><span class="p">.</span><span class="w">  </span><span class="c1">%% Correct</span><span class="w">
+</span><span class="c1">%% Or use:</span><span class="w">
+</span><span class="n">Timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="1071330769-1">(</span><span class="ss">microsecond</span><span class="p" data-group-id="1071330769-1">)</span><span class="p">.</span></code></pre><h3 id="2-timezone-confusion" class="section-heading"><a href="#2-timezone-confusion" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">2. Timezone Confusion</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% Timestamps are always UTC internally</span><span class="w">
+</span><span class="c1">%% Convert from local time carefully:</span><span class="w">
+
+</span><span class="c1">%% BAD: Using local time directly</span><span class="w">
+</span><span class="n">LocalTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">calendar</span><span class="p">:</span><span class="nf">local_time</span><span class="p" data-group-id="0977957789-1">(</span><span class="p" data-group-id="0977957789-1">)</span><span class="p">,</span><span class="w">
+</span><span class="n">Micros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">datetime_to_micros</span><span class="p" data-group-id="0977957789-2">(</span><span class="n">LocalTime</span><span class="p" data-group-id="0977957789-2">)</span><span class="p">.</span><span class="w">  </span><span class="c1">%% Wrong if not UTC!</span><span class="w">
+
+</span><span class="c1">%% GOOD: Convert to UTC first</span><span class="w">
+</span><span class="n">UTCTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">calendar</span><span class="p">:</span><span class="nf">local_time_to_universal_time_dst</span><span class="p" data-group-id="0977957789-3">(</span><span class="n">LocalTime</span><span class="p" data-group-id="0977957789-3">)</span><span class="p">,</span><span class="w">
+</span><span class="n">Micros</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">datetime_to_micros</span><span class="p" data-group-id="0977957789-4">(</span><span class="nf">hd</span><span class="p" data-group-id="0977957789-5">(</span><span class="n">UTCTime</span><span class="p" data-group-id="0977957789-5">)</span><span class="p" data-group-id="0977957789-4">)</span><span class="p">.</span></code></pre><h3 id="3-clock-skew-in-distributed-systems" class="section-heading"><a href="#3-clock-skew-in-distributed-systems" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">3. Clock Skew in Distributed Systems</span></h3><p>Events from different nodes may have slightly different timestamps due to clock skew.</p><pre><code class="makeup erlang" translate="no"><span class="c1">%% Be aware that events may not be perfectly ordered by timestamp</span><span class="w">
+</span><span class="c1">%% across nodes. Version ordering is authoritative.</span></code></pre><hr class="thin"/><h2 id="when-not-to-use-temporal-queries" class="section-heading"><a href="#when-not-to-use-temporal-queries" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">When NOT to Use Temporal Queries</span></h2><ul><li><strong>Real-time subscriptions</strong> - Use subscriptions instead, not polling with timestamps</li><li><strong>Simple &quot;latest state&quot;</strong> - Just read all events by version</li><li><strong>High-frequency queries</strong> - Version-based queries are more efficient</li><li><strong>Sub-millisecond precision</strong> - Timestamp resolution is limited</li></ul><hr class="thin"/><h2 id="related-guides" class="section-heading"><a href="#related-guides" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Related Guides</span></h2><ul><li><a href="event_sourcing.html">Event Sourcing</a> - Core concepts</li><li><a href="snapshots.html">Snapshots</a> - Optimize reconstruction with snapshots</li><li><a href="scavenging.html">Scavenging</a> - Remove old events (uses timestamps)</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="capability_security.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Capability Security
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="scavenging.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+Scavenging
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+              (<a href="https://preview.hex.pm/preview/reckon_gater/1.0.0/show/guides/temporal_queries.md">current file</a>)
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

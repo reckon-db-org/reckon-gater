@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="reckon_gater v1.0.0">
+
+
+    <title>Scavenging — reckon_gater v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
+
+    <script defer src="dist/sidebar_items-CB9EB389.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+reckon_gater
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of reckon_gater</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Scavenging</h1>
+
+
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.0/guides/scavenging.md#L1" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>This guide explains how to remove old events from streams to manage storage growth while preserving the ability to reconstruct current state via snapshots.</p><h2 id="prerequisites" class="section-heading"><a href="#prerequisites" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Prerequisites</span></h2><p>Before reading this guide, you should understand:</p><ul><li>Event sourcing concepts (<a href="event_sourcing.html">Event Sourcing Guide</a>)</li><li>Snapshots and their role in state reconstruction (<a href="snapshots.html">Snapshots Guide</a>)</li><li>The immutable nature of event logs and why deletion requires special care</li></ul><h2 id="the-problem-unbounded-storage-growth" class="section-heading"><a href="#the-problem-unbounded-storage-growth" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The Problem: Unbounded Storage Growth</span></h2><p>In event sourcing, events are immutable and never deleted by default. Over time, this leads to:</p><ul><li><strong>Storage costs</strong> - Event logs grow indefinitely</li><li><strong>Read performance</strong> - More events to scan for reconstruction</li><li><strong>Compliance challenges</strong> - Some regulations require data deletion</li></ul><p>But you can't just delete events randomly—that would break state reconstruction.</p><h2 id="the-solution-scavenging" class="section-heading"><a href="#the-solution-scavenging" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The Solution: Scavenging</span></h2><p>Scavenging safely removes old events by:</p><ol><li><strong>Requiring a snapshot</strong> - Ensures state can still be reconstructed</li><li><strong>Preserving recent events</strong> - Keeps events newer than the snapshot</li><li><strong>Dry run preview</strong> - Shows what would be deleted before executing</li></ol><pre><code class="makeup erlang" translate="no"><span class="n">Before</span><span class="w"> </span><span class="nc">scavenging</span><span class="p">:</span><span class="w">
+</span><span class="err">┌</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┐</span><span class="w">
+</span><span class="err">│</span><span class="w"> </span><span class="ss">v0</span><span class="w">   </span><span class="ss">v1</span><span class="w">   </span><span class="ss">v2</span><span class="w">   </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="w"> </span><span class="ss">v500</span><span class="w"> </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="w"> </span><span class="ss">v1000</span><span class="w"> </span><span class="ss">v1001</span><span class="w"> </span><span class="ss">v1002</span><span class="w"> </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="w"> </span><span class="ss">v1500</span><span class="w">        </span><span class="err">│</span><span class="w">
+</span><span class="err">│</span><span class="w"> </span><span class="err">│</span><span class="w">                    </span><span class="err">│</span><span class="w">                              </span><span class="err">│</span><span class="w">           </span><span class="err">│</span><span class="w">
+</span><span class="err">│</span><span class="w"> </span><span class="err">│</span><span class="w">    </span><span class="n">Old</span><span class="w"> </span><span class="ss">events</span><span class="w">      </span><span class="err">│</span><span class="w">      </span><span class="n">Newer</span><span class="w"> </span><span class="ss">events</span><span class="w">            </span><span class="err">│</span><span class="w">           </span><span class="err">│</span><span class="w">
+</span><span class="err">└</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┘</span><span class="w">
+                       </span><span class="err">▲</span><span class="w">
+                  </span><span class="n">Snapshot</span><span class="w"> </span><span class="ss">at</span><span class="w"> </span><span class="ss">v500</span><span class="w">
+
+</span><span class="n">After</span><span class="w"> </span><span class="nf">scavenging</span><span class="w"> </span><span class="p" data-group-id="0239903404-1">(</span><span class="ss">before</span><span class="o">=</span><span class="ss">v500</span><span class="p" data-group-id="0239903404-1">)</span><span class="p">:</span><span class="w">
+</span><span class="err">┌</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┐</span><span class="w">
+</span><span class="err">│</span><span class="w">              </span><span class="p" data-group-id="0239903404-2">[</span><span class="ss">deleted</span><span class="p" data-group-id="0239903404-2">]</span><span class="w">     </span><span class="ss">v500</span><span class="w"> </span><span class="ss">v501</span><span class="w"> </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="w"> </span><span class="ss">v1000</span><span class="w"> </span><span class="ss">v1001</span><span class="w"> </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="w"> </span><span class="ss">v1500</span><span class="w"> </span><span class="err">│</span><span class="w">
+</span><span class="err">│</span><span class="w">                             </span><span class="err">│</span><span class="w">                                   </span><span class="err">│</span><span class="w">
+</span><span class="err">│</span><span class="w">                        </span><span class="n">Snapshot</span><span class="w"> </span><span class="ss">preserved</span><span class="w">                       </span><span class="err">│</span><span class="w">
+</span><span class="err">└</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┘</span></code></pre><hr class="thin"/><h2 id="where-does-this-code-run" class="section-heading"><a href="#where-does-this-code-run" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Where Does This Code Run?</span></h2><table><thead><tr><th style="text-align: left;">Operation</th><th style="text-align: left;">Location</th><th style="text-align: left;">Module</th></tr></thead><tbody><tr><td style="text-align: left;">Scavenge API calls</td><td style="text-align: left;">Your Application</td><td style="text-align: left;"><code class="inline">esdb_gater_api</code></td></tr><tr><td style="text-align: left;">Snapshot creation</td><td style="text-align: left;">Your Application</td><td style="text-align: left;"><code class="inline">esdb_gater_api</code></td></tr><tr><td style="text-align: left;">Event deletion</td><td style="text-align: left;">reckon-db Server</td><td style="text-align: left;">Internal</td></tr><tr><td style="text-align: left;">Archival (optional)</td><td style="text-align: left;">reckon-db Server</td><td style="text-align: left;"><code class="inline">reckon_db_archive_*</code></td></tr></tbody></table><hr class="thin"/><h2 id="api-reference" class="section-heading"><a href="#api-reference" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">API Reference</span></h2><h3 id="scavenge-a-stream" class="section-heading"><a href="#scavenge-a-stream" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Scavenge a Stream</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Remove events older than a timestamp from a stream</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="c1">%% Calculate cutoff: 30 days ago</span><span class="w">
+</span><span class="n">ThirtyDaysAgo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="8050454320-1">(</span><span class="ss">microsecond</span><span class="p" data-group-id="8050454320-1">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p" data-group-id="8050454320-2">(</span><span class="mi">30</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p" data-group-id="8050454320-2">)</span><span class="p">,</span><span class="w">
+
+</span><span class="c1">%% Scavenge the stream</span><span class="w">
+</span><span class="p" data-group-id="8050454320-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Result</span><span class="p" data-group-id="8050454320-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="8050454320-4">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="8050454320-5">&lt;&lt;</span><span class="s">&quot;orders-123&quot;</span><span class="p" data-group-id="8050454320-5">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="8050454320-6">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">ThirtyDaysAgo</span><span class="p">,</span><span class="w">
+    </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">true</span><span class="w">  </span><span class="c1">%% Safety: only scavenge if snapshot exists</span><span class="w">
+</span><span class="p" data-group-id="8050454320-6">}</span><span class="p" data-group-id="8050454320-4">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Result shows what was deleted</span><span class="w">
+</span><span class="p" data-group-id="8050454320-7">#{</span><span class="w">
+    </span><span class="ss">deleted_count</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1523</span><span class="p">,</span><span class="w">
+    </span><span class="ss">oldest_remaining</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1703001600000000</span><span class="p">,</span><span class="w">
+    </span><span class="ss">snapshot_version</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1500</span><span class="w">
+</span><span class="p" data-group-id="8050454320-7">}</span></code></pre><h3 id="scavenge-matching-streams" class="section-heading"><a href="#scavenge-matching-streams" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Scavenge Matching Streams</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Scavenge multiple streams matching a pattern</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="c1">%% Scavenge all order streams older than 90 days</span><span class="w">
+</span><span class="n">NinetyDaysAgo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="2810335675-1">(</span><span class="ss">microsecond</span><span class="p" data-group-id="2810335675-1">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p" data-group-id="2810335675-2">(</span><span class="mi">90</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p" data-group-id="2810335675-2">)</span><span class="p">,</span><span class="w">
+
+</span><span class="p" data-group-id="2810335675-3">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Results</span><span class="p" data-group-id="2810335675-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge_matching</span><span class="p" data-group-id="2810335675-4">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2810335675-5">&lt;&lt;</span><span class="s">&quot;orders-*&quot;</span><span class="p" data-group-id="2810335675-5">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2810335675-6">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">NinetyDaysAgo</span><span class="p">,</span><span class="w">
+    </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">true</span><span class="w">
+</span><span class="p" data-group-id="2810335675-6">}</span><span class="p" data-group-id="2810335675-4">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Results is a list of per-stream results</span><span class="w">
+</span><span class="p" data-group-id="2810335675-7">[</span><span class="w">
+    </span><span class="p" data-group-id="2810335675-8">#{</span><span class="ss">stream</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="2810335675-9">&lt;&lt;</span><span class="s">&quot;orders-001&quot;</span><span class="p" data-group-id="2810335675-9">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="ss">deleted_count</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">500</span><span class="p" data-group-id="2810335675-8">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="2810335675-10">#{</span><span class="ss">stream</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="2810335675-11">&lt;&lt;</span><span class="s">&quot;orders-002&quot;</span><span class="p" data-group-id="2810335675-11">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="ss">deleted_count</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">823</span><span class="p" data-group-id="2810335675-10">}</span><span class="p">,</span><span class="w">
+    </span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="w">
+</span><span class="p" data-group-id="2810335675-7">]</span></code></pre><h3 id="dry-run-preview" class="section-heading"><a href="#dry-run-preview" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Dry Run (Preview)</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Preview what would be deleted WITHOUT actually deleting</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="c1">%% ALWAYS preview before executing</span><span class="w">
+</span><span class="p" data-group-id="2084242867-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Preview</span><span class="p" data-group-id="2084242867-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge_dry_run</span><span class="p" data-group-id="2084242867-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2084242867-3">&lt;&lt;</span><span class="s">&quot;orders-123&quot;</span><span class="p" data-group-id="2084242867-3">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2084242867-4">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">ThirtyDaysAgo</span><span class="w">
+</span><span class="p" data-group-id="2084242867-4">}</span><span class="p" data-group-id="2084242867-2">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Preview shows impact without making changes</span><span class="w">
+</span><span class="p" data-group-id="2084242867-5">#{</span><span class="w">
+    </span><span class="ss">would_delete</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1523</span><span class="p">,</span><span class="w">
+    </span><span class="ss">oldest_event</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1700000000000000</span><span class="p">,</span><span class="w">
+    </span><span class="ss">newest_affected</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1702500000000000</span><span class="p">,</span><span class="w">
+    </span><span class="ss">has_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">true</span><span class="p">,</span><span class="w">
+    </span><span class="ss">snapshot_version</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">1500</span><span class="w">
+</span><span class="p" data-group-id="2084242867-5">}</span></code></pre><hr class="thin"/><h2 id="options-reference" class="section-heading"><a href="#options-reference" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Options Reference</span></h2><table><thead><tr><th style="text-align: left;">Option</th><th style="text-align: left;">Type</th><th style="text-align: left;">Default</th><th style="text-align: left;">Description</th></tr></thead><tbody><tr><td style="text-align: left;"><code class="inline">before</code></td><td style="text-align: left;">integer</td><td style="text-align: left;">required</td><td style="text-align: left;">Delete events before this timestamp (microseconds)</td></tr><tr><td style="text-align: left;"><code class="inline">require_snapshot</code></td><td style="text-align: left;">boolean</td><td style="text-align: left;"><code class="inline">true</code></td><td style="text-align: left;">Only scavenge if snapshot exists</td></tr><tr><td style="text-align: left;"><code class="inline">keep_versions</code></td><td style="text-align: left;">integer</td><td style="text-align: left;">0</td><td style="text-align: left;">Keep at least N most recent versions</td></tr><tr><td style="text-align: left;"><code class="inline">archive_to</code></td><td style="text-align: left;">atom</td><td style="text-align: left;">undefined</td><td style="text-align: left;">Archive backend before deletion</td></tr></tbody></table><hr class="thin"/><h2 id="use-cases" class="section-heading"><a href="#use-cases" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Use Cases</span></h2><h3 id="1-scheduled-storage-cleanup" class="section-heading"><a href="#1-scheduled-storage-cleanup" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">1. Scheduled Storage Cleanup</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Daily automated scavenging job</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="w">
+</span><span class="p">-</span><span class="na">module</span><span class="p" data-group-id="4709922005-1">(</span><span class="ss">scavenge_scheduler</span><span class="p" data-group-id="4709922005-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="nf">run_daily_scavenge</span><span class="p" data-group-id="4709922005-2">(</span><span class="p" data-group-id="4709922005-2">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="n">RetentionDays</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">90</span><span class="p">,</span><span class="w">
+    </span><span class="n">Cutoff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="4709922005-3">(</span><span class="ss">microsecond</span><span class="p" data-group-id="4709922005-3">)</span><span class="w"> </span><span class="o">-</span><span class="w">
+             </span><span class="p" data-group-id="4709922005-4">(</span><span class="n">RetentionDays</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p" data-group-id="4709922005-4">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Scavenge all order streams</span><span class="w">
+    </span><span class="p" data-group-id="4709922005-5">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Results</span><span class="p" data-group-id="4709922005-5">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge_matching</span><span class="p" data-group-id="4709922005-6">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4709922005-7">&lt;&lt;</span><span class="s">&quot;orders-*&quot;</span><span class="p" data-group-id="4709922005-7">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4709922005-8">#{</span><span class="w">
+        </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Cutoff</span><span class="p">,</span><span class="w">
+        </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">true</span><span class="w">
+    </span><span class="p" data-group-id="4709922005-8">}</span><span class="p" data-group-id="4709922005-6">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="n">TotalDeleted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">lists</span><span class="p">:</span><span class="nf">foldl</span><span class="p" data-group-id="4709922005-9">(</span><span class="w">
+        </span><span class="nf">fun</span><span class="p" data-group-id="4709922005-10">(</span><span class="p" data-group-id="4709922005-11">#{</span><span class="ss">deleted_count</span><span class="w"> </span><span class="p">:=</span><span class="w"> </span><span class="n">N</span><span class="p" data-group-id="4709922005-11">}</span><span class="p">,</span><span class="w"> </span><span class="n">Acc</span><span class="p" data-group-id="4709922005-10">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="n">Acc</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="k">end</span><span class="p">,</span><span class="w">
+        </span><span class="mi">0</span><span class="p">,</span><span class="w">
+        </span><span class="n">Results</span><span class="w">
+    </span><span class="p" data-group-id="4709922005-9">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="nc">logger</span><span class="p">:</span><span class="nf">info</span><span class="p" data-group-id="4709922005-12">(</span><span class="s">&quot;Scavenged </span><span class="si">~p</span><span class="s"> events from </span><span class="si">~p</span><span class="s"> streams&quot;</span><span class="p">,</span><span class="w">
+                </span><span class="p" data-group-id="4709922005-13">[</span><span class="n">TotalDeleted</span><span class="p">,</span><span class="w"> </span><span class="nf">length</span><span class="p" data-group-id="4709922005-14">(</span><span class="n">Results</span><span class="p" data-group-id="4709922005-14">)</span><span class="p" data-group-id="4709922005-13">]</span><span class="p" data-group-id="4709922005-12">)</span><span class="p">.</span></code></pre><h3 id="2-compliance-driven-archival" class="section-heading"><a href="#2-compliance-driven-archival" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">2. Compliance-Driven Archival</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Archive events before deleting for compliance</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="nf">archive_and_scavenge</span><span class="p" data-group-id="5641048287-1">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="n">RetentionDays</span><span class="p" data-group-id="5641048287-1">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w">
+    </span><span class="n">Cutoff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="5641048287-2">(</span><span class="ss">microsecond</span><span class="p" data-group-id="5641048287-2">)</span><span class="w"> </span><span class="o">-</span><span class="w">
+             </span><span class="p" data-group-id="5641048287-3">(</span><span class="n">RetentionDays</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p" data-group-id="5641048287-3">)</span><span class="p">,</span><span class="w">
+
+    </span><span class="c1">%% Archive to file before scavenging</span><span class="w">
+    </span><span class="p" data-group-id="5641048287-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="p">_</span><span class="p" data-group-id="5641048287-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="5641048287-5">(</span><span class="n">StoreId</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5641048287-6">#{</span><span class="w">
+        </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Cutoff</span><span class="p">,</span><span class="w">
+        </span><span class="ss">archive_to</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">file</span><span class="p">,</span><span class="w">
+        </span><span class="ss">archive_path</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="5641048287-7">&lt;&lt;</span><span class="s">&quot;/archive/&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="o">/</span><span class="ss">binary</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.events&quot;</span><span class="p" data-group-id="5641048287-7">&gt;&gt;</span><span class="w">
+    </span><span class="p" data-group-id="5641048287-6">}</span><span class="p" data-group-id="5641048287-5">)</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="safety-features" class="section-heading"><a href="#safety-features" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Safety Features</span></h2><h3 id="snapshot-requirement" class="section-heading"><a href="#snapshot-requirement" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Snapshot Requirement</span></h3><p>By default, scavenging <strong>requires</strong> a snapshot to exist. This prevents accidental data loss:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%% This will fail if no snapshot exists</span><span class="w">
+</span><span class="p" data-group-id="5925549891-1">{</span><span class="ss">error</span><span class="p">,</span><span class="w"> </span><span class="ss">no_snapshot</span><span class="p" data-group-id="5925549891-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="5925549891-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5925549891-3">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Timestamp</span><span class="p">,</span><span class="w">
+    </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">true</span><span class="w">  </span><span class="c1">%% Default</span><span class="w">
+</span><span class="p" data-group-id="5925549891-3">}</span><span class="p" data-group-id="5925549891-2">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% Override only if you understand the consequences</span><span class="w">
+</span><span class="p" data-group-id="5925549891-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="p">_</span><span class="p" data-group-id="5925549891-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="5925549891-5">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5925549891-6">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Timestamp</span><span class="p">,</span><span class="w">
+    </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">false</span><span class="w">  </span><span class="c1">%% DANGER: may lose state if no snapshot</span><span class="w">
+</span><span class="p" data-group-id="5925549891-6">}</span><span class="p" data-group-id="5925549891-5">)</span><span class="p">.</span></code></pre><h3 id="keep-recent-versions" class="section-heading"><a href="#keep-recent-versions" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Keep Recent Versions</span></h3><p>Always keep some recent events regardless of timestamp:</p><pre><code class="makeup erlang" translate="no"><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+</span><span class="c1">%% This code runs in: YOUR APPLICATION</span><span class="w">
+</span><span class="c1">%% Purpose: Keep a minimum event history for debugging</span><span class="w">
+</span><span class="c1">%%--------------------------------------------------------------------</span><span class="w">
+
+</span><span class="p" data-group-id="4076126144-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="p">_</span><span class="p" data-group-id="4076126144-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="4076126144-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="4076126144-3">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Timestamp</span><span class="p">,</span><span class="w">
+    </span><span class="ss">keep_versions</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">100</span><span class="w">  </span><span class="c1">%% Always keep last 100 events</span><span class="w">
+</span><span class="p" data-group-id="4076126144-3">}</span><span class="p" data-group-id="4076126144-2">)</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="common-pitfalls" class="section-heading"><a href="#common-pitfalls" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Common Pitfalls</span></h2><h3 id="1-scavenging-without-snapshots" class="section-heading"><a href="#1-scavenging-without-snapshots" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">1. Scavenging Without Snapshots</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Scavenging without ensuring a snapshot exists</span><span class="w">
+</span><span class="p" data-group-id="8516913168-1">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="p">_</span><span class="p" data-group-id="8516913168-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="8516913168-2">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="8516913168-3">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Timestamp</span><span class="p">,</span><span class="w">
+    </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">false</span><span class="w">  </span><span class="c1">%% State might be lost!</span><span class="w">
+</span><span class="p" data-group-id="8516913168-3">}</span><span class="p" data-group-id="8516913168-2">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% GOOD: Take a snapshot first, then scavenge</span><span class="w">
+</span><span class="p" data-group-id="8516913168-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="8516913168-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">reconstruct_aggregate</span><span class="p" data-group-id="8516913168-5">(</span><span class="n">StreamId</span><span class="p" data-group-id="8516913168-5">)</span><span class="p">,</span><span class="w">
+</span><span class="p" data-group-id="8516913168-6">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Version</span><span class="p" data-group-id="8516913168-6">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">save_snapshot</span><span class="p" data-group-id="8516913168-7">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="n">State</span><span class="p" data-group-id="8516913168-7">)</span><span class="p">,</span><span class="w">
+</span><span class="p" data-group-id="8516913168-8">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="p">_</span><span class="p" data-group-id="8516913168-8">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="8516913168-9">(</span><span class="ss">my_store</span><span class="p">,</span><span class="w"> </span><span class="n">StreamId</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="8516913168-10">#{</span><span class="w">
+    </span><span class="ss">before</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="n">Timestamp</span><span class="p">,</span><span class="w">
+    </span><span class="ss">require_snapshot</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ss">true</span><span class="w">
+</span><span class="p" data-group-id="8516913168-10">}</span><span class="p" data-group-id="8516913168-9">)</span><span class="p">.</span></code></pre><h3 id="2-wrong-timestamp-units" class="section-heading"><a href="#2-wrong-timestamp-units" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">2. Wrong Timestamp Units</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Using seconds instead of microseconds</span><span class="w">
+</span><span class="n">BadCutoff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="0228024488-1">(</span><span class="ss">second</span><span class="p" data-group-id="0228024488-1">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p" data-group-id="0228024488-2">(</span><span class="mi">30</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="p" data-group-id="0228024488-2">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% GOOD: Using microseconds</span><span class="w">
+</span><span class="n">GoodCutoff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">erlang</span><span class="p">:</span><span class="nf">system_time</span><span class="p" data-group-id="0228024488-3">(</span><span class="ss">microsecond</span><span class="p" data-group-id="0228024488-3">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p" data-group-id="0228024488-4">(</span><span class="mi">30</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p" data-group-id="0228024488-4">)</span><span class="p">.</span></code></pre><h3 id="3-skipping-dry-run" class="section-heading"><a href="#3-skipping-dry-run" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">3. Skipping Dry Run</span></h3><pre><code class="makeup erlang" translate="no"><span class="c1">%% BAD: Scavenging production data without preview</span><span class="w">
+</span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="5296230361-1">(</span><span class="ss">prod_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-2">&lt;&lt;</span><span class="s">&quot;important-stream&quot;</span><span class="p" data-group-id="5296230361-2">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-3">#{</span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="p" data-group-id="5296230361-3">}</span><span class="p" data-group-id="5296230361-1">)</span><span class="p">.</span><span class="w">
+
+</span><span class="c1">%% GOOD: Always dry run first</span><span class="w">
+</span><span class="p" data-group-id="5296230361-4">{</span><span class="ss">ok</span><span class="p">,</span><span class="w"> </span><span class="n">Preview</span><span class="p" data-group-id="5296230361-4">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge_dry_run</span><span class="p" data-group-id="5296230361-5">(</span><span class="ss">prod_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-6">&lt;&lt;</span><span class="s">&quot;important-stream&quot;</span><span class="p" data-group-id="5296230361-6">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-7">#{</span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="p" data-group-id="5296230361-7">}</span><span class="p" data-group-id="5296230361-5">)</span><span class="p">,</span><span class="w">
+</span><span class="nc">logger</span><span class="p">:</span><span class="nf">info</span><span class="p" data-group-id="5296230361-8">(</span><span class="s">&quot;Would delete </span><span class="si">~p</span><span class="s"> events&quot;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-9">[</span><span class="nc">maps</span><span class="p">:</span><span class="nf">get</span><span class="p" data-group-id="5296230361-10">(</span><span class="ss">would_delete</span><span class="p">,</span><span class="w"> </span><span class="n">Preview</span><span class="p" data-group-id="5296230361-10">)</span><span class="p" data-group-id="5296230361-9">]</span><span class="p" data-group-id="5296230361-8">)</span><span class="p">,</span><span class="w">
+</span><span class="c1">%% Review preview, then proceed if acceptable</span><span class="w">
+</span><span class="nc">esdb_gater_api</span><span class="p">:</span><span class="nf">scavenge</span><span class="p" data-group-id="5296230361-11">(</span><span class="ss">prod_store</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-12">&lt;&lt;</span><span class="s">&quot;important-stream&quot;</span><span class="p" data-group-id="5296230361-12">&gt;&gt;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="5296230361-13">#{</span><span class="p">.</span><span class="p">.</span><span class="p">.</span><span class="p" data-group-id="5296230361-13">}</span><span class="p" data-group-id="5296230361-11">)</span><span class="p">.</span></code></pre><hr class="thin"/><h2 id="when-to-scavenge" class="section-heading"><a href="#when-to-scavenge" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">When to Scavenge</span></h2><p><strong>Scavenge when:</strong></p><ul><li>Storage costs are a concern</li><li>Events older than retention period have no business value</li><li>Snapshots exist for state reconstruction</li><li>Regulatory requirements permit deletion</li></ul><p><strong>Do NOT scavenge when:</strong></p><ul><li>Full audit history is required (legal/compliance)</li><li>No snapshots exist (state would be lost)</li><li>Events have legal retention requirements</li><li>You haven't verified with a dry run first</li></ul><hr class="thin"/><h2 id="best-practices" class="section-heading"><a href="#best-practices" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Best Practices</span></h2><ol><li><strong>Always dry run first</strong> - Preview changes before executing</li><li><strong>Ensure snapshots exist</strong> - Take snapshots before scavenging</li><li><strong>Use keep_versions</strong> - Maintain some recent history for debugging</li><li><strong>Archive if needed</strong> - Preserve data for compliance before deletion</li><li><strong>Schedule off-peak</strong> - Scavenging is I/O intensive</li><li><strong>Monitor space</strong> - Track storage savings via telemetry</li></ol><hr class="thin"/><h2 id="related-guides" class="section-heading"><a href="#related-guides" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Related Guides</span></h2><ul><li><a href="snapshots.html">Snapshots</a> - Required for safe scavenging</li><li><a href="temporal_queries.html">Temporal Queries</a> - Query by timestamp before scavenging</li><li><a href="event_sourcing.html">Event Sourcing</a> - Core concepts</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="temporal_queries.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Temporal Queries
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="causation.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+Causation Tracking
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/reckon_gater/1.0.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.0">Hex Preview</a>
+
+              (<a href="https://preview.hex.pm/preview/reckon_gater/1.0.0/show/guides/scavenging.md">current file</a>)
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="reckon_gater.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

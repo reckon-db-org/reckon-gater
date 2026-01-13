@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380">
+  <defs>
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="successGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="failGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffebee"/>
+      <stop offset="100%" style="stop-color:#ffcdd2"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#666"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="250" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Worker Registry Flow</text>
+
+  <!-- Register Worker Section -->
+  <text x="120" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1565c0">Register Worker</text>
+
+  <rect x="40" y="55" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="120" y="74" text-anchor="middle" font-family="monospace" font-size="9" fill="#1565c0">register_worker()</text>
+
+  <line x1="120" y1="83" x2="120" y2="100" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="105" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="120" y="124" text-anchor="middle" font-family="monospace" font-size="9" fill="#1565c0">worker_registry</text>
+
+  <line x1="120" y1="133" x2="120" y2="150" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="155" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="120" y="174" text-anchor="middle" font-family="monospace" font-size="9" fill="#1565c0">pg:join()</text>
+
+  <line x1="120" y1="183" x2="120" y2="200" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="205" width="160" height="28" rx="5" fill="url(#successGrad)" stroke="#4caf50" stroke-width="1.5"/>
+  <text x="120" y="224" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">Process monitor attached</text>
+
+  <!-- Execute Operation Section -->
+  <text x="370" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e65100">Execute Operation</text>
+
+  <rect x="290" y="55" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="370" y="74" text-anchor="middle" font-family="monospace" font-size="9" fill="#1565c0">esdb_gater_api:execute()</text>
+
+  <line x1="370" y1="83" x2="370" y2="100" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="290" y="105" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="370" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">Get workers → Select (round-robin)</text>
+
+  <line x1="370" y1="133" x2="370" y2="150" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="290" y="155" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="370" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">Call worker with timeout</text>
+
+  <!-- Branch -->
+  <line x1="370" y1="183" x2="370" y2="210" stroke="#666" stroke-width="1.5"/>
+  <line x1="310" y1="210" x2="430" y2="210" stroke="#666" stroke-width="1.5"/>
+  <line x1="310" y1="210" x2="310" y2="230" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="430" y1="210" x2="430" y2="230" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Success path -->
+  <rect x="250" y="235" width="120" height="28" rx="5" fill="url(#successGrad)" stroke="#4caf50" stroke-width="1.5"/>
+  <text x="310" y="254" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#2e7d32">Success</text>
+
+  <line x1="310" y1="263" x2="310" y2="285" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="250" y="290" width="120" height="28" rx="5" fill="url(#successGrad)" stroke="#4caf50" stroke-width="1.5"/>
+  <text x="310" y="309" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">Return result</text>
+
+  <!-- Failure path -->
+  <rect x="370" y="235" width="120" height="28" rx="5" fill="url(#failGrad)" stroke="#ef5350" stroke-width="1.5"/>
+  <text x="430" y="254" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#c62828">Failure</text>
+
+  <line x1="430" y1="263" x2="430" y2="285" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="355" y="290" width="150" height="28" rx="5" fill="url(#failGrad)" stroke="#ef5350" stroke-width="1.5"/>
+  <text x="430" y="309" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#c62828">Exponential backoff → Retry</text>
+
+  <!-- Retry arrow back -->
+  <line x1="430" y1="318" x2="430" y2="340" stroke="#666" stroke-width="1.5"/>
+  <line x1="430" y1="340" x2="480" y2="340" stroke="#666" stroke-width="1.5"/>
+  <line x1="480" y1="340" x2="480" y2="69" stroke="#666" stroke-width="1.5"/>
+  <line x1="480" y1="69" x2="455" y2="69" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>

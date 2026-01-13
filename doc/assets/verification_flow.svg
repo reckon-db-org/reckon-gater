@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 550">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="550" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="200" y="30" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Token Verification Flow</text>
+
+  <!-- Step 1 -->
+  <rect x="50" y="50" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="72" r="12" fill="#4ade80"/>
+  <text x="75" y="77" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">1</text>
+  <text x="200" y="70" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Decode token (JWT or binary)</text>
+
+  <path d="M200 95 L200 110" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,105 200,115 205,105" fill="#60a5fa"/>
+
+  <!-- Step 2 -->
+  <rect x="50" y="115" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="137" r="12" fill="#4ade80"/>
+  <text x="75" y="142" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">2</text>
+  <text x="200" y="135" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Extract issuer DID</text>
+  <text x="200" y="150" text-anchor="middle" fill="#888" font-family="Arial, sans-serif" font-size="8">Get public key from DID</text>
+
+  <path d="M200 160 L200 175" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,170 200,180 205,170" fill="#60a5fa"/>
+
+  <!-- Step 3 -->
+  <rect x="50" y="180" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="202" r="12" fill="#4ade80"/>
+  <text x="75" y="207" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">3</text>
+  <text x="200" y="200" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Verify Ed25519 signature</text>
+  <text x="200" y="215" text-anchor="middle" fill="#888" font-family="Arial, sans-serif" font-size="8">Using issuer's public key</text>
+
+  <path d="M200 225 L200 240" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,235 200,245 205,235" fill="#60a5fa"/>
+
+  <!-- Step 4 -->
+  <rect x="50" y="245" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="267" r="12" fill="#4ade80"/>
+  <text x="75" y="272" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">4</text>
+  <text x="200" y="265" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Check time bounds</text>
+  <text x="200" y="280" text-anchor="middle" fill="#888" font-family="monospace" font-size="8">nbf &lt;= now &lt;= exp</text>
+
+  <path d="M200 290 L200 305" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,300 200,310 205,300" fill="#60a5fa"/>
+
+  <!-- Step 5 -->
+  <rect x="50" y="310" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="332" r="12" fill="#4ade80"/>
+  <text x="75" y="337" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">5</text>
+  <text x="200" y="330" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Check revocation list</text>
+  <text x="200" y="345" text-anchor="middle" fill="#888" font-family="Arial, sans-serif" font-size="8">Local ETS lookup</text>
+
+  <path d="M200 355 L200 370" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,365 200,375 205,365" fill="#60a5fa"/>
+
+  <!-- Step 6 -->
+  <rect x="50" y="375" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="397" r="12" fill="#4ade80"/>
+  <text x="75" y="402" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">6</text>
+  <text x="200" y="395" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Match resource URI</text>
+  <text x="200" y="410" text-anchor="middle" fill="#888" font-family="Arial, sans-serif" font-size="8">Against grants in token</text>
+
+  <path d="M200 420 L200 435" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,430 200,440 205,430" fill="#60a5fa"/>
+
+  <!-- Step 7 -->
+  <rect x="50" y="440" width="300" height="45" rx="6" fill="#0f3460" filter="url(#shadow)"/>
+  <circle cx="75" cy="462" r="12" fill="#4ade80"/>
+  <text x="75" y="467" text-anchor="middle" fill="#000" font-family="Arial" font-size="10" font-weight="bold">7</text>
+  <text x="200" y="460" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10">Check action permitted</text>
+  <text x="200" y="475" text-anchor="middle" fill="#888" font-family="Arial, sans-serif" font-size="8">Grant includes requested action?</text>
+
+  <path d="M200 485 L200 505" stroke="#60a5fa" stroke-width="2"/>
+  <polygon points="195,500 200,510 205,500" fill="#60a5fa"/>
+
+  <!-- Result -->
+  <circle cx="145" cy="530" r="15" fill="#4ade80"/>
+  <text x="145" y="536" text-anchor="middle" fill="#000" font-family="Arial" font-size="12" font-weight="bold">OK</text>
+  <text x="200" y="535" fill="#4ade80" font-family="Arial" font-size="11">or</text>
+  <circle cx="255" cy="530" r="15" fill="#ef4444"/>
+  <text x="255" y="536" text-anchor="middle" fill="#fff" font-family="Arial" font-size="10" font-weight="bold">X</text>
+</svg>
