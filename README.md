@@ -2,6 +2,7 @@
 
 [![Hex.pm](https://img.shields.io/hexpm/v/reckon_gater.svg)](https://hex.pm/packages/reckon_gater)
 [![Hexdocs.pm](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/reckon_gater)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg)](https://buymeacoffee.com/beamologist)
 
 Gateway for distributed access to [reckon-db](https://github.com/reckon-db-org/reckon-db) event stores.
 
