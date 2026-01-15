@@ -555,7 +555,13 @@ do_route_call(StoreId, Request, Timeout) ->
         {ok, #worker_entry{pid = Pid}} ->
             try
                 Result = gen_server:call(Pid, Request, Timeout),
-                {ok, Result}
+                %% Don't double-wrap if result is already {ok, _} or {error, _}
+                case Result of
+                    {ok, _} -> Result;
+                    {error, _} -> Result;
+                    ok -> {ok, ok};
+                    _ -> {ok, Result}
+                end
             catch
                 exit:{timeout, _} ->
                     {error, timeout};

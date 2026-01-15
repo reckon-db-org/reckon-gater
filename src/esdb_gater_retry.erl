@@ -72,15 +72,37 @@ do_retry(StoreId, Fun, Config, Attempt) ->
     case Fun() of
         {ok, _} = Success ->
             Success;
-        {error, Reason} when Attempt < MaxRetries ->
-            Delay = calculate_delay(Attempt, Config),
-            emit_retry_telemetry(StoreId, Attempt, Delay, Reason),
-            timer:sleep(Delay),
-            do_retry(StoreId, Fun, Config, Attempt + 1);
-        {error, Reason} ->
-            emit_exhausted_telemetry(StoreId, MaxRetries, Reason),
-            {error, {retries_exhausted, Reason}}
+        {error, Reason} = Error ->
+            case is_retriable_error(Reason) of
+                true when Attempt < MaxRetries ->
+                    Delay = calculate_delay(Attempt, Config),
+                    emit_retry_telemetry(StoreId, Attempt, Delay, Reason),
+                    timer:sleep(Delay),
+                    do_retry(StoreId, Fun, Config, Attempt + 1);
+                true ->
+                    emit_exhausted_telemetry(StoreId, MaxRetries, Reason),
+                    {error, {retries_exhausted, Reason}};
+                false ->
+                    %% Non-transient error, return immediately without retry
+                    Error
+            end
     end.
+
+%% @private Determine if an error is transient and worth retrying
+-spec is_retriable_error(term()) -> boolean().
+is_retriable_error(timeout) -> true;
+is_retriable_error(worker_down) -> true;
+is_retriable_error(node_down) -> true;
+is_retriable_error(no_workers) -> true;
+is_retriable_error({noproc, _}) -> true;
+is_retriable_error({nodedown, _}) -> true;
+is_retriable_error({exit, _}) -> true;
+%% Non-transient errors - don't retry
+is_retriable_error({stream_not_found, _}) -> false;
+is_retriable_error({wrong_expected_version, _}) -> false;
+is_retriable_error(not_found) -> false;
+%% Unknown errors - default to not retry (be conservative)
+is_retriable_error(_) -> false.
 
 %% @private Emit telemetry for retry attempt
 -spec emit_retry_telemetry(atom(), non_neg_integer(), non_neg_integer(), term()) -> ok.
