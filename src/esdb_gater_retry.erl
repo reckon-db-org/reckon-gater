@@ -89,20 +89,20 @@ do_retry(StoreId, Fun, Config, Attempt) ->
     end.
 
 %% @private Determine if an error is transient and worth retrying
+%%
+%% Non-transient errors that should NOT be retried:
+%% - stream_not_found: The stream doesn't exist (caller should handle)
+%% - wrong_expected_version: Optimistic concurrency conflict (caller should reload)
+%% - not_found: Resource doesn't exist
+%%
+%% All other errors are assumed transient and will be retried.
 -spec is_retriable_error(term()) -> boolean().
-is_retriable_error(timeout) -> true;
-is_retriable_error(worker_down) -> true;
-is_retriable_error(node_down) -> true;
-is_retriable_error(no_workers) -> true;
-is_retriable_error({noproc, _}) -> true;
-is_retriable_error({nodedown, _}) -> true;
-is_retriable_error({exit, _}) -> true;
 %% Non-transient errors - don't retry
 is_retriable_error({stream_not_found, _}) -> false;
 is_retriable_error({wrong_expected_version, _}) -> false;
 is_retriable_error(not_found) -> false;
-%% Unknown errors - default to not retry (be conservative)
-is_retriable_error(_) -> false.
+%% All other errors - default to retry (transient until proven otherwise)
+is_retriable_error(_) -> true.
 
 %% @private Emit telemetry for retry attempt
 -spec emit_retry_telemetry(atom(), non_neg_integer(), non_neg_integer(), term()) -> ok.
