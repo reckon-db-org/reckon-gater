@@ -5,6 +5,26 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-01-19
+
+### Fixed
+
+- **Unknown error retry policy**: Changed default retry behavior to retry unknown
+  errors (transient by default) rather than immediately failing. This provides
+  better resilience for unexpected transient failures.
+
+## [1.0.1] - 2026-01-15
+
+### Fixed
+
+- **Double-wrapping bug**: Fixed critical bug in `do_route_call/3` where results
+  were always wrapped in `{ok, ...}`, causing double-wrapping when workers
+  returned `{ok, Value}`. Now correctly passes through `{ok, _}` and `{error, _}`
+  results without additional wrapping.
+- **Retriable error classification**: Added `is_retriable_error/1` to distinguish
+  transient errors from permanent ones. Non-transient errors like `stream_not_found`
+  and `wrong_expected_version` now return immediately without retry.
+
 ## [1.0.0] - 2026-01-03
 
 ### Changed
