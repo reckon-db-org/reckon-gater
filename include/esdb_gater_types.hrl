@@ -54,6 +54,12 @@
     %% Event metadata (correlation_id, causation_id, etc.)
     metadata :: map(),
 
+    %% Tags for cross-stream querying (optional)
+    %% Example: [<<"student:456">>, <<"course:CS101">>]
+    %% Tags are used for QUERY purposes only, NOT for concurrency control.
+    %% Use read_by_tags/3 to query events across streams by tag.
+    tags :: [binary()] | undefined,
+
     %% Timestamp when event was created
     timestamp :: integer(),
 
@@ -70,10 +76,19 @@
 -type event() :: #event{}.
 
 %%====================================================================
+%% Tag Match Mode
+%%====================================================================
+
+%% How to match multiple tags:
+%%   any - Return events matching ANY of the tags (union)
+%%   all - Return events matching ALL of the tags (intersection)
+-type tag_match() :: any | all.
+
+%%====================================================================
 %% Subscription Types
 %%====================================================================
 
--type subscription_type() :: stream | event_type | event_pattern | event_payload.
+-type subscription_type() :: stream | event_type | event_pattern | event_payload | tags.
 
 %%====================================================================
 %% Subscription Record

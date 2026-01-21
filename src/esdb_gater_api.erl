@@ -49,7 +49,9 @@
     get_version/2,
     get_streams/1,
     delete_stream/2,
-    read_by_event_types/3
+    read_by_event_types/3,
+    read_by_tags/2,
+    read_by_tags/3
 ]).
 
 %% Subscription operations
@@ -221,6 +223,61 @@ delete_stream(StoreId, StreamId) ->
 -spec read_by_event_types(atom(), [binary()], pos_integer()) -> {ok, list()} | {error, term()}.
 read_by_event_types(StoreId, EventTypes, BatchSize) ->
     route_call(StoreId, {read_by_event_types, StoreId, EventTypes, BatchSize}).
+
+%% @doc Read events by tags (default: ANY match, batch_size 1000)
+%%
+%% Queries events across all streams that have matching tags.
+%% By default, returns events matching ANY of the provided tags (union).
+%%
+%% Example:
+%%   {ok, Events} = esdb_gater_api:read_by_tags(my_store, [<<"student:456">>]).
+%%
+%% @see read_by_tags/3 for options
+-spec read_by_tags(atom(), [binary()]) -> {ok, list()} | {error, term()}.
+read_by_tags(StoreId, Tags) ->
+    read_by_tags(StoreId, Tags, #{}).
+
+%% @doc Read events by tags with options
+%%
+%% Queries events across all streams that have matching tags.
+%% Tags are typically used for cross-stream querying in the process-centric model.
+%%
+%% == Options ==
+%%
+%% <dl>
+%%   <dt>`match'</dt>
+%%   <dd>`any' (default) - Return events matching ANY of the provided tags (union).</dd>
+%%   <dd>`all' - Return events matching ALL of the provided tags (intersection).</dd>
+%%
+%%   <dt>`batch_size'</dt>
+%%   <dd>Maximum number of events to return. Default: 1000.</dd>
+%% </dl>
+%%
+%% == Examples ==
+%%
+%% Find all events for a student (across all courses):
+%%   {ok, Events} = esdb_gater_api:read_by_tags(my_store,
+%%       [<<"student:456">>], #{}).
+%%
+%% Find events tagged with BOTH student AND course (intersection):
+%%   {ok, Events} = esdb_gater_api:read_by_tags(my_store,
+%%       [<<"student:456">>, <<"course:CS101">>],
+%%       #{match => all}).
+%%
+%% Find events for either student 456 OR student 789 (union):
+%%   {ok, Events} = esdb_gater_api:read_by_tags(my_store,
+%%       [<<"student:456">>, <<"student:789">>],
+%%       #{match => any, batch_size => 500}).
+%%
+%% @param StoreId The store identifier
+%% @param Tags List of tag binaries to match
+%% @param Opts Options map: #{match => any | all, batch_size => pos_integer()}
+%% @returns {ok, [event()]} | {error, term()}
+-spec read_by_tags(atom(), [binary()], map()) -> {ok, list()} | {error, term()}.
+read_by_tags(StoreId, Tags, Opts) ->
+    Match = maps:get(match, Opts, any),
+    BatchSize = maps:get(batch_size, Opts, 1000),
+    route_call(StoreId, {read_by_tags, StoreId, Tags, Match, BatchSize}).
 
 %%====================================================================
 %% Subscription Operations
