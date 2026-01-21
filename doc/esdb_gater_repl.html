@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.38.2">
-    <meta name="project" content="reckon_gater v1.0.2">
+    <meta name="project" content="reckon_gater v1.1.0">
 
 
-    <title>esdb_gater_repl — reckon_gater v1.0.2</title>
+    <title>esdb_gater_repl — reckon_gater v1.1.0</title>
 
     <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
 
-    <script defer src="dist/sidebar_items-E4B77EC4.js"></script>
+    <script defer src="dist/sidebar_items-7A20C755.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-DPJLHKSM.js"></script>
 
@@ -37,7 +37,7 @@
 reckon_gater
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.0.2
+          v1.1.0
         </div>
       </div>
     </div>
@@ -76,11 +76,11 @@ reckon_gater
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">esdb_gater_repl</span> 
-      <small class="app-vsn" translate="no">(reckon_gater v1.0.2)</small>
+      <small class="app-vsn" translate="no">(reckon_gater v1.1.0)</small>
 
     </h1>
 
-      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.2/src/esdb_gater_repl.erl#L56" title="View Source" class="icon-action" rel="help">
+      <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.1.0/src/esdb_gater_repl.erl#L56" title="View Source" class="icon-action" rel="help">
         <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         <span class="sr-only">View Source</span>
       </a>
@@ -89,16 +89,16 @@ reckon_gater
 
 
     <section id="moduledoc">
-<p>Interactive REPL for reckon-gater</p><p>Provides an interactive shell for exploring event stores, streams, causation chains, and temporal queries.</p><p>Start the REPL:</p><pre><code class="makeup erlang" translate="no"><span class="w">  </span><span class="nc">esdb_gater_repl</span><span class="p">:</span><span class="nf">start</span><span class="p" data-group-id="3534448702-1">(</span><span class="p" data-group-id="3534448702-1">)</span><span class="p">.</span><span class="w">                </span><span class="c1">%% No store selected</span><span class="w">
-  </span><span class="nc">esdb_gater_repl</span><span class="p">:</span><span class="nf">start</span><span class="p" data-group-id="3534448702-2">(</span><span class="ss">my_store</span><span class="p" data-group-id="3534448702-2">)</span><span class="p">.</span><span class="w">        </span><span class="c1">%% With store pre-selected</span></code></pre><p>Commands:</p><pre><code class="makeup erlang" translate="no"><span class="w">  </span><span class="n">STORE</span><span class="w"> </span><span class="n">COMMANDS</span><span class="w">
+<p>Interactive REPL for reckon-gater</p><p>Provides an interactive shell for exploring event stores, streams, causation chains, and temporal queries.</p><p>Start the REPL:</p><pre><code class="makeup erlang" translate="no"><span class="w">  </span><span class="nc">esdb_gater_repl</span><span class="p">:</span><span class="nf">start</span><span class="p" data-group-id="0813819590-1">(</span><span class="p" data-group-id="0813819590-1">)</span><span class="p">.</span><span class="w">                </span><span class="c1">%% No store selected</span><span class="w">
+  </span><span class="nc">esdb_gater_repl</span><span class="p">:</span><span class="nf">start</span><span class="p" data-group-id="0813819590-2">(</span><span class="ss">my_store</span><span class="p" data-group-id="0813819590-2">)</span><span class="p">.</span><span class="w">        </span><span class="c1">%% With store pre-selected</span></code></pre><p>Commands:</p><pre><code class="makeup erlang" translate="no"><span class="w">  </span><span class="n">STORE</span><span class="w"> </span><span class="n">COMMANDS</span><span class="w">
     </span><span class="ss">stores</span><span class="w">              </span><span class="n">List</span><span class="w"> </span><span class="ss">all</span><span class="w"> </span><span class="ss">stores</span><span class="w">
     </span><span class="ss">use</span><span class="w"> </span><span class="n">STORE</span><span class="w">           </span><span class="n">Set</span><span class="w"> </span><span class="ss">current</span><span class="w"> </span><span class="ss">store</span><span class="w"> </span><span class="ss">context</span><span class="w">
  
   </span><span class="n">STREAM</span><span class="w"> </span><span class="n">COMMANDS</span><span class="w">
     </span><span class="ss">streams</span><span class="w">             </span><span class="n">List</span><span class="w"> </span><span class="ss">streams</span><span class="w"> </span><span class="ss">in</span><span class="w"> </span><span class="ss">current</span><span class="w"> </span><span class="ss">store</span><span class="w">
     </span><span class="ss">stream</span><span class="w"> </span><span class="n">STREAM</span><span class="w">       </span><span class="n">Set</span><span class="w"> </span><span class="ss">current</span><span class="w"> </span><span class="ss">stream</span><span class="w"> </span><span class="ss">context</span><span class="w">
-    </span><span class="ss">read</span><span class="w"> </span><span class="p" data-group-id="2431904037-1">[</span><span class="n">N</span><span class="p" data-group-id="2431904037-1">]</span><span class="w">            </span><span class="n">Read</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="ss">events</span><span class="w"> </span><span class="ss">from</span><span class="w"> </span><span class="ss">current</span><span class="w"> </span><span class="nf">stream</span><span class="w"> </span><span class="p" data-group-id="2431904037-2">(</span><span class="ss">default</span><span class="w"> </span><span class="mi">10</span><span class="p" data-group-id="2431904037-2">)</span><span class="w">
-    </span><span class="ss">read</span><span class="w"> </span><span class="n">STREAM</span><span class="w"> </span><span class="p" data-group-id="2431904037-3">[</span><span class="n">N</span><span class="p" data-group-id="2431904037-3">]</span><span class="w">     </span><span class="n">Read</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="ss">events</span><span class="w"> </span><span class="ss">from</span><span class="w"> </span><span class="ss">specified</span><span class="w"> </span><span class="ss">stream</span><span class="w">
+    </span><span class="ss">read</span><span class="w"> </span><span class="p" data-group-id="0096493403-1">[</span><span class="n">N</span><span class="p" data-group-id="0096493403-1">]</span><span class="w">            </span><span class="n">Read</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="ss">events</span><span class="w"> </span><span class="ss">from</span><span class="w"> </span><span class="ss">current</span><span class="w"> </span><span class="nf">stream</span><span class="w"> </span><span class="p" data-group-id="0096493403-2">(</span><span class="ss">default</span><span class="w"> </span><span class="mi">10</span><span class="p" data-group-id="0096493403-2">)</span><span class="w">
+    </span><span class="ss">read</span><span class="w"> </span><span class="n">STREAM</span><span class="w"> </span><span class="p" data-group-id="0096493403-3">[</span><span class="n">N</span><span class="p" data-group-id="0096493403-3">]</span><span class="w">     </span><span class="n">Read</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="ss">events</span><span class="w"> </span><span class="ss">from</span><span class="w"> </span><span class="ss">specified</span><span class="w"> </span><span class="ss">stream</span><span class="w">
     </span><span class="ss">version</span><span class="w">             </span><span class="n">Get</span><span class="w"> </span><span class="ss">version</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="ss">current</span><span class="w"> </span><span class="ss">stream</span><span class="w">
     </span><span class="ss">version</span><span class="w"> </span><span class="n">STREAM</span><span class="w">      </span><span class="n">Get</span><span class="w"> </span><span class="ss">version</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="ss">specified</span><span class="w"> </span><span class="ss">stream</span><span class="w">
  
@@ -195,7 +195,7 @@ reckon_gater
       <h1 class="signature" translate="no">graph_to_dot(_)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.2/src/esdb_gater_repl.erl#L718" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.1.0/src/esdb_gater_repl.erl#L718" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -217,7 +217,7 @@ reckon_gater
       <h1 class="signature" translate="no">start()</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.2/src/esdb_gater_repl.erl#L74" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.1.0/src/esdb_gater_repl.erl#L74" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -245,7 +245,7 @@ reckon_gater
       <h1 class="signature" translate="no">start(Store)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.0.2/src/esdb_gater_repl.erl#L79" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.1.0/src/esdb_gater_repl.erl#L79" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -271,9 +271,9 @@ reckon_gater
       <p>
 
           <span class="line">
-            <a href="https://hex.pm/packages/reckon_gater/1.0.2" class="footer-hex-package">Hex Package</a>
+            <a href="https://hex.pm/packages/reckon_gater/1.1.0" class="footer-hex-package">Hex Package</a>
 
-            <a href="https://preview.hex.pm/preview/reckon_gater/1.0.2">Hex Preview</a>
+            <a href="https://preview.hex.pm/preview/reckon_gater/1.1.0">Hex Preview</a>
 
           </span>
 

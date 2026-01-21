@@ -5,6 +5,17 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-21
+
+### Added
+
+- **Tag-Based Querying**: Cross-stream event queries using tags
+  - `read_by_tags/2,3` - Query events by tags across all streams
+  - `tag_match()` type - Support for `any` (union) and `all` (intersection) matching
+  - `tags` field added to `#event{}` record in `esdb_gater_types.hrl`
+  - `tags` subscription type for tag-based subscriptions
+  - Tags are for QUERY purposes only, NOT for concurrency control
+
 ## [1.0.3] - 2026-01-19
 
 ### Fixed
