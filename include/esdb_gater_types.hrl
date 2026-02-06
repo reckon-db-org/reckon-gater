@@ -88,7 +88,14 @@
 %% Subscription Types
 %%====================================================================
 
--type subscription_type() :: stream | event_type | event_pattern | event_payload | tags.
+%% Subscription types come in two forms:
+%% - evoq-style: stream, event_type, event_pattern, event_payload, tags
+%% - gater-style: by_stream, by_event_type, by_event_pattern, by_event_payload, by_tags
+%%
+%% The reckon_evoq_adapter translates from evoq-style to gater-style,
+%% and reckon_db accepts both for backward compatibility.
+-type subscription_type() :: stream | event_type | event_pattern | event_payload | tags
+                           | by_stream | by_event_type | by_event_pattern | by_event_payload | by_tags.
 
 %%====================================================================
 %% Subscription Record
