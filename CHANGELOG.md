@@ -5,6 +5,41 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-03-19
+
+### Added
+
+- **Store Inspector API**: 6 new exports for aggregate store-level introspection:
+  - `store_stats/1` — stream count, total events, snapshot/subscription counts
+  - `list_all_snapshots/1` — all snapshots across all streams
+  - `list_store_subscriptions/1` — all subscriptions with checkpoints
+  - `subscription_lag/2` — events behind for a specific subscription
+  - `event_type_summary/1` — census of event types with counts
+  - `stream_info/2` — detailed stream info with timestamps and snapshot coverage
+- All operations are load-balanced through the existing gateway worker pool
+
+## [1.2.2] - 2026-03-08
+
+### Fixed
+
+- **`esdb_gater_api:has_events/1`**: Unwrap `route_call` result to return plain
+  `boolean()` as specified. `route_call/2` wraps all results in `{ok, Value}`,
+  so `has_events/1` was returning `{ok, true}` instead of `true`.
+
+## [1.2.1] - 2026-03-08
+
+### Added
+
+- **`esdb_gater_api:has_events/1`**: Check if a store contains at least one event.
+  Routes to `reckon_db_streams:has_events/1` via gateway worker.
+
+## [1.2.0] - 2026-03-06
+
+### Added
+
+- **`esdb_gater_api:read_all_global/3`**: Read all events across all streams in
+  global epoch_us order. Used for catch-up subscriptions and event replay.
+
 ## [1.1.3] - 2026-03-05
 
 ### Fixed

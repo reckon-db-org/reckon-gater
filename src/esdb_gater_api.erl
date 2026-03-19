@@ -47,11 +47,13 @@
     stream_forward/4,
     stream_backward/4,
     get_version/2,
+    has_events/1,
     get_streams/1,
     delete_stream/2,
     read_by_event_types/3,
     read_by_tags/2,
-    read_by_tags/3
+    read_by_tags/3,
+    read_all_global/3
 ]).
 
 %% Subscription operations
@@ -137,6 +139,16 @@
     link_info/2
 ]).
 
+%% Store inspector operations
+-export([
+    store_stats/1,
+    list_all_snapshots/1,
+    list_store_subscriptions/1,
+    subscription_lag/2,
+    event_type_summary/1,
+    stream_info/2
+]).
+
 -define(CALL_TIMEOUT, 5000).
 
 %%====================================================================
@@ -206,6 +218,15 @@ stream_backward(StoreId, StreamId, StartVersion, Count) ->
 get_version(StoreId, StreamId) ->
     route_call(StoreId, {get_version, StoreId, StreamId}).
 
+%% @doc Check if a store contains at least one event.
+-spec has_events(atom()) -> boolean().
+has_events(StoreId) ->
+    case route_call(StoreId, {has_events, StoreId}) of
+        {ok, Bool} when is_boolean(Bool) -> Bool;
+        {ok, _} -> true;
+        {error, _} -> false
+    end.
+
 %% @doc Get all streams in a store
 -spec get_streams(atom()) -> {ok, list()} | {error, term()}.
 get_streams(StoreId) ->
@@ -250,6 +271,18 @@ read_by_tags(StoreId, Tags, Opts) ->
     Match = maps:get(match, Opts, any),
     BatchSize = maps:get(batch_size, Opts, 1000),
     route_call(StoreId, {read_by_tags, StoreId, Tags, Match, BatchSize}).
+
+%% @doc Read all events across all streams sorted by epoch_us (global ordering).
+%%
+%% This is used for catch-up subscriptions where a consumer needs to replay
+%% all historical events from a given offset.
+%%
+%% Offset is the number of events to skip (not a version number).
+%% BatchSize controls how many events to return per call.
+-spec read_all_global(atom(), non_neg_integer(), pos_integer()) ->
+    {ok, list()} | {error, term()}.
+read_all_global(StoreId, Offset, BatchSize) ->
+    route_call(StoreId, {read_all_global, StoreId, Offset, BatchSize}).
 
 %%====================================================================
 %% Subscription Operations
@@ -553,6 +586,40 @@ stop_link(StoreId, LinkName) ->
 -spec link_info(atom(), binary()) -> {ok, map()} | {error, term()}.
 link_info(StoreId, LinkName) ->
     route_call(StoreId, {link_info, StoreId, LinkName}).
+
+%%====================================================================
+%% Store Inspector Operations
+%%====================================================================
+
+%% @doc Aggregate statistics for a store.
+-spec store_stats(atom()) -> {ok, map()} | {error, term()}.
+store_stats(StoreId) ->
+    route_call(StoreId, {store_stats, StoreId}).
+
+%% @doc List all snapshots across all streams in a store.
+-spec list_all_snapshots(atom()) -> {ok, [map()]} | {error, term()}.
+list_all_snapshots(StoreId) ->
+    route_call(StoreId, {list_all_snapshots, StoreId}).
+
+%% @doc List all subscriptions for a store with checkpoint positions.
+-spec list_store_subscriptions(atom()) -> {ok, [map()]} | {error, term()}.
+list_store_subscriptions(StoreId) ->
+    route_call(StoreId, {list_store_subscriptions, StoreId}).
+
+%% @doc Calculate lag for a specific subscription.
+-spec subscription_lag(atom(), binary()) -> {ok, map()} | {error, term()}.
+subscription_lag(StoreId, SubscriptionName) ->
+    route_call(StoreId, {subscription_lag, StoreId, SubscriptionName}).
+
+%% @doc Census of event types in the store with counts.
+-spec event_type_summary(atom()) -> {ok, [map()]} | {error, term()}.
+event_type_summary(StoreId) ->
+    route_call(StoreId, {event_type_summary, StoreId}).
+
+%% @doc Detailed info for a single stream (timestamps, snapshot coverage).
+-spec stream_info(atom(), binary()) -> {ok, map()} | {error, term()}.
+stream_info(StoreId, StreamId) ->
+    route_call(StoreId, {stream_info, StoreId, StreamId}).
 
 %%====================================================================
 %% Internal Functions
