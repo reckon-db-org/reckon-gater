@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="dist/html-erlang-DQDXQC7W.css" />
 
-    <script defer src="dist/sidebar_items-386B1CD6.js"></script>
+    <script defer src="dist/sidebar_items-A9092FE1.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-DPJLHKSM.js"></script>
 
@@ -212,6 +212,16 @@ reckon_gater
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#event_type_summary/1" data-no-tooltip="" translate="no">event_type_summary(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Census of event types in the store with counts.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#get_causation_chain/2" data-no-tooltip="" translate="no">get_causation_chain(StoreId, EventId)</a>
 
       </div>
@@ -392,6 +402,16 @@ reckon_gater
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#list_all_snapshots/1" data-no-tooltip="" translate="no">list_all_snapshots(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>List all snapshots across all streams in a store.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#list_links/1" data-no-tooltip="" translate="no">list_links(StoreId)</a>
 
       </div>
@@ -417,6 +437,16 @@ reckon_gater
       </div>
 
         <div class="summary-synopsis"><p>List snapshots</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list_store_subscriptions/1" data-no-tooltip="" translate="no">list_store_subscriptions(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>List all subscriptions for a store with checkpoint positions.</p></div>
 
     </div>
 
@@ -642,6 +672,16 @@ reckon_gater
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#store_stats/1" data-no-tooltip="" translate="no">store_stats(StoreId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Aggregate statistics for a store.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#stream_backward/4" data-no-tooltip="" translate="no">stream_backward(StoreId, StreamId, StartVersion, Count)</a>
 
       </div>
@@ -657,6 +697,26 @@ reckon_gater
       </div>
 
         <div class="summary-synopsis"><p>Stream events forward from a version</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stream_info/2" data-no-tooltip="" translate="no">stream_info(StoreId, StreamId)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Detailed info for a single stream (timestamps, snapshot coverage).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#subscription_lag/2" data-no-tooltip="" translate="no">subscription_lag(StoreId, SubscriptionName)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Calculate lag for a specific subscription.</p></div>
 
     </div>
 
@@ -753,7 +813,7 @@ reckon_gater
       <h1 class="signature" translate="no">worker_entry/0</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/_build/default/lib/reckon_gater/include/esdb_gater.hrl#L45" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/_build/docs/lib/reckon_gater/include/esdb_gater.hrl#L45" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -794,7 +854,7 @@ reckon_gater
       <h1 class="signature" translate="no">ack_event(StoreId, SubscriptionName, SubscriberPid, Event)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L307" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L317" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -822,7 +882,7 @@ reckon_gater
       <h1 class="signature" translate="no">append_events(StoreId, StreamId, Events)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L179" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L189" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -850,7 +910,7 @@ reckon_gater
       <h1 class="signature" translate="no">append_events(StoreId, StreamId, ExpectedVersion, Events)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L185" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L195" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -879,7 +939,7 @@ reckon_gater
       <h1 class="signature" translate="no">build_causation_graph(StoreId, Id)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L484" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L494" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -907,7 +967,7 @@ reckon_gater
       <h1 class="signature" translate="no">check_raft_log_consistency(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L407" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L417" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -935,7 +995,7 @@ reckon_gater
       <h1 class="signature" translate="no">create_link(StoreId, LinkSpec)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L543" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L553" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -963,7 +1023,7 @@ reckon_gater
       <h1 class="signature" translate="no">delete_link(StoreId, LinkName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L549" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L559" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -991,7 +1051,7 @@ reckon_gater
       <h1 class="signature" translate="no">delete_snapshot(StoreId, SourceUuid, StreamUuid, Version)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L323" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L333" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1019,7 +1079,7 @@ reckon_gater
       <h1 class="signature" translate="no">delete_stream(StoreId, StreamId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L227" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L237" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1037,6 +1097,34 @@ reckon_gater
 <p>Delete a stream and all its events</p>
   </section>
 </section>
+<section class="detail" id="event_type_summary/1">
+
+  <div class="detail-header">
+    <a href="#event_type_summary/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">event_type_summary(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L616" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> event_type_summary(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()]} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Census of event types in the store with counts.</p>
+  </section>
+</section>
 <section class="detail" id="get_causation_chain/2">
 
   <div class="detail-header">
@@ -1047,7 +1135,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_causation_chain(StoreId, EventId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L474" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L484" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1075,7 +1163,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_cause(StoreId, EventId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L469" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L479" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1103,7 +1191,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_correlated(StoreId, CorrelationId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L479" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L489" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1131,7 +1219,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_effects(StoreId, EventId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L464" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L474" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1159,7 +1247,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_events(StoreId, StreamId, StartVersion, Count, Direction)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L191" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L201" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1188,7 +1276,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_link(StoreId, LinkName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L555" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L565" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1216,7 +1304,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_memory_level(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L529" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L539" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1244,7 +1332,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_memory_stats(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L534" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L544" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1272,7 +1360,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_schema(StoreId, EventType)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L493" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L503" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1300,7 +1388,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_schema_version(StoreId, EventType)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L503" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L513" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1328,7 +1416,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_streams(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L222" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L232" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1356,7 +1444,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_subscription(StoreId, SubscriptionName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L290" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L300" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1384,7 +1472,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_subscriptions(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L283" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L293" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1412,7 +1500,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_version(StoreId, StreamId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L208" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L218" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1440,7 +1528,7 @@ reckon_gater
       <h1 class="signature" translate="no">get_workers(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L170" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L180" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1468,7 +1556,7 @@ reckon_gater
       <h1 class="signature" translate="no">has_events(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L213" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L223" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1496,7 +1584,7 @@ reckon_gater
       <h1 class="signature" translate="no">health()</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L364" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L374" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1524,7 +1612,7 @@ reckon_gater
       <h1 class="signature" translate="no">link_info(StoreId, LinkName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L577" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L587" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1542,6 +1630,34 @@ reckon_gater
 <p>Get detailed info about a link</p>
   </section>
 </section>
+<section class="detail" id="list_all_snapshots/1">
+
+  <div class="detail-header">
+    <a href="#list_all_snapshots/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list_all_snapshots(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L601" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> list_all_snapshots(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()]} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>List all snapshots across all streams in a store.</p>
+  </section>
+</section>
 <section class="detail" id="list_links/1">
 
   <div class="detail-header">
@@ -1552,7 +1668,7 @@ reckon_gater
       <h1 class="signature" translate="no">list_links(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L560" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L570" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1580,7 +1696,7 @@ reckon_gater
       <h1 class="signature" translate="no">list_schemas(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L498" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L508" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1608,7 +1724,7 @@ reckon_gater
       <h1 class="signature" translate="no">list_snapshots(StoreId, SourceUuid, StreamUuid)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L336" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L346" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1626,6 +1742,34 @@ reckon_gater
 <p>List snapshots</p>
   </section>
 </section>
+<section class="detail" id="list_store_subscriptions/1">
+
+  <div class="detail-header">
+    <a href="#list_store_subscriptions/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list_store_subscriptions(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L606" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> list_store_subscriptions(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, [<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()]} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>List all subscriptions for a store with checkpoint positions.</p>
+  </section>
+</section>
 <section class="detail" id="list_stores/0">
 
   <div class="detail-header">
@@ -1636,7 +1780,7 @@ reckon_gater
       <h1 class="signature" translate="no">list_stores()</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L345" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L355" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1664,7 +1808,7 @@ reckon_gater
       <h1 class="signature" translate="no">quick_health_check(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L397" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L407" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1692,7 +1836,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_all_global(StoreId, Offset, BatchSize)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L274" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L284" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1720,7 +1864,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_by_event_types(StoreId, EventTypes, BatchSize)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L235" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L245" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1748,7 +1892,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_by_tags(StoreId, Tags)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L243" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L253" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1776,7 +1920,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_by_tags(StoreId, Tags, Opts)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L260" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L270" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1804,7 +1948,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_range(StoreId, StreamId, FromTimestamp, ToTimestamp)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L426" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L436" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1832,7 +1976,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_range(StoreId, StreamId, FromTimestamp, ToTimestamp, Opts)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L431" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L441" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1860,7 +2004,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_snapshot(StoreId, SourceUuid, StreamUuid, Version)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L330" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L340" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1888,7 +2032,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_until(StoreId, StreamId, Timestamp)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L416" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L426" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1916,7 +2060,7 @@ reckon_gater
       <h1 class="signature" translate="no">read_until(StoreId, StreamId, Timestamp, Opts)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L421" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L431" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1944,7 +2088,7 @@ reckon_gater
       <h1 class="signature" translate="no">record_snapshot(StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L317" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L327" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1972,7 +2116,7 @@ reckon_gater
       <h1 class="signature" translate="no">register_schema(StoreId, EventType, Schema)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L513" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L523" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2000,7 +2144,7 @@ reckon_gater
       <h1 class="signature" translate="no">register_worker(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L150" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L160" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2028,7 +2172,7 @@ reckon_gater
       <h1 class="signature" translate="no">register_worker(StoreId, Pid)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L155" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L165" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2056,7 +2200,7 @@ reckon_gater
       <h1 class="signature" translate="no">remove_subscription(StoreId, Type, Selector, SubscriptionName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L301" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L311" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2084,7 +2228,7 @@ reckon_gater
       <h1 class="signature" translate="no">save_subscription(StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L295" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L305" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2118,7 +2262,7 @@ reckon_gater
       <h1 class="signature" translate="no">scavenge(StoreId, StreamId, Opts)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L445" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L455" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2146,7 +2290,7 @@ reckon_gater
       <h1 class="signature" translate="no">scavenge_dry_run(StoreId, StreamId, Opts)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L455" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L465" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2174,7 +2318,7 @@ reckon_gater
       <h1 class="signature" translate="no">scavenge_matching(StoreId, Pattern, Opts)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L450" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L460" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2202,7 +2346,7 @@ reckon_gater
       <h1 class="signature" translate="no">start_link(StoreId, LinkName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L565" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L575" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2230,7 +2374,7 @@ reckon_gater
       <h1 class="signature" translate="no">stop_link(StoreId, LinkName)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L571" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L581" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2248,6 +2392,34 @@ reckon_gater
 <p>Stop a link</p>
   </section>
 </section>
+<section class="detail" id="store_stats/1">
+
+  <div class="detail-header">
+    <a href="#store_stats/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">store_stats(StoreId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L596" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> store_stats(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Aggregate statistics for a store.</p>
+  </section>
+</section>
 <section class="detail" id="stream_backward/4">
 
   <div class="detail-header">
@@ -2258,7 +2430,7 @@ reckon_gater
       <h1 class="signature" translate="no">stream_backward(StoreId, StreamId, StartVersion, Count)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L203" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L213" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2286,7 +2458,7 @@ reckon_gater
       <h1 class="signature" translate="no">stream_forward(StoreId, StreamId, StartVersion, Count)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L197" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L207" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2304,6 +2476,62 @@ reckon_gater
 <p>Stream events forward from a version</p>
   </section>
 </section>
+<section class="detail" id="stream_info/2">
+
+  <div class="detail-header">
+    <a href="#stream_info/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stream_info(StoreId, StreamId)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L621" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> stream_info(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Detailed info for a single stream (timestamps, snapshot coverage).</p>
+  </section>
+</section>
+<section class="detail" id="subscription_lag/2">
+
+  <div class="detail-header">
+    <a href="#subscription_lag/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">subscription_lag(StoreId, SubscriptionName)</h1>
+
+
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L611" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> subscription_lag(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:atom/0">atom</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:map/0">map</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+
+      </div>
+
+<p>Calculate lag for a specific subscription.</p>
+  </section>
+</section>
 <section class="detail" id="unregister_schema/2">
 
   <div class="detail-header">
@@ -2314,7 +2542,7 @@ reckon_gater
       <h1 class="signature" translate="no">unregister_schema(StoreId, EventType)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L519" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L529" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2342,7 +2570,7 @@ reckon_gater
       <h1 class="signature" translate="no">unregister_worker(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L160" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L170" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2370,7 +2598,7 @@ reckon_gater
       <h1 class="signature" translate="no">unregister_worker(StoreId, Pid)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L165" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L175" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2398,7 +2626,7 @@ reckon_gater
       <h1 class="signature" translate="no">upcast_events(StoreId, Events)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L508" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L518" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2426,7 +2654,7 @@ reckon_gater
       <h1 class="signature" translate="no">verify_cluster_consistency(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L392" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L402" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2454,7 +2682,7 @@ reckon_gater
       <h1 class="signature" translate="no">verify_membership_consensus(StoreId)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L402" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L412" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -2482,7 +2710,7 @@ reckon_gater
       <h1 class="signature" translate="no">version_at(StoreId, StreamId, Timestamp)</h1>
 
 
-        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L436" class="icon-action" rel="help" aria-label="View Source">
+        <a href="https://github.com/reckon-db-org/reckon-gater/blob/v1.3.0/src/esdb_gater_api.erl#L446" class="icon-action" rel="help" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
