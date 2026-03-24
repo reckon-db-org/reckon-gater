@@ -100,6 +100,7 @@ do_retry(StoreId, Fun, Config, Attempt) ->
 %% Non-transient errors - don't retry
 is_retriable_error({stream_not_found, _}) -> false;
 is_retriable_error({wrong_expected_version, _}) -> false;
+is_retriable_error({wrong_expected_version, _, _}) -> false;
 is_retriable_error(not_found) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
