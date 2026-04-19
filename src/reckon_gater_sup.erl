@@ -3,13 +3,13 @@
 %% == Supervision Tree ==
 %%
 %% reckon_gater_sup (one_for_one)
-%%   - esdb_gater_cluster_sup (rest_for_one)
-%%       - esdb_gater_worker_registry
-%%       - esdb_gater_cluster_monitor
-%%   - esdb_channel_sup (one_for_one)
+%%   - reckon_gater_cluster_sup (rest_for_one)
+%%       - reckon_gater_worker_registry
+%%       - reckon_gater_cluster_monitor
+%%   - reckon_gater_channel_sup (one_for_one)
 %%       - 10x channel workers
 %%
-%% Note: esdb_gater_api is a stateless API module, not a supervised process.
+%% Note: reckon_gater_api is a stateless API module, not a supervised process.
 %%
 %% @author rgfaber
 
@@ -45,20 +45,20 @@ init([]) ->
 
     Children = [
         #{
-            id => esdb_gater_cluster_sup,
-            start => {esdb_gater_cluster_sup, start_link, []},
+            id => reckon_gater_cluster_sup,
+            start => {reckon_gater_cluster_sup, start_link, []},
             restart => permanent,
             shutdown => infinity,
             type => supervisor,
-            modules => [esdb_gater_cluster_sup]
+            modules => [reckon_gater_cluster_sup]
         },
         #{
-            id => esdb_channel_sup,
-            start => {esdb_channel_sup, start_link, []},
+            id => reckon_gater_channel_sup,
+            start => {reckon_gater_channel_sup, start_link, []},
             restart => permanent,
             shutdown => infinity,
             type => supervisor,
-            modules => [esdb_channel_sup]
+            modules => [reckon_gater_channel_sup]
         }
     ],
 

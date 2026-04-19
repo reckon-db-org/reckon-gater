@@ -5,6 +5,73 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-04-19
+
+### Changed
+
+**BREAKING**: All modules renamed from the historical `esdb_*` prefix
+(ExESDBGater origin) to layer-qualified `reckon_gater_*`. Public API
+migration:
+
+| Old module | New module |
+|---|---|
+| `esdb_gater_api`            | `reckon_gater_api`            |
+| `esdb_gater_config`         | `reckon_gater_config`         |
+| `esdb_gater_retry`          | `reckon_gater_retry`          |
+| `esdb_gater_telemetry`      | `reckon_gater_telemetry`      |
+| `esdb_gater_worker_registry`| `reckon_gater_worker_registry`|
+| `esdb_gater_cluster_monitor`| `reckon_gater_cluster_monitor`|
+| `esdb_gater_cluster_sup`    | `reckon_gater_cluster_sup`    |
+| `esdb_gater_crypto_nif`     | `reckon_gater_crypto_nif`     |
+| `esdb_gater_repl`           | `reckon_gater_repl`           |
+| `esdb_capability`           | `reckon_gater_capability`     |
+| `esdb_identity`             | `reckon_gater_identity`       |
+| `esdb_pubsub_security`      | `reckon_gater_pubsub_security`|
+| `esdb_channel`              | `reckon_gater_channel`        |
+| `esdb_channel_*` (12 submodules) | `reckon_gater_channel_*`  |
+
+Header files:
+
+| Old header | New header |
+|---|---|
+| `esdb_gater.hrl`               | `reckon_gater.hrl`               |
+| `esdb_gater_types.hrl`         | `reckon_gater_types.hrl`         |
+| `esdb_gater_telemetry.hrl`     | `reckon_gater_telemetry.hrl`     |
+| `esdb_capability_types.hrl`    | `reckon_gater_capability_types.hrl` |
+
+Environment variable name: `ESDB_GATER_SECRET` → `RECKON_GATER_SECRET`.
+Deployments that rely on this env must update their configuration.
+
+### Migration
+
+Consumer code:
+
+```erlang
+%% Before
+{ok, Version} = esdb_gater_api:append_events(Store, Stream, Events).
+-include_lib("reckon_gater/include/esdb_gater_types.hrl").
+
+%% After
+{ok, Version} = reckon_gater_api:append_events(Store, Stream, Events).
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
+```
+
+Apply a tree-wide sed with word boundaries:
+```bash
+sed -i -E 's/\besdb_gater_api\b/reckon_gater_api/g; s/\besdb_gater_types\b/reckon_gater_types/g' **/*.erl **/*.hrl
+```
+
+### Rationale
+
+Module prefix now encodes the layer unambiguously:
+- `reckon_db_*`  — storage engine
+- `reckon_gater_*` — API gateway (this package)
+- `reckon_evoq_*` — adapter
+- `evoq_*` — CQRS framework
+
+No code change to the behaviour of any function. Function arities and
+return shapes are unchanged.
+
 ## [1.3.1] - 2026-03-19
 
 ### Added
@@ -22,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`esdb_gater_api:has_events/1`**: Unwrap `route_call` result to return plain
+- **`reckon_gater_api:has_events/1`**: Unwrap `route_call` result to return plain
   `boolean()` as specified. `route_call/2` wraps all results in `{ok, Value}`,
   so `has_events/1` was returning `{ok, true}` instead of `true`.
 
@@ -30,14 +97,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`esdb_gater_api:has_events/1`**: Check if a store contains at least one event.
+- **`reckon_gater_api:has_events/1`**: Check if a store contains at least one event.
   Routes to `reckon_db_streams:has_events/1` via gateway worker.
 
 ## [1.2.0] - 2026-03-06
 
 ### Added
 
-- **`esdb_gater_api:read_all_global/3`**: Read all events across all streams in
+- **`reckon_gater_api:read_all_global/3`**: Read all events across all streams in
   global epoch_us order. Used for catch-up subscriptions and event replay.
 
 ## [1.1.3] - 2026-03-05
@@ -111,8 +178,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Duplicate module conflict**: Renamed `esdb_crypto_nif` module to
-  `esdb_gater_crypto_nif` to avoid collision with reckon_db's module of the
+- **Duplicate module conflict**: Renamed `reckon_db_crypto_nif` module to
+  `reckon_gater_crypto_nif` to avoid collision with reckon_db's module of the
   same name. This fixes Mix release errors when both packages are used together.
 
 ## [0.6.5] - 2025-12-26
@@ -138,14 +205,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Capability Opt-In Mode**: Global configuration for capability enforcement
-  - `esdb_gater_config:capability_mode/0` - Get current mode (disabled|optional|required)
-  - `esdb_gater_config:set_capability_mode/1` - Set mode at runtime
-  - `esdb_gater_config:effective_capability_mode/1` - Get mode with channel override
+  - `reckon_gater_config:capability_mode/0` - Get current mode (disabled|optional|required)
+  - `reckon_gater_config:set_capability_mode/1` - Set mode at runtime
+  - `reckon_gater_config:effective_capability_mode/1` - Get mode with channel override
   - Configurable via sys.config: `{capability_mode, disabled | optional | required}`
   - Per-channel override still takes precedence (most restrictive wins)
 
 - **Interactive REPL**: Full-featured shell for event store exploration
-  - `esdb_gater_repl:start/0,1` - Start interactive shell
+  - `reckon_gater_repl:start/0,1` - Start interactive shell
   - Store commands: `stores`, `use STORE`
   - Stream commands: `streams`, `stream STREAM`, `read`, `version`
   - Causation commands: `effects`, `cause`, `chain`, `graph`, `dot FILE`
@@ -180,9 +247,9 @@ These additions support the erl-evoq-esdb adapter improvements.
 ### Changed
 
 - **Documentation Overhaul**: Fixed client-side guides to use correct gateway API
-  - `shared_types.md` - Replaced server API examples with `esdb_gater_api` calls
+  - `shared_types.md` - Replaced server API examples with `reckon_gater_api` calls
   - `event_sourcing.md` - Updated 5 code samples to use gateway API
-  - `cqrs.md` - Updated projection examples to use `esdb_gater_api`
+  - `cqrs.md` - Updated projection examples to use `reckon_gater_api`
   - `snapshots.md` - Complete rewrite with client-side perspective
   - `subscriptions.md` - Complete rewrite with gateway API and PubSub channels
   - `stream_links.md` - Updated subscription examples
@@ -201,7 +268,7 @@ These additions support the erl-evoq-esdb adapter improvements.
 - **NIF Extraction**: Moved Rust NIF to separate `reckon-nifs` package
   - NIFs are now loaded from `reckon_nifs` priv/ when available
   - Falls back to `reckon_gater` priv/ for standalone builds
-  - Renamed NIF to `esdb_gater_crypto_nif` to avoid conflict with reckon-db's NIF
+  - Renamed NIF to `reckon_gater_crypto_nif` to avoid conflict with reckon-db's NIF
   - Pure Erlang fallbacks unchanged for community edition
 
 - **Simplified Configuration**: Cleaned up rebar.config
@@ -216,19 +283,19 @@ These additions support the erl-evoq-esdb adapter improvements.
 
 ### Added
 
-- **Temporal Query Operations** (`esdb_gater_api`):
+- **Temporal Query Operations** (`reckon_gater_api`):
   - `read_until/3,4` - Read events up to a timestamp
   - `read_range/4,5` - Read events in a time range
   - `version_at/3` - Get stream version at a specific timestamp
   - New guide: `guides/temporal_queries.md`
 
-- **Scavenge Operations** (`esdb_gater_api`):
+- **Scavenge Operations** (`reckon_gater_api`):
   - `scavenge/3` - Delete old events from a stream
   - `scavenge_matching/3` - Scavenge streams matching a pattern
   - `scavenge_dry_run/3` - Preview what would be deleted
   - New guide: `guides/scavenging.md`
 
-- **Causation Tracking** (`esdb_gater_api`):
+- **Causation Tracking** (`reckon_gater_api`):
   - `get_effects/2` - Get events caused by an event
   - `get_cause/2` - Get the event that caused this one
   - `get_causation_chain/2` - Trace back to root cause
@@ -237,7 +304,7 @@ These additions support the erl-evoq-esdb adapter improvements.
   - New guide: `guides/causation.md`
   - New SVG: `assets/causation_graph.svg`
 
-- **Schema Operations** (`esdb_gater_api`):
+- **Schema Operations** (`reckon_gater_api`):
   - `register_schema/3` - Register event schema with version
   - `unregister_schema/2` - Remove a schema
   - `get_schema/2` - Get schema for an event type
@@ -247,12 +314,12 @@ These additions support the erl-evoq-esdb adapter improvements.
   - New guide: `guides/schema_evolution.md`
   - New SVG: `assets/schema_upcasting.svg`
 
-- **Memory Pressure Operations** (`esdb_gater_api`):
+- **Memory Pressure Operations** (`reckon_gater_api`):
   - `get_memory_level/1` - Get current pressure level (normal/elevated/critical)
   - `get_memory_stats/1` - Get detailed memory statistics
   - New guide: `guides/memory_pressure.md`
 
-- **Stream Link Operations** (`esdb_gater_api`):
+- **Stream Link Operations** (`reckon_gater_api`):
   - `create_link/2` - Create a derived stream with filter/transform
   - `delete_link/2` - Delete a link
   - `get_link/2` - Get link configuration
@@ -303,25 +370,25 @@ These additions support the erl-evoq-esdb adapter improvements.
 
 ### Added
 
-- **Capability-Based Security** (`esdb_capability.erl`, `esdb_identity.erl`):
+- **Capability-Based Security** (`reckon_gater_capability.erl`, `reckon_gater_identity.erl`):
   - UCAN-inspired capability tokens for decentralized authorization
   - Ed25519 keypair generation and DID encoding (`did:key` method)
   - Token creation, signing, and delegation with attenuation
   - JWT and Erlang binary encoding formats (auto-detected on decode)
   - Base58 encoding for DIDs (Bitcoin alphabet)
-  - Shared types in `include/esdb_capability_types.hrl`
+  - Shared types in `include/reckon_gater_capability_types.hrl`
   - Comprehensive security guide (`guides/capability_security.md`)
 
 - **Channel Capability Authorization**:
-  - `esdb_channel:publish/4` and `esdb_channel:subscribe/4` with capability token
+  - `reckon_gater_channel:publish/4` and `reckon_gater_channel:subscribe/4` with capability token
   - Channels can require capabilities via `requires_capability/0` callback
   - Resource URI format: `esdb://{realm}/channel/{channel_name}/{topic}`
   - Actions: `channel/publish` and `channel/subscribe`
-  - Integrates with `esdb_capability_verifier` in reckon-db for server-side verification
+  - Integrates with `reckon_db_capability_verifier` in reckon-db for server-side verification
 
 - **Optional NIF Acceleration** (Enterprise Edition):
   - Rust-based NIFs for Base58 encoding/decoding (5-10x faster)
-  - `esdb_crypto_nif.erl` wrapper with automatic fallback
+  - `reckon_db_crypto_nif.erl` wrapper with automatic fallback
   - `native/` directory with Rust crate (excluded from hex.pm)
   - Commented hooks in `rebar.config` for opt-in compilation
   - Pattern: Community (hex.pm) = pure Erlang, Enterprise (git) = NIF-accelerated
@@ -362,7 +429,7 @@ on reckon-db.
 ### Removed
 
 - **Ra dependency**: No longer required since registry uses pg
-- **esdb_gater_api worker**: Removed from supervision tree (API is now purely functional)
+- **reckon_gater_api worker**: Removed from supervision tree (API is now purely functional)
 
 ### Added
 
@@ -406,7 +473,7 @@ on reckon-db.
   - Configurable base delay, max delay, max attempts
   - Telemetry integration for retry tracking
 - PubSub Channel System:
-  - `esdb_channel` behavior for channel implementations
+  - `reckon_gater_channel` behavior for channel implementations
   - 10 dedicated channels with different priorities:
     - Critical: alerts, security (HMAC required, no rate limit)
     - High: events, health

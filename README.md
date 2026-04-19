@@ -40,17 +40,17 @@ application:ensure_all_started(reckon_gater).
 
 %% Append events to a stream
 Events = [#{type => <<"user_created">>, data => #{name => <<"Alice">>}}],
-{ok, Version} = esdb_gater_api:append_events(my_store, <<"users-123">>, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"users-123">>, Events).
 
 %% Read events from a stream
-{ok, EventList} = esdb_gater_api:stream_forward(my_store, <<"users-123">>, 0, 100).
+{ok, EventList} = reckon_gater_api:stream_forward(my_store, <<"users-123">>, 0, 100).
 
 %% Subscribe to PubSub channel
-ok = esdb_channel_server:subscribe(esdb_channel_events, <<"user.*">>, self()).
+ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"user.*">>, self()).
 
 %% Receive channel messages
 receive
-    {channel_message, esdb_channel_events, _Topic, Event} ->
+    {channel_message, reckon_gater_channel_events, _Topic, Event} ->
         handle_event(Event)
 end.
 ```
@@ -61,69 +61,69 @@ end.
 
 ```erlang
 %% Append events to a stream
-esdb_gater_api:append_events(StoreId, StreamId, Events) ->
+reckon_gater_api:append_events(StoreId, StreamId, Events) ->
     {ok, NewVersion} | {error, term()}.
-esdb_gater_api:append_events(StoreId, StreamId, ExpectedVersion, Events) ->
+reckon_gater_api:append_events(StoreId, StreamId, ExpectedVersion, Events) ->
     {ok, NewVersion} | {error, term()}.
 
 %% Read events from a stream
-esdb_gater_api:get_events(StoreId, StreamId, StartVersion, Count, Direction) ->
+reckon_gater_api:get_events(StoreId, StreamId, StartVersion, Count, Direction) ->
     {ok, [Event]} | {error, term()}.
-esdb_gater_api:stream_forward(StoreId, StreamId, StartVersion, Count) ->
+reckon_gater_api:stream_forward(StoreId, StreamId, StartVersion, Count) ->
     {ok, [Event]} | {error, term()}.
-esdb_gater_api:stream_backward(StoreId, StreamId, StartVersion, Count) ->
+reckon_gater_api:stream_backward(StoreId, StreamId, StartVersion, Count) ->
     {ok, [Event]} | {error, term()}.
 
 %% Stream metadata
-esdb_gater_api:get_version(StoreId, StreamId) -> {ok, Version} | {error, term()}.
-esdb_gater_api:stream_exists(StoreId, StreamId) -> boolean().
-esdb_gater_api:get_streams(StoreId) -> {ok, [StreamId]} | {error, term()}.
+reckon_gater_api:get_version(StoreId, StreamId) -> {ok, Version} | {error, term()}.
+reckon_gater_api:stream_exists(StoreId, StreamId) -> boolean().
+reckon_gater_api:get_streams(StoreId) -> {ok, [StreamId]} | {error, term()}.
 ```
 
 ### Subscription Operations
 
 ```erlang
 %% Create a subscription
-esdb_gater_api:save_subscription(StoreId, Type, Selector, Name, StartFrom, Subscriber) ->
+reckon_gater_api:save_subscription(StoreId, Type, Selector, Name, StartFrom, Subscriber) ->
     ok | {error, term()}.
 
 %% Remove a subscription
-esdb_gater_api:remove_subscription(StoreId, Type, Selector, Name) ->
+reckon_gater_api:remove_subscription(StoreId, Type, Selector, Name) ->
     ok | {error, term()}.
 
 %% Acknowledge event processing
-esdb_gater_api:ack_event(StoreId, StreamId, SubscriptionName, EventNumber) ->
+reckon_gater_api:ack_event(StoreId, StreamId, SubscriptionName, EventNumber) ->
     ok | {error, term()}.
 
 %% List subscriptions
-esdb_gater_api:get_subscriptions(StoreId) -> {ok, [Subscription]} | {error, term()}.
+reckon_gater_api:get_subscriptions(StoreId) -> {ok, [Subscription]} | {error, term()}.
 ```
 
 ### Snapshot Operations
 
 ```erlang
 %% Record a snapshot
-esdb_gater_api:record_snapshot(StoreId, SourceUuid, StreamUuid, Version, Record) ->
+reckon_gater_api:record_snapshot(StoreId, SourceUuid, StreamUuid, Version, Record) ->
     ok | {error, term()}.
 
 %% Read a snapshot
-esdb_gater_api:read_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
+reckon_gater_api:read_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     {ok, Snapshot} | {error, term()}.
 
 %% Delete a snapshot
-esdb_gater_api:delete_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
+reckon_gater_api:delete_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     ok | {error, term()}.
 
 %% List snapshots
-esdb_gater_api:list_snapshots(StoreId, SourceUuid, StreamUuid) ->
+reckon_gater_api:list_snapshots(StoreId, SourceUuid, StreamUuid) ->
     {ok, [Snapshot]} | {error, term()}.
 ```
 
 ### Health
 
 ```erlang
-esdb_gater_api:health() -> healthy | {degraded, Reason} | {unhealthy, Reason}.
-esdb_gater_api:quick_health_check(StoreId) -> ok | {error, term()}.
+reckon_gater_api:health() -> healthy | {degraded, Reason} | {unhealthy, Reason}.
+reckon_gater_api:quick_health_check(StoreId) -> ok | {error, term()}.
 ```
 
 ### Temporal Queries
@@ -132,17 +132,17 @@ Query events by timestamp for point-in-time reconstruction. See [Temporal Querie
 
 ```erlang
 %% Read events up to a timestamp
-esdb_gater_api:read_until(StoreId, StreamId, Timestamp) ->
+reckon_gater_api:read_until(StoreId, StreamId, Timestamp) ->
     {ok, [Event]} | {error, term()}.
-esdb_gater_api:read_until(StoreId, StreamId, Timestamp, Opts) ->
+reckon_gater_api:read_until(StoreId, StreamId, Timestamp, Opts) ->
     {ok, [Event]} | {error, term()}.
 
 %% Read events in a time range
-esdb_gater_api:read_range(StoreId, StreamId, FromTs, ToTs) ->
+reckon_gater_api:read_range(StoreId, StreamId, FromTs, ToTs) ->
     {ok, [Event]} | {error, term()}.
 
 %% Get stream version at a specific timestamp
-esdb_gater_api:version_at(StoreId, StreamId, Timestamp) ->
+reckon_gater_api:version_at(StoreId, StreamId, Timestamp) ->
     {ok, Version} | {error, term()}.
 ```
 
@@ -152,15 +152,15 @@ Remove old events beyond retention, optionally archive first. See [Scavenging Gu
 
 ```erlang
 %% Scavenge a stream (delete old events)
-esdb_gater_api:scavenge(StoreId, StreamId, Opts) ->
+reckon_gater_api:scavenge(StoreId, StreamId, Opts) ->
     {ok, Result} | {error, term()}.
 
 %% Scavenge streams matching a pattern
-esdb_gater_api:scavenge_matching(StoreId, Pattern, Opts) ->
+reckon_gater_api:scavenge_matching(StoreId, Pattern, Opts) ->
     {ok, [Result]} | {error, term()}.
 
 %% Preview what would be deleted (dry run)
-esdb_gater_api:scavenge_dry_run(StoreId, StreamId, Opts) ->
+reckon_gater_api:scavenge_dry_run(StoreId, StreamId, Opts) ->
     {ok, Preview} | {error, term()}.
 ```
 
@@ -172,23 +172,23 @@ Track event lineage for debugging and auditing. See [Causation Guide](guides/cau
 
 ```erlang
 %% Get events caused by an event
-esdb_gater_api:get_effects(StoreId, EventId) ->
+reckon_gater_api:get_effects(StoreId, EventId) ->
     {ok, [Event]} | {error, term()}.
 
 %% Get the event that caused this one
-esdb_gater_api:get_cause(StoreId, EventId) ->
+reckon_gater_api:get_cause(StoreId, EventId) ->
     {ok, Event} | {error, not_found}.
 
 %% Get full causation chain (root to this event)
-esdb_gater_api:get_causation_chain(StoreId, EventId) ->
+reckon_gater_api:get_causation_chain(StoreId, EventId) ->
     {ok, [Event]} | {error, term()}.
 
 %% Get all events with the same correlation ID
-esdb_gater_api:get_correlated(StoreId, CorrelationId) ->
+reckon_gater_api:get_correlated(StoreId, CorrelationId) ->
     {ok, [Event]} | {error, term()}.
 
 %% Build causation graph for visualization
-esdb_gater_api:build_causation_graph(StoreId, EventId) ->
+reckon_gater_api:build_causation_graph(StoreId, EventId) ->
     {ok, Graph} | {error, term()}.
 ```
 
@@ -200,21 +200,21 @@ Schema registry with automatic upcasting. See [Schema Evolution Guide](guides/sc
 
 ```erlang
 %% Register a schema
-esdb_gater_api:register_schema(StoreId, EventType, Schema) -> ok.
+reckon_gater_api:register_schema(StoreId, EventType, Schema) -> ok.
 
 %% Get schema for an event type
-esdb_gater_api:get_schema(StoreId, EventType) ->
+reckon_gater_api:get_schema(StoreId, EventType) ->
     {ok, Schema} | {error, not_found}.
 
 %% List all schemas
-esdb_gater_api:list_schemas(StoreId) -> {ok, [SchemaInfo]}.
+reckon_gater_api:list_schemas(StoreId) -> {ok, [SchemaInfo]}.
 
 %% Upcast events to current schema version
-esdb_gater_api:upcast_events(StoreId, Events) ->
+reckon_gater_api:upcast_events(StoreId, Events) ->
     {ok, UpcastedEvents} | {error, term()}.
 
 %% Unregister a schema
-esdb_gater_api:unregister_schema(StoreId, EventType) -> ok.
+reckon_gater_api:unregister_schema(StoreId, EventType) -> ok.
 ```
 
 ### Memory Pressure
@@ -223,11 +223,11 @@ Adaptive behavior based on system memory. See [Memory Pressure Guide](guides/mem
 
 ```erlang
 %% Get current memory pressure level
-esdb_gater_api:get_memory_level(StoreId) ->
+reckon_gater_api:get_memory_level(StoreId) ->
     {ok, normal | elevated | critical}.
 
 %% Get detailed memory statistics
-esdb_gater_api:get_memory_stats(StoreId) ->
+reckon_gater_api:get_memory_stats(StoreId) ->
     {ok, #{used := bytes(), total := bytes(), level := atom()}}.
 ```
 
@@ -239,24 +239,24 @@ Create derived streams from source streams. See [Stream Links Guide](guides/stre
 
 ```erlang
 %% Create a new link (filter + transform)
-esdb_gater_api:create_link(StoreId, LinkSpec) -> ok.
+reckon_gater_api:create_link(StoreId, LinkSpec) -> ok.
 
 %% Delete a link
-esdb_gater_api:delete_link(StoreId, LinkName) -> ok.
+reckon_gater_api:delete_link(StoreId, LinkName) -> ok.
 
 %% Get link by name
-esdb_gater_api:get_link(StoreId, LinkName) ->
+reckon_gater_api:get_link(StoreId, LinkName) ->
     {ok, LinkInfo} | {error, not_found}.
 
 %% List all links
-esdb_gater_api:list_links(StoreId) -> {ok, [LinkInfo]}.
+reckon_gater_api:list_links(StoreId) -> {ok, [LinkInfo]}.
 
 %% Start/stop a link
-esdb_gater_api:start_link(StoreId, LinkName) -> ok.
-esdb_gater_api:stop_link(StoreId, LinkName) -> ok.
+reckon_gater_api:start_link(StoreId, LinkName) -> ok.
+reckon_gater_api:stop_link(StoreId, LinkName) -> ok.
 
 %% Get detailed link info
-esdb_gater_api:link_info(StoreId, LinkName) ->
+reckon_gater_api:link_info(StoreId, LinkName) ->
     {ok, #{status := atom(), events_processed := integer()}}.
 ```
 
@@ -264,21 +264,21 @@ esdb_gater_api:link_info(StoreId, LinkName) ->
 
 ```erlang
 %% Subscribe to a topic
-esdb_channel_server:subscribe(ChannelName, Topic, Pid) -> ok.
+reckon_gater_channel_server:subscribe(ChannelName, Topic, Pid) -> ok.
 
 %% Subscribe with capability token (for authorization)
-esdb_channel_server:subscribe(ChannelName, Topic, Pid, CapabilityToken) ->
+reckon_gater_channel_server:subscribe(ChannelName, Topic, Pid, CapabilityToken) ->
     ok | {error, {unauthorized, Reason}}.
 
 %% Unsubscribe from a topic
-esdb_channel_server:unsubscribe(ChannelName, Topic, Pid) -> ok.
+reckon_gater_channel_server:unsubscribe(ChannelName, Topic, Pid) -> ok.
 
 %% Publish a message
-esdb_channel_server:publish(ChannelName, Topic, Message) ->
+reckon_gater_channel_server:publish(ChannelName, Topic, Message) ->
     ok | {error, rate_limited | signature_required | invalid_signature}.
 
 %% Publish with capability token (for authorization)
-esdb_channel_server:publish(ChannelName, Topic, Message, CapabilityToken) ->
+reckon_gater_channel_server:publish(ChannelName, Topic, Message, CapabilityToken) ->
     ok | {error, {unauthorized, Reason}}.
 ```
 
@@ -286,30 +286,30 @@ esdb_channel_server:publish(ChannelName, Topic, Message, CapabilityToken) ->
 
 ```erlang
 %% Sign a message with default secret
-esdb_pubsub_security:sign(Message) -> SignedMessage.
+reckon_gater_pubsub_security:sign(Message) -> SignedMessage.
 
 %% Sign with custom secret
-esdb_pubsub_security:sign(Message, Secret) -> SignedMessage.
+reckon_gater_pubsub_security:sign(Message, Secret) -> SignedMessage.
 
 %% Verify a signed message
-esdb_pubsub_security:verify(SignedMessage) -> ok | {error, Reason}.
+reckon_gater_pubsub_security:verify(SignedMessage) -> ok | {error, Reason}.
 
 %% Set the default secret
-esdb_pubsub_security:set_secret(Secret) -> ok.
+reckon_gater_pubsub_security:set_secret(Secret) -> ok.
 ```
 
 ### Retry Configuration
 
 ```erlang
 %% Create custom retry config
-Config = esdb_gater_retry:new_config(
+Config = reckon_gater_retry:new_config(
     100,     %% base_delay_ms
     5000,    %% max_delay_ms
     5        %% max_attempts
 ),
 
 %% Execute with custom retry
-esdb_gater_api:execute(my_store, Fun, Config).
+reckon_gater_api:execute(my_store, Fun, Config).
 ```
 
 ## Channels
@@ -320,16 +320,16 @@ The gateway provides 10 dedicated PubSub channels:
 
 | Channel | Priority | Rate Limit | HMAC | Purpose |
 |---------|----------|------------|------|---------|
-| `esdb_channel_alerts` | critical | unlimited | required | Critical system alerts |
-| `esdb_channel_security` | critical | unlimited | required | Security events |
-| `esdb_channel_events` | high | unlimited | optional | Business events |
-| `esdb_channel_health` | high | 100/sec | optional | Health checks |
-| `esdb_channel_system` | normal | unlimited | optional | System notifications |
-| `esdb_channel_metrics` | normal | 10000/sec | optional | Performance metrics |
-| `esdb_channel_audit` | normal | unlimited | optional | Audit trail |
-| `esdb_channel_lifecycle` | normal | unlimited | optional | Lifecycle events |
-| `esdb_channel_logging` | low | 1000/sec | optional | Log messages |
-| `esdb_channel_diagnostics` | low | 100/sec | optional | Diagnostic info |
+| `reckon_gater_channel_alerts` | critical | unlimited | required | Critical system alerts |
+| `reckon_gater_channel_security` | critical | unlimited | required | Security events |
+| `reckon_gater_channel_events` | high | unlimited | optional | Business events |
+| `reckon_gater_channel_health` | high | 100/sec | optional | Health checks |
+| `reckon_gater_channel_system` | normal | unlimited | optional | System notifications |
+| `reckon_gater_channel_metrics` | normal | 10000/sec | optional | Performance metrics |
+| `reckon_gater_channel_audit` | normal | unlimited | optional | Audit trail |
+| `reckon_gater_channel_lifecycle` | normal | unlimited | optional | Lifecycle events |
+| `reckon_gater_channel_logging` | low | 1000/sec | optional | Log messages |
+| `reckon_gater_channel_diagnostics` | low | 100/sec | optional | Diagnostic info |
 
 ### Channel Priorities
 
@@ -372,10 +372,10 @@ The gateway provides 10 dedicated PubSub channels:
 
     %% Channel configuration
     {channels, [
-        {esdb_channel_events, [
+        {reckon_gater_channel_events, [
             {priority, high}
         ]},
-        {esdb_channel_metrics, [
+        {reckon_gater_channel_metrics, [
             {max_rate, 10000}
         ]}
     ]},
@@ -395,33 +395,33 @@ The gateway provides 10 dedicated PubSub channels:
 
 | Event | Measurements | Metadata |
 |-------|--------------|----------|
-| `[esdb_gater, worker, registered]` | system_time | store_id, node, pid |
-| `[esdb_gater, worker, unregistered]` | system_time | store_id, pid |
-| `[esdb_gater, worker, lookup]` | duration | store_id |
-| `[esdb_gater, request, start]` | system_time | store_id, request_type |
-| `[esdb_gater, request, stop]` | duration | store_id, request_type, result |
-| `[esdb_gater, request, error]` | duration | store_id, request_type, reason |
-| `[esdb_gater, retry, attempt]` | delay_ms, attempt | store_id, reason |
-| `[esdb_gater, retry, exhausted]` | total_attempts | store_id, reason |
-| `[esdb_gater, cluster, node, up]` | system_time | node, member_count |
-| `[esdb_gater, cluster, node, down]` | system_time | node, member_count |
-| `[esdb_gater, channel, broadcast]` | recipient_count | channel, topic |
+| `[reckon_gater, worker, registered]` | system_time | store_id, node, pid |
+| `[reckon_gater, worker, unregistered]` | system_time | store_id, pid |
+| `[reckon_gater, worker, lookup]` | duration | store_id |
+| `[reckon_gater, request, start]` | system_time | store_id, request_type |
+| `[reckon_gater, request, stop]` | duration | store_id, request_type, result |
+| `[reckon_gater, request, error]` | duration | store_id, request_type, reason |
+| `[reckon_gater, retry, attempt]` | delay_ms, attempt | store_id, reason |
+| `[reckon_gater, retry, exhausted]` | total_attempts | store_id, reason |
+| `[reckon_gater, cluster, node, up]` | system_time | node, member_count |
+| `[reckon_gater, cluster, node, down]` | system_time | node, member_count |
+| `[reckon_gater, channel, broadcast]` | recipient_count | channel, topic |
 
 ### Attaching Handlers
 
 ```erlang
 %% Attach default logger handler
-ok = esdb_gater_telemetry:attach_default_handler().
+ok = reckon_gater_telemetry:attach_default_handler().
 
 %% Attach custom handler
 Handler = fun(Event, Measurements, Meta, Config) ->
     %% Your custom handling
     ok
 end,
-ok = esdb_gater_telemetry:attach(my_handler, Handler, #{}).
+ok = reckon_gater_telemetry:attach(my_handler, Handler, #{}).
 
 %% Detach handler
-ok = esdb_gater_telemetry:detach(my_handler).
+ok = reckon_gater_telemetry:detach(my_handler).
 ```
 
 ## Building
@@ -471,28 +471,28 @@ Use the gateway API to access reckon-db with automatic load balancing and retry:
 
 ```erlang
 %% Stream operations
-{ok, Version} = esdb_gater_api:append_events(my_store, StreamId, Events).
-{ok, Version} = esdb_gater_api:append_events(my_store, StreamId, ExpectedVersion, Events).
-{ok, Events} = esdb_gater_api:stream_forward(my_store, StreamId, 0, 100).
-{ok, Events} = esdb_gater_api:stream_backward(my_store, StreamId, 100, 50).
-{ok, Version} = esdb_gater_api:get_version(my_store, StreamId).
-true = esdb_gater_api:stream_exists(my_store, StreamId).
+{ok, Version} = reckon_gater_api:append_events(my_store, StreamId, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, StreamId, ExpectedVersion, Events).
+{ok, Events} = reckon_gater_api:stream_forward(my_store, StreamId, 0, 100).
+{ok, Events} = reckon_gater_api:stream_backward(my_store, StreamId, 100, 50).
+{ok, Version} = reckon_gater_api:get_version(my_store, StreamId).
+true = reckon_gater_api:stream_exists(my_store, StreamId).
 
 %% Subscription operations
-ok = esdb_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).
-ok = esdb_gater_api:remove_subscription(my_store, stream, StreamId, <<"my_sub">>).
-ok = esdb_gater_api:ack_event(my_store, StreamId, <<"my_sub">>, EventNumber).
-{ok, Subs} = esdb_gater_api:get_subscriptions(my_store).
+ok = reckon_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).
+ok = reckon_gater_api:remove_subscription(my_store, stream, StreamId, <<"my_sub">>).
+ok = reckon_gater_api:ack_event(my_store, StreamId, <<"my_sub">>, EventNumber).
+{ok, Subs} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Snapshot operations
-ok = esdb_gater_api:record_snapshot(my_store, SourceUuid, StreamUuid, Version, Record).
-{ok, Snap} = esdb_gater_api:read_snapshot(my_store, SourceUuid, StreamUuid, Version).
-ok = esdb_gater_api:delete_snapshot(my_store, SourceUuid, StreamUuid, Version).
-{ok, Snaps} = esdb_gater_api:list_snapshots(my_store, SourceUuid, StreamUuid).
+ok = reckon_gater_api:record_snapshot(my_store, SourceUuid, StreamUuid, Version, Record).
+{ok, Snap} = reckon_gater_api:read_snapshot(my_store, SourceUuid, StreamUuid, Version).
+ok = reckon_gater_api:delete_snapshot(my_store, SourceUuid, StreamUuid, Version).
+{ok, Snaps} = reckon_gater_api:list_snapshots(my_store, SourceUuid, StreamUuid).
 
 %% Health check
-healthy = esdb_gater_api:health().
-ok = esdb_gater_api:quick_health_check(my_store).
+healthy = reckon_gater_api:health().
+ok = reckon_gater_api:quick_health_check(my_store).
 ```
 
 ### Deployment
@@ -505,7 +505,7 @@ application:ensure_all_started(reckon_db).
 
 %% Gateway workers auto-register with the pg-based registry
 %% Use the gater API for all operations
-{ok, Version} = esdb_gater_api:append_events(my_store, StreamId, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, StreamId, Events).
 ```
 
 In a multi-node cluster, each node runs reckon-db with its gateway worker. The pg-based registry provides:
