@@ -36,7 +36,8 @@
     register_worker/2,
     unregister_worker/1,
     unregister_worker/2,
-    get_workers/1
+    get_workers/1,
+    pick_worker/3
 ]).
 
 %% Stream operations
@@ -683,21 +684,56 @@ route_cast(StoreId, Request) ->
     end,
     ok.
 
-%% @private Select a worker using round-robin
+%% @doc Pure worker-selection policy behind {@link select_worker/1}.
+%%
+%% Prefers workers on the caller's own node when any exist; falls
+%% back to cluster-wide round-robin only when no local worker is
+%% present. Extracted so the policy can be exercised without a
+%% running pg scope.
+%%
+%% == Why local-first ==
+%%
+%% The worker registry is pg-based, so a call to {@link get_workers/1}
+%% returns PIDs from every BEAM-connected node. That's the right pool
+%% for stores that form a shared Raft cluster — any worker writes
+%% into the same Khepri state machine and reads are cluster-wide.
+%%
+%% For stores that stay local per node (autojoin=false), a write
+%% routed to a remote worker persists in THAT node's private store
+%% and is invisible to the caller's local store. Preferring the
+%% caller's own node keeps each daemon's writes on its own disk.
+%% Falling back to the remote pool preserves the cluster-wide
+%% behaviour when the local worker isn't registered yet (boot race)
+%% or when the store is genuinely clustered and the caller has no
+%% local presence.
+-spec pick_worker([worker_entry()], node(), non_neg_integer()) ->
+    {ok, worker_entry(), non_neg_integer()} | {error, no_workers}.
+pick_worker([], _Node, _Index) ->
+    {error, no_workers};
+pick_worker(Workers, Node, Index) ->
+    Candidates = case [W || W <- Workers, W#worker_entry.node =:= Node] of
+        []    -> Workers;
+        Local -> Local
+    end,
+    Pick = lists:nth((Index rem length(Candidates)) + 1, Candidates),
+    {ok, Pick, Index + 1}.
+
+%% @private Select a worker using round-robin with local-node preference.
 -spec select_worker(atom()) -> {ok, worker_entry()} | {error, no_workers}.
 select_worker(StoreId) ->
     case reckon_gater_worker_registry:get_workers(StoreId) of
-        {ok, []} ->
-            {error, no_workers};
         {ok, Workers} ->
-            %% Simple round-robin using process dictionary
             Index = case get({worker_index, StoreId}) of
                 undefined -> 0;
                 N -> N
             end,
-            Worker = lists:nth((Index rem length(Workers)) + 1, Workers),
-            put({worker_index, StoreId}, Index + 1),
-            {ok, Worker};
+            case pick_worker(Workers, node(), Index) of
+                {ok, Worker, NextIndex} ->
+                    put({worker_index, StoreId}, NextIndex),
+                    {ok, Worker};
+                {error, no_workers} = Err ->
+                    Err
+            end;
         {error, _} = Error ->
             Error
     end.

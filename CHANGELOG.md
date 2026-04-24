@@ -5,6 +5,28 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-04-24
+
+### Fixed
+
+- `reckon_gater_api:select_worker/1` now prefers workers on the
+  caller's own node when any exist, falling back to the full
+  cluster-wide round-robin only when no local worker is present.
+
+  The registry is pg-based and returns PIDs from every connected
+  BEAM node. That pool is correct for stores that form a shared
+  Raft cluster — any worker writes into the same Khepri state
+  machine. But when a store stays local per node (the
+  `HECATE_AUTOJOIN_STORES=false` case in hecate-daemon), a write
+  routed to a remote worker persists in THAT node's private store
+  and becomes invisible to the caller: the gater returned
+  `{ok, Version}` while the caller's local stream was still empty,
+  silently diverging each daemon's view of its own data.
+
+  The selection policy is extracted into a pure helper,
+  `reckon_gater_api:pick_worker/3`, and covered by
+  `test/unit/reckon_gater_worker_selection_tests.erl`.
+
 ## [2.0.0] - 2026-04-19
 
 ### Changed
