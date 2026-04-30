@@ -4,7 +4,7 @@
 [![Hexdocs.pm](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/reckon_gater)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg)](https://buymeacoffee.com/beamologist)
 
-Gateway for distributed access to [reckon-db](https://github.com/reckon-db-org/reckon-db) event stores.
+Gateway for distributed access to [reckon-db](https://codeberg.org/reckon-db-org/reckon-db) event stores.
 
 ![Gateway Architecture](assets/gateway_architecture.svg)
 
@@ -453,7 +453,7 @@ rebar3 ct --suite=test/e2e/reckon_gater_e2e_SUITE
 
 ## Integration with reckon-db
 
-reckon-gater is designed to work with [reckon-db](https://github.com/reckon-db-org/reckon-db) to provide load-balanced, distributed access to event stores.
+reckon-gater is designed to work with [reckon-db](https://codeberg.org/reckon-db-org/reckon-db) to provide load-balanced, distributed access to event stores.
 
 ### Automatic Worker Registration
 
@@ -548,9 +548,9 @@ See the [Shared Types Guide](guides/shared_types.md) for detailed usage.
 
 | Project | Description |
 |---------|-------------|
-| [reckon-db](https://github.com/reckon-db-org/reckon-db) | Core event store built on Khepri/Ra |
-| [evoq](https://github.com/reckon-db-org/evoq) | CQRS/Event Sourcing framework |
-| [reckon-evoq](https://github.com/reckon-db-org/reckon-evoq) | Adapter connecting evoq to reckon-db |
+| [reckon-db](https://codeberg.org/reckon-db-org/reckon-db) | Core event store built on Khepri/Ra |
+| [evoq](https://codeberg.org/reckon-db-org/evoq) | CQRS/Event Sourcing framework |
+| [reckon-evoq](https://codeberg.org/reckon-db-org/reckon-evoq) | Adapter connecting evoq to reckon-db |
 
 ## License
 
