@@ -51,8 +51,8 @@ After scavenging (before=v500):
 
 | Operation | Location | Module |
 |-----------|----------|--------|
-| Scavenge API calls | Your Application | `esdb_gater_api` |
-| Snapshot creation | Your Application | `esdb_gater_api` |
+| Scavenge API calls | Your Application | `reckon_gater_api` |
+| Snapshot creation | Your Application | `reckon_gater_api` |
 | Event deletion | reckon-db Server | Internal |
 | Archival (optional) | reckon-db Server | `reckon_db_archive_*` |
 
@@ -72,7 +72,7 @@ After scavenging (before=v500):
 ThirtyDaysAgo = erlang:system_time(microsecond) - (30 * 24 * 60 * 60 * 1000000),
 
 %% Scavenge the stream
-{ok, Result} = esdb_gater_api:scavenge(my_store, <<"orders-123">>, #{
+{ok, Result} = reckon_gater_api:scavenge(my_store, <<"orders-123">>, #{
     before => ThirtyDaysAgo,
     require_snapshot => true  %% Safety: only scavenge if snapshot exists
 }).
@@ -96,7 +96,7 @@ ThirtyDaysAgo = erlang:system_time(microsecond) - (30 * 24 * 60 * 60 * 1000000),
 %% Scavenge all order streams older than 90 days
 NinetyDaysAgo = erlang:system_time(microsecond) - (90 * 24 * 60 * 60 * 1000000),
 
-{ok, Results} = esdb_gater_api:scavenge_matching(my_store, <<"orders-*">>, #{
+{ok, Results} = reckon_gater_api:scavenge_matching(my_store, <<"orders-*">>, #{
     before => NinetyDaysAgo,
     require_snapshot => true
 }).
@@ -118,7 +118,7 @@ NinetyDaysAgo = erlang:system_time(microsecond) - (90 * 24 * 60 * 60 * 1000000),
 %%--------------------------------------------------------------------
 
 %% ALWAYS preview before executing
-{ok, Preview} = esdb_gater_api:scavenge_dry_run(my_store, <<"orders-123">>, #{
+{ok, Preview} = reckon_gater_api:scavenge_dry_run(my_store, <<"orders-123">>, #{
     before => ThirtyDaysAgo
 }).
 
@@ -163,7 +163,7 @@ run_daily_scavenge() ->
              (RetentionDays * 24 * 60 * 60 * 1000000),
 
     %% Scavenge all order streams
-    {ok, Results} = esdb_gater_api:scavenge_matching(my_store, <<"orders-*">>, #{
+    {ok, Results} = reckon_gater_api:scavenge_matching(my_store, <<"orders-*">>, #{
         before => Cutoff,
         require_snapshot => true
     }),
@@ -191,7 +191,7 @@ archive_and_scavenge(StoreId, StreamId, RetentionDays) ->
              (RetentionDays * 24 * 60 * 60 * 1000000),
 
     %% Archive to file before scavenging
-    {ok, _} = esdb_gater_api:scavenge(StoreId, StreamId, #{
+    {ok, _} = reckon_gater_api:scavenge(StoreId, StreamId, #{
         before => Cutoff,
         archive_to => file,
         archive_path => <<"/archive/", StreamId/binary, ".events">>
@@ -208,13 +208,13 @@ By default, scavenging **requires** a snapshot to exist. This prevents accidenta
 
 ```erlang
 %% This will fail if no snapshot exists
-{error, no_snapshot} = esdb_gater_api:scavenge(my_store, StreamId, #{
+{error, no_snapshot} = reckon_gater_api:scavenge(my_store, StreamId, #{
     before => Timestamp,
     require_snapshot => true  %% Default
 }).
 
 %% Override only if you understand the consequences
-{ok, _} = esdb_gater_api:scavenge(my_store, StreamId, #{
+{ok, _} = reckon_gater_api:scavenge(my_store, StreamId, #{
     before => Timestamp,
     require_snapshot => false  %% DANGER: may lose state if no snapshot
 }).
@@ -230,7 +230,7 @@ Always keep some recent events regardless of timestamp:
 %% Purpose: Keep a minimum event history for debugging
 %%--------------------------------------------------------------------
 
-{ok, _} = esdb_gater_api:scavenge(my_store, StreamId, #{
+{ok, _} = reckon_gater_api:scavenge(my_store, StreamId, #{
     before => Timestamp,
     keep_versions => 100  %% Always keep last 100 events
 }).
@@ -244,15 +244,15 @@ Always keep some recent events regardless of timestamp:
 
 ```erlang
 %% BAD: Scavenging without ensuring a snapshot exists
-{ok, _} = esdb_gater_api:scavenge(my_store, StreamId, #{
+{ok, _} = reckon_gater_api:scavenge(my_store, StreamId, #{
     before => Timestamp,
     require_snapshot => false  %% State might be lost!
 }).
 
 %% GOOD: Take a snapshot first, then scavenge
 {ok, State} = reconstruct_aggregate(StreamId),
-{ok, Version} = esdb_gater_api:save_snapshot(my_store, StreamId, State),
-{ok, _} = esdb_gater_api:scavenge(my_store, StreamId, #{
+{ok, Version} = reckon_gater_api:save_snapshot(my_store, StreamId, State),
+{ok, _} = reckon_gater_api:scavenge(my_store, StreamId, #{
     before => Timestamp,
     require_snapshot => true
 }).
@@ -272,13 +272,13 @@ GoodCutoff = erlang:system_time(microsecond) - (30 * 24 * 60 * 60 * 1000000).
 
 ```erlang
 %% BAD: Scavenging production data without preview
-esdb_gater_api:scavenge(prod_store, <<"important-stream">>, #{...}).
+reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{...}).
 
 %% GOOD: Always dry run first
-{ok, Preview} = esdb_gater_api:scavenge_dry_run(prod_store, <<"important-stream">>, #{...}),
+{ok, Preview} = reckon_gater_api:scavenge_dry_run(prod_store, <<"important-stream">>, #{...}),
 logger:info("Would delete ~p events", [maps:get(would_delete, Preview)]),
 %% Review preview, then proceed if acceptable
-esdb_gater_api:scavenge(prod_store, <<"important-stream">>, #{...}).
+reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{...}).
 ```
 
 ---

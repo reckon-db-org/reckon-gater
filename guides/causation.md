@@ -48,10 +48,10 @@ Every event carries metadata that links it to its origin:
 | Operation | Location | Module |
 |-----------|----------|--------|
 | Set causation/correlation IDs | Your Application | Your command handlers |
-| Append events with metadata | Your Application | `esdb_gater_api` |
-| Query causation relationships | Your Application | `esdb_gater_api` |
+| Append events with metadata | Your Application | `reckon_gater_api` |
+| Query causation relationships | Your Application | `reckon_gater_api` |
 | Build causation graph | reckon-db Server | `reckon_db_causation` |
-| Generate DOT visualization | reckon-db Server | `esdb_graph_nif` |
+| Generate DOT visualization | reckon-db Server | `reckon_db_graph_nif` |
 
 ---
 
@@ -83,7 +83,7 @@ handle_command(Command, State) ->
         }
     ],
 
-    {ok, _} = esdb_gater_api:append_events(my_store, StreamId, Events).
+    {ok, _} = reckon_gater_api:append_events(my_store, StreamId, Events).
 ```
 
 ### Get Effects (What Did This Event Cause?)
@@ -95,7 +95,7 @@ handle_command(Command, State) ->
 %%--------------------------------------------------------------------
 
 %% What events did OrderCreated cause?
-{ok, Effects} = esdb_gater_api:get_effects(my_store, <<"evt-001">>).
+{ok, Effects} = reckon_gater_api:get_effects(my_store, <<"evt-001">>).
 
 %% Returns events where causation_id = "evt-001"
 [
@@ -113,7 +113,7 @@ handle_command(Command, State) ->
 %%--------------------------------------------------------------------
 
 %% What caused PaymentInitiated?
-{ok, Cause} = esdb_gater_api:get_cause(my_store, <<"evt-002">>).
+{ok, Cause} = reckon_gater_api:get_cause(my_store, <<"evt-002">>).
 
 %% Returns the parent event
 #{event_type => <<"OrderCreated">>, id => <<"evt-001">>, ...}
@@ -128,7 +128,7 @@ handle_command(Command, State) ->
 %%--------------------------------------------------------------------
 
 %% Trace PaymentFailed back to its origin
-{ok, Chain} = esdb_gater_api:get_causation_chain(my_store, <<"evt-007">>).
+{ok, Chain} = reckon_gater_api:get_causation_chain(my_store, <<"evt-007">>).
 
 %% Returns events from root to this event
 [
@@ -148,7 +148,7 @@ handle_command(Command, State) ->
 %%--------------------------------------------------------------------
 
 %% Get all events for order processing
-{ok, Events} = esdb_gater_api:get_correlated(my_store, <<"order-12345">>).
+{ok, Events} = reckon_gater_api:get_correlated(my_store, <<"order-12345">>).
 
 %% Returns all events with correlation_id = "order-12345"
 ```
@@ -161,7 +161,7 @@ handle_command(Command, State) ->
 %% Purpose: Build a graph structure for visualization tools
 %%--------------------------------------------------------------------
 
-{ok, Graph} = esdb_gater_api:build_causation_graph(my_store, <<"evt-001">>).
+{ok, Graph} = reckon_gater_api:build_causation_graph(my_store, <<"evt-001">>).
 
 %% Returns a graph structure
 #{
@@ -198,12 +198,12 @@ When a payment fails, trace back to understand the full context:
 
 debug_failure(StoreId, FailedEventId) ->
     %% Get the causation chain (how we got here)
-    {ok, Chain} = esdb_gater_api:get_causation_chain(StoreId, FailedEventId),
+    {ok, Chain} = reckon_gater_api:get_causation_chain(StoreId, FailedEventId),
 
     %% Get all related events (what else happened)
     {ok, FailedEvent} = get_event(StoreId, FailedEventId),
     CorrelationId = maps:get(correlation_id, maps:get(metadata, FailedEvent)),
-    {ok, AllEvents} = esdb_gater_api:get_correlated(StoreId, CorrelationId),
+    {ok, AllEvents} = reckon_gater_api:get_correlated(StoreId, CorrelationId),
 
     #{
         causation_chain => Chain,          %% Direct ancestors
@@ -236,7 +236,7 @@ start_saga(OrderId) ->
 
 %% Later: check saga progress
 get_saga_status(OrderId) ->
-    {ok, Events} = esdb_gater_api:get_correlated(my_store, OrderId),
+    {ok, Events} = reckon_gater_api:get_correlated(my_store, OrderId),
     analyze_saga_state(Events).
 ```
 
@@ -251,10 +251,10 @@ Export causation graphs for visual analysis:
 %%--------------------------------------------------------------------
 
 visualize_causation(StoreId, EventId) ->
-    {ok, Graph} = esdb_gater_api:build_causation_graph(StoreId, EventId),
+    {ok, Graph} = reckon_gater_api:build_causation_graph(StoreId, EventId),
 
-    %% Convert to DOT format (using esdb_graph_nif on server)
-    DOT = esdb_graph_nif:to_dot(Graph),
+    %% Convert to DOT format (using reckon_db_graph_nif on server)
+    DOT = reckon_db_graph_nif:to_dot(Graph),
 
     %% Write to file and render with Graphviz
     file:write_file("causation.dot", DOT),
@@ -297,7 +297,7 @@ create_event_metadata(CausingId, CorrelationId, ActorId) ->
 handle_event(OrderCreated, State) ->
     NewEvent = #{event_type => <<"PaymentRequested">>, data => ...},
     %% Missing causation_id! Lineage is broken.
-    esdb_gater_api:append_events(Store, Stream, [NewEvent]).
+    reckon_gater_api:append_events(Store, Stream, [NewEvent]).
 
 %% GOOD: Preserve causation chain
 handle_event(OrderCreated = #{id := EventId, metadata := Meta}, State) ->
@@ -310,7 +310,7 @@ handle_event(OrderCreated = #{id := EventId, metadata := Meta}, State) ->
             correlation_id => CorrelationId  %% Same business process
         }
     },
-    esdb_gater_api:append_events(Store, Stream, [NewEvent]).
+    reckon_gater_api:append_events(Store, Stream, [NewEvent]).
 ```
 
 ### 2. Using Wrong ID for Correlation

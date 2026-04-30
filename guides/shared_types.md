@@ -34,10 +34,10 @@ Event = #{
     data => #{user_id => <<"usr-123">>, email => <<"alice@example.com">>},
     metadata => #{correlation_id => <<"req-456">>}
 },
-{ok, Version} = esdb_gater_api:append_events(my_store, <<"user-usr-123">>, [Event]).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"user-usr-123">>, [Event]).
 
 %% Reading events returns #event{} records
-{ok, Events} = esdb_gater_api:stream_forward(my_store, <<"user-usr-123">>, 0, 100),
+{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"user-usr-123">>, 0, 100),
 lists:foreach(fun(#event{event_type = Type, data = Data}) ->
     io:format("Event: ~s, Data: ~p~n", [Type, Data])
 end, Events).
@@ -62,13 +62,13 @@ The `#snapshot{}` record stores aggregate state at a specific version for fast r
 ```erlang
 %% Save a snapshot via gateway
 State = #{balance => 1000, status => active},
-ok = esdb_gater_api:record_snapshot(my_store, my_source, <<"account-123">>, 50, State).
+ok = reckon_gater_api:record_snapshot(my_store, my_source, <<"account-123">>, 50, State).
 
 %% Load latest snapshot
-case esdb_gater_api:read_snapshot(my_store, my_source, <<"account-123">>, latest) of
+case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-123">>, latest) of
     {ok, #snapshot{version = V, data = State}} ->
         %% Replay events from version V onwards
-        {ok, Events} = esdb_gater_api:stream_forward(my_store, <<"account-123">>, V, 1000),
+        {ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-123">>, V, 1000),
         FinalState = lists:foldl(fun apply_event/2, State, Events);
     {error, not_found} ->
         %% No snapshot, replay all events
@@ -109,7 +109,7 @@ The `#subscription{}` record tracks subscription state for event delivery.
 
 ```erlang
 %% Create a subscription via gateway
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store,
     stream,                    %% Type
     <<"orders-*">>,            %% Selector (pattern)
@@ -119,10 +119,10 @@ ok = esdb_gater_api:save_subscription(
 ).
 
 %% List subscriptions
-{ok, Subscriptions} = esdb_gater_api:get_subscriptions(my_store).
+{ok, Subscriptions} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Remove a subscription
-ok = esdb_gater_api:remove_subscription(my_store, stream, <<"orders-*">>, <<"order_projection">>).
+ok = reckon_gater_api:remove_subscription(my_store, stream, <<"orders-*">>, <<"order_projection">>).
 ```
 
 ## Version Constants
@@ -140,7 +140,7 @@ Usage with the gateway API:
 
 ```erlang
 %% Append with version check via options
-{ok, Version} = esdb_gater_api:append_events(
+{ok, Version} = reckon_gater_api:append_events(
     my_store,
     <<"order-123">>,
     [Event],

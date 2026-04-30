@@ -55,10 +55,10 @@ Source Streams:              Link:                    Derived Stream:
 
 | Operation | Location | Module |
 |-----------|----------|--------|
-| Create/configure links | Your Application | `esdb_gater_api` |
+| Create/configure links | Your Application | `reckon_gater_api` |
 | Store link definitions | reckon-db Server | `reckon_db_links` |
 | Filter/transform processing | reckon-db Server | `reckon_db_link_worker` |
-| Subscribe to derived stream | Your Application | `esdb_gater_api` |
+| Subscribe to derived stream | Your Application | `reckon_gater_api` |
 
 ---
 
@@ -72,7 +72,7 @@ Source Streams:              Link:                    Derived Stream:
 %% Purpose: Create a derived stream for high-value orders
 %%--------------------------------------------------------------------
 
-esdb_gater_api:create_link(my_store, #{
+reckon_gater_api:create_link(my_store, #{
     name => <<"high-value-orders">>,
     source => #{
         type => stream_pattern,
@@ -100,7 +100,7 @@ esdb_gater_api:create_link(my_store, #{
 %% Purpose: Check link configuration and status
 %%--------------------------------------------------------------------
 
-{ok, Link} = esdb_gater_api:get_link(my_store, <<"high-value-orders">>).
+{ok, Link} = reckon_gater_api:get_link(my_store, <<"high-value-orders">>).
 %% => #{
 %%     name => <<"high-value-orders">>,
 %%     source => #{type => stream_pattern, pattern => <<"orders-*">>},
@@ -118,7 +118,7 @@ esdb_gater_api:create_link(my_store, #{
 %% Purpose: Get all configured links for a store
 %%--------------------------------------------------------------------
 
-{ok, Links} = esdb_gater_api:list_links(my_store).
+{ok, Links} = reckon_gater_api:list_links(my_store).
 ```
 
 ### Start/Stop a Link
@@ -130,10 +130,10 @@ esdb_gater_api:create_link(my_store, #{
 %%--------------------------------------------------------------------
 
 %% Stop processing (link remains configured, will resume from last position)
-esdb_gater_api:stop_link(my_store, <<"high-value-orders">>).
+reckon_gater_api:stop_link(my_store, <<"high-value-orders">>).
 
 %% Resume processing
-esdb_gater_api:start_link(my_store, <<"high-value-orders">>).
+reckon_gater_api:start_link(my_store, <<"high-value-orders">>).
 ```
 
 ### Delete a Link
@@ -144,7 +144,7 @@ esdb_gater_api:start_link(my_store, <<"high-value-orders">>).
 %% Purpose: Remove a link and its derived stream
 %%--------------------------------------------------------------------
 
-esdb_gater_api:delete_link(my_store, <<"high-value-orders">>).
+reckon_gater_api:delete_link(my_store, <<"high-value-orders">>).
 ```
 
 ### Detailed Link Statistics
@@ -155,7 +155,7 @@ esdb_gater_api:delete_link(my_store, <<"high-value-orders">>).
 %% Purpose: Get detailed processing statistics
 %%--------------------------------------------------------------------
 
-{ok, Info} = esdb_gater_api:link_info(my_store, <<"high-value-orders">>).
+{ok, Info} = reckon_gater_api:link_info(my_store, <<"high-value-orders">>).
 %% => #{
 %%     status => running,
 %%     events_processed => 12345,      %% Events that matched filter
@@ -179,7 +179,7 @@ Links create streams prefixed with `$link:`:
 %%--------------------------------------------------------------------
 
 %% Subscribe to the derived stream via gateway (just like any other stream)
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store,
     stream,
     <<"$link:high-value-orders">>,
@@ -189,7 +189,7 @@ ok = esdb_gater_api:save_subscription(
 ).
 
 %% Read from the derived stream
-{ok, Events} = esdb_gater_api:stream_forward(
+{ok, Events} = reckon_gater_api:stream_forward(
     my_store,
     <<"$link:high-value-orders">>,
     0,
@@ -300,14 +300,14 @@ Create per-category views from a mixed stream:
 %%--------------------------------------------------------------------
 
 %% Electronics orders
-esdb_gater_api:create_link(my_store, #{
+reckon_gater_api:create_link(my_store, #{
     name => <<"electronics-orders">>,
     source => #{type => stream_pattern, pattern => <<"orders-*">>},
     filter => #{field => <<"category">>, op => '=', value => <<"electronics">>}
 }).
 
 %% Clothing orders
-esdb_gater_api:create_link(my_store, #{
+reckon_gater_api:create_link(my_store, #{
     name => <<"clothing-orders">>,
     source => #{type => stream_pattern, pattern => <<"orders-*">>},
     filter => #{field => <<"category">>, op => '=', value => <<"clothing">>}
@@ -324,7 +324,7 @@ Group events by type across all streams:
 %% Purpose: All payment events in one stream
 %%--------------------------------------------------------------------
 
-esdb_gater_api:create_link(my_store, #{
+reckon_gater_api:create_link(my_store, #{
     name => <<"all-payments">>,
     source => #{type => stream_pattern, pattern => <<"*">>},
     filter => #{field => <<"event_type">>, op => in, value => [
@@ -345,7 +345,7 @@ Automatically flag events for review:
 %% Purpose: Flag high-value transactions for compliance review
 %%--------------------------------------------------------------------
 
-esdb_gater_api:create_link(my_store, #{
+reckon_gater_api:create_link(my_store, #{
     name => <<"flagged-transactions">>,
     source => #{type => stream_pattern, pattern => <<"transactions-*">>},
     filter => #{field => <<"amount">>, op => '>', value => 10000},
@@ -387,12 +387,12 @@ filter => #{field => <<"type">>, op => '=', value => <<"payment">>}
 
 ```erlang
 %% BAD: Ignoring link health
-esdb_gater_api:create_link(my_store, #{...}).
+reckon_gater_api:create_link(my_store, #{...}).
 %% ... never check if it's keeping up
 
 %% GOOD: Monitor lag for real-time requirements
 check_link_health(LinkName) ->
-    {ok, Info} = esdb_gater_api:link_info(my_store, LinkName),
+    {ok, Info} = reckon_gater_api:link_info(my_store, LinkName),
     Lag = maps:get(lag, Info),
     if Lag > 1000 ->
         logger:warning("Link ~p is ~p events behind", [LinkName, Lag]);

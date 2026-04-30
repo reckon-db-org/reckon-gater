@@ -24,7 +24,7 @@ Save aggregate state at a specific version:
 ```erlang
 %% Record a snapshot via gateway
 State = #{balance => 1000, status => active},
-ok = esdb_gater_api:record_snapshot(
+ok = reckon_gater_api:record_snapshot(
     my_store,                    %% Store ID
     my_source,                   %% Source ID (your application)
     <<"account-123">>,           %% Stream ID
@@ -39,25 +39,25 @@ Load the latest or a specific snapshot:
 
 ```erlang
 %% Load the latest snapshot
-case esdb_gater_api:read_snapshot(my_store, my_source, <<"account-123">>, latest) of
+case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-123">>, latest) of
     {ok, Snapshot} ->
         Version = Snapshot#snapshot.version,
         State = Snapshot#snapshot.data,
         %% Replay events after the snapshot
-        {ok, Events} = esdb_gater_api:stream_forward(
+        {ok, Events} = reckon_gater_api:stream_forward(
             my_store, <<"account-123">>, Version + 1, 10000
         ),
         FinalState = lists:foldl(fun apply_event/2, State, Events);
     {error, not_found} ->
         %% No snapshot, replay from beginning
-        {ok, AllEvents} = esdb_gater_api:stream_forward(
+        {ok, AllEvents} = reckon_gater_api:stream_forward(
             my_store, <<"account-123">>, 0, 10000
         ),
         lists:foldl(fun apply_event/2, initial_state(), AllEvents)
 end.
 
 %% Load snapshot at a specific version
-{ok, Snapshot} = esdb_gater_api:read_snapshot(
+{ok, Snapshot} = reckon_gater_api:read_snapshot(
     my_store, my_source, <<"account-123">>, 100
 ).
 ```
@@ -68,7 +68,7 @@ Get all snapshots for a stream:
 
 ```erlang
 %% List all snapshots for a stream
-{ok, Snapshots} = esdb_gater_api:list_snapshots(my_store, my_source, <<"account-123">>).
+{ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-123">>).
 
 %% Returns list sorted by version (newest first)
 [
@@ -84,12 +84,12 @@ Remove old snapshots to save storage:
 
 ```erlang
 %% Delete a specific snapshot
-ok = esdb_gater_api:delete_snapshot(my_store, my_source, <<"account-123">>, 50).
+ok = reckon_gater_api:delete_snapshot(my_store, my_source, <<"account-123">>, 50).
 
 %% Delete old snapshots (keep only recent ones)
-{ok, Snapshots} = esdb_gater_api:list_snapshots(my_store, my_source, <<"account-123">>),
+{ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-123">>),
 OldSnapshots = lists:nthtail(3, Snapshots),  %% Keep 3 most recent
-[esdb_gater_api:delete_snapshot(my_store, my_source, S#snapshot.stream_id, S#snapshot.version)
+[reckon_gater_api:delete_snapshot(my_store, my_source, S#snapshot.stream_id, S#snapshot.version)
  || S <- OldSnapshots].
 ```
 
@@ -117,7 +117,7 @@ load(StoreId, AccountId) ->
     StreamId = <<"account-", AccountId/binary>>,
 
     %% Try to load from snapshot first
-    {InitialState, StartVersion} = case esdb_gater_api:read_snapshot(
+    {InitialState, StartVersion} = case reckon_gater_api:read_snapshot(
         StoreId, account_client, StreamId, latest
     ) of
         {ok, Snapshot} ->
@@ -127,7 +127,7 @@ load(StoreId, AccountId) ->
     end,
 
     %% Replay events after snapshot
-    case esdb_gater_api:stream_forward(StoreId, StreamId, StartVersion, 10000) of
+    case reckon_gater_api:stream_forward(StoreId, StreamId, StartVersion, 10000) of
         {ok, Events} ->
             FinalState = lists:foldl(fun apply_event/2, InitialState, Events),
             NewVersion = case Events of
@@ -152,7 +152,7 @@ execute(StoreId, AccountId, Command) ->
     case handle_command(Command, Account) of
         {ok, Events} ->
             %% Append events via gateway
-            {ok, NewVersion} = esdb_gater_api:append_events(
+            {ok, NewVersion} = reckon_gater_api:append_events(
                 StoreId, StreamId, Events,
                 #{expected_version => Account#account.version}
             ),
@@ -171,7 +171,7 @@ execute(StoreId, AccountId, Command) ->
 %% Save snapshot if threshold reached
 maybe_save_snapshot(StoreId, StreamId, State, Version)
   when Version rem ?SNAPSHOT_THRESHOLD =:= 0, Version > 0 ->
-    ok = esdb_gater_api:record_snapshot(
+    ok = reckon_gater_api:record_snapshot(
         StoreId, account_client, StreamId, Version, State
     ),
     logger:info("Saved snapshot for ~s at version ~p", [StreamId, Version]);
@@ -208,7 +208,7 @@ Snapshot every N events (shown above):
 
 maybe_snapshot(StoreId, StreamId, State, Version)
   when Version rem ?SNAPSHOT_EVERY =:= 0 ->
-    esdb_gater_api:record_snapshot(StoreId, my_app, StreamId, Version, State);
+    reckon_gater_api:record_snapshot(StoreId, my_app, StreamId, Version, State);
 maybe_snapshot(_, _, _, _) ->
     ok.
 ```
@@ -231,7 +231,7 @@ handle_info(check_snapshots, #{store_id := StoreId, aggregates := Aggs} = State)
     maps:foreach(fun(StreamId, {CurrentState, Version}) ->
         case needs_snapshot(StoreId, StreamId, Version) of
             true ->
-                esdb_gater_api:record_snapshot(
+                reckon_gater_api:record_snapshot(
                     StoreId, snapshot_scheduler, StreamId, Version, CurrentState
                 );
             false ->
@@ -241,7 +241,7 @@ handle_info(check_snapshots, #{store_id := StoreId, aggregates := Aggs} = State)
     {noreply, State}.
 
 needs_snapshot(StoreId, StreamId, CurrentVersion) ->
-    case esdb_gater_api:read_snapshot(StoreId, snapshot_scheduler, StreamId, latest) of
+    case reckon_gater_api:read_snapshot(StoreId, snapshot_scheduler, StreamId, latest) of
         {ok, #snapshot{version = V}} -> CurrentVersion - V > 100;
         {error, not_found} -> CurrentVersion > 50
     end.
@@ -293,9 +293,9 @@ Don't keep unlimited snapshots:
 
 ```erlang
 cleanup_old_snapshots(StoreId, StreamId, KeepCount) ->
-    {ok, Snapshots} = esdb_gater_api:list_snapshots(StoreId, my_app, StreamId),
+    {ok, Snapshots} = reckon_gater_api:list_snapshots(StoreId, my_app, StreamId),
     ToDelete = lists:nthtail(KeepCount, Snapshots),
-    [esdb_gater_api:delete_snapshot(StoreId, my_app, StreamId, S#snapshot.version)
+    [reckon_gater_api:delete_snapshot(StoreId, my_app, StreamId, S#snapshot.version)
      || S <- ToDelete].
 ```
 
@@ -306,7 +306,7 @@ Track snapshot metrics:
 ```erlang
 save_with_metrics(StoreId, StreamId, Version, State) ->
     Start = erlang:monotonic_time(microsecond),
-    ok = esdb_gater_api:record_snapshot(StoreId, my_app, StreamId, Version, State),
+    ok = reckon_gater_api:record_snapshot(StoreId, my_app, StreamId, Version, State),
     Duration = erlang:monotonic_time(microsecond) - Start,
 
     telemetry:execute(

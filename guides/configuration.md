@@ -83,14 +83,14 @@ You can change the capability mode at runtime:
 
 ```erlang
 %% Erlang
-esdb_gater_config:set_capability_mode(required).
-esdb_gater_config:capability_mode().  %% Returns: required
+reckon_gater_config:set_capability_mode(required).
+reckon_gater_config:capability_mode().  %% Returns: required
 ```
 
 ```elixir
 # Elixir
-:esdb_gater_config.set_capability_mode(:required)
-:esdb_gater_config.capability_mode()  # Returns: :required
+:reckon_gater_config.set_capability_mode(:required)
+:reckon_gater_config.capability_mode()  # Returns: :required
 ```
 
 ### HMAC Security
@@ -131,14 +131,14 @@ config :reckon_gater,
 
 ```erlang
 %% Erlang
-esdb_pubsub_security:set_secret(<<"new-secret">>).
-esdb_pubsub_security:get_secret().
+reckon_gater_pubsub_security:set_secret(<<"new-secret">>).
+reckon_gater_pubsub_security:get_secret().
 ```
 
 ```elixir
 # Elixir
-:esdb_pubsub_security.set_secret("new-secret")
-:esdb_pubsub_security.get_secret()
+:reckon_gater_pubsub_security.set_secret("new-secret")
+:reckon_gater_pubsub_security.get_secret()
 ```
 
 ### Retry Configuration
@@ -295,11 +295,11 @@ The gateway emits telemetry events for monitoring. Configure handlers via BEAM t
 :telemetry.attach_many(
   "esdb-gater-handler",
   [
-    [:esdb_gater, :retry, :attempt],
-    [:esdb_gater, :retry, :exhausted],
-    [:esdb_gater, :request, :start],
-    [:esdb_gater, :request, :stop],
-    [:esdb_gater, :request, :exception]
+    [:reckon_gater, :retry, :attempt],
+    [:reckon_gater, :retry, :exhausted],
+    [:reckon_gater, :request, :start],
+    [:reckon_gater, :request, :stop],
+    [:reckon_gater, :request, :exception]
   ],
   &MyApp.TelemetryHandler.handle_event/4,
   nil
@@ -311,11 +311,11 @@ The gateway emits telemetry events for monitoring. Configure handlers via BEAM t
 telemetry:attach_many(
   <<"esdb-gater-handler">>,
   [
-    [esdb_gater, retry, attempt],
-    [esdb_gater, retry, exhausted],
-    [esdb_gater, request, start],
-    [esdb_gater, request, stop],
-    [esdb_gater, request, exception]
+    [reckon_gater, retry, attempt],
+    [reckon_gater, retry, exhausted],
+    [reckon_gater, request, start],
+    [reckon_gater, request, stop],
+    [reckon_gater, request, exception]
   ],
   fun my_handler:handle_event/4,
   undefined

@@ -43,10 +43,10 @@ Capability tokens are **self-proving** - they carry their own authorization:
 
 | Component | Location | Responsibility |
 |-----------|----------|----------------|
-| `esdb_identity` | Your Application | Generate keypairs, manage identities |
-| `esdb_capability` | Your Application | Create, sign, delegate, encode tokens |
-| `esdb_capability_verifier` | reckon-db Server | Verify signatures, check permissions |
-| `esdb_revocation` | reckon-db Server | Track revoked tokens |
+| `reckon_gater_identity` | Your Application | Generate keypairs, manage identities |
+| `reckon_gater_capability` | Your Application | Create, sign, delegate, encode tokens |
+| `reckon_db_capability_verifier` | reckon-db Server | Verify signatures, check permissions |
+| `reckon_db_revocation` | reckon-db Server | Track revoked tokens |
 
 **Key insight:** Token *creation* happens in your application. Token *verification* happens on the reckon-db server. reckon-gater provides the types and helpers, but doesn't enforce security.
 
@@ -64,10 +64,10 @@ Identities are Ed25519 keypairs. The public key is encoded as a DID (Decentraliz
 %% Purpose: Create a new identity for your service/user
 %%--------------------------------------------------------------------
 
--include_lib("reckon_gater/include/esdb_capability_types.hrl").
+-include_lib("reckon_gater/include/reckon_gater_capability_types.hrl").
 
 %% Generate a new Ed25519 keypair
-Identity = esdb_identity:generate().
+Identity = reckon_gater_identity:generate().
 
 %% The identity contains:
 %% - Public key (shareable)
@@ -75,7 +75,7 @@ Identity = esdb_identity:generate().
 %% - DID (public key encoded as did:key:z...)
 
 %% Get the DID for sharing with others
-DID = esdb_identity:did(Identity).
+DID = reckon_gater_identity:did(Identity).
 %% => <<"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK">>
 ```
 
@@ -102,7 +102,7 @@ load_identity(Path, MasterKey) ->
     {ok, Encrypted} = file:read_file(Path),
     Decrypted = crypto:crypto_one_time(aes_256_gcm, MasterKey, Nonce, Encrypted, false),
     {PubKey, PrivKey} = binary_to_term(Decrypted),
-    esdb_identity:from_keypair(PubKey, PrivKey).
+    reckon_gater_identity:from_keypair(PubKey, PrivKey).
 ```
 
 ### Why DIDs?
@@ -139,25 +139,25 @@ Capability tokens grant specific permissions on specific resources.
 %% Define what permissions to grant
 Grants = [
     %% Can read any stream in the realm
-    esdb_capability:grant(<<"esdb://myapp/stream/*">>, ?ACTION_STREAM_READ),
+    reckon_gater_capability:grant(<<"esdb://myapp/stream/*">>, ?ACTION_STREAM_READ),
 
     %% Can append to order streams only
-    esdb_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_APPEND)
+    reckon_gater_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_APPEND)
 ],
 
 %% Who is this token for? (their DID)
 Audience = <<"did:key:z6MkClientDID...">>,
 
 %% Create the capability (unsigned)
-Cap = esdb_capability:create(MyIdentity, Audience, Grants, #{
+Cap = reckon_gater_capability:create(MyIdentity, Audience, Grants, #{
     ttl => 900  %% 15 minutes - keep it short!
 }),
 
 %% Sign with YOUR private key (proves you issued it)
-SignedCap = esdb_capability:sign(Cap, esdb_identity:private_key(MyIdentity)),
+SignedCap = reckon_gater_capability:sign(Cap, reckon_gater_identity:private_key(MyIdentity)),
 
 %% Encode for transmission
-Token = esdb_capability:encode(SignedCap, jwt).
+Token = reckon_gater_capability:encode(SignedCap, jwt).
 %% => <<"eyJhbGciOiJFZERTQSIsInR5cCI6IlVDQU4ifQ...">>
 ```
 
@@ -167,7 +167,7 @@ A grant specifies WHAT (resource) and HOW (action):
 
 ```erlang
 %% Grant structure
-esdb_capability:grant(Resource, Action)
+reckon_gater_capability:grant(Resource, Action)
 
 %% Resource: URI pattern for the resource
 %% Action: What operation is allowed
@@ -227,19 +227,19 @@ Consider a microservices architecture where each service delegates to the next w
 %% We want to give Payment Service: orders-*/read only
 
 WorkerGrants = [
-    esdb_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_READ)
+    reckon_gater_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_READ)
     %% Note: NO append permission - attenuation!
 ],
 
 %% Delegate from our token to the worker
-WorkerCap = esdb_capability:delegate(
+WorkerCap = reckon_gater_capability:delegate(
     OurSignedToken,        %% Parent token (must be signed)
     PaymentServiceDID,     %% Who we're delegating to
     WorkerGrants           %% Reduced permissions
 ),
 
 %% Sign with OUR key (proves WE delegated it)
-SignedWorkerCap = esdb_capability:sign(WorkerCap, esdb_identity:private_key(OurIdentity)).
+SignedWorkerCap = reckon_gater_capability:sign(WorkerCap, reckon_gater_identity:private_key(OurIdentity)).
 ```
 
 ### Invalid Delegations
@@ -250,13 +250,13 @@ These will fail verification on the server:
 %% Parent grants: stream/orders-* with read
 %% INVALID: trying to add append (not in parent)
 BadGrants = [
-    esdb_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_APPEND)
+    reckon_gater_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_APPEND)
 ].
 
 %% Parent grants: stream/orders-* with read
 %% INVALID: trying to access users-* (outside scope)
 BadGrants = [
-    esdb_capability:grant(<<"esdb://myapp/stream/users-*">>, ?ACTION_STREAM_READ)
+    reckon_gater_capability:grant(<<"esdb://myapp/stream/users-*">>, ?ACTION_STREAM_READ)
 ].
 ```
 
@@ -278,7 +278,7 @@ When making requests, include the token. The gater routes it to reckon-db for ve
 %% Currently, tokens are used primarily for PubSub channels
 
 Events = [#{event_type => <<"OrderCreated">>, data => #{...}}],
-{ok, Version} = esdb_gater_api:append_events(my_store, <<"orders-123">>, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"orders-123">>, Events).
 ```
 
 ### PubSub Channel Operations
@@ -291,20 +291,20 @@ Events = [#{event_type => <<"OrderCreated">>, data => #{...}}],
 
 %% Create a capability for publishing
 Grants = [
-    esdb_capability:grant(
-        <<"esdb://myapp/channel/esdb_channel_events/*">>,
+    reckon_gater_capability:grant(
+        <<"esdb://myapp/channel/reckon_gater_channel_events/*">>,
         ?ACTION_CHANNEL_PUBLISH
     )
 ],
-Cap = esdb_capability:create(Issuer, Audience, Grants, #{ttl => 900}),
-SignedCap = esdb_capability:sign(Cap, esdb_identity:private_key(Issuer)),
-Token = esdb_capability:encode(SignedCap, binary),
+Cap = reckon_gater_capability:create(Issuer, Audience, Grants, #{ttl => 900}),
+SignedCap = reckon_gater_capability:sign(Cap, reckon_gater_identity:private_key(Issuer)),
+Token = reckon_gater_capability:encode(SignedCap, binary),
 
 %% Publish with capability token
-ok = esdb_channel:publish(esdb_channel_events, <<"orders.created">>, Event, Token).
+ok = reckon_gater_channel:publish(reckon_gater_channel_events, <<"orders.created">>, Event, Token).
 
 %% Subscribe with capability token
-ok = esdb_channel:subscribe(esdb_channel_events, <<"orders.*">>, self(), Token).
+ok = reckon_gater_channel:subscribe(reckon_gater_channel_events, <<"orders.*">>, self(), Token).
 ```
 
 ---
@@ -334,7 +334,7 @@ ok = esdb_channel:subscribe(esdb_channel_events, <<"orders.*">>, self(), Token).
 ### JWT Format (Interoperable)
 
 ```erlang
-Token = esdb_capability:encode(Cap, jwt).
+Token = reckon_gater_capability:encode(Cap, jwt).
 %% => <<"eyJhbGciOiJFZERTQSIsInR5cCI6IlVDQU4ifQ.eyJpc3MiOiJkaWQ6...">>
 ```
 
@@ -347,7 +347,7 @@ Token = esdb_capability:encode(Cap, jwt).
 ### Erlang Binary Format (Fast)
 
 ```erlang
-Token = esdb_capability:encode(Cap, binary).
+Token = reckon_gater_capability:encode(Cap, binary).
 %% => <<131, 104, 12, 100, ...>>
 ```
 
@@ -359,7 +359,7 @@ Token = esdb_capability:encode(Cap, binary).
 Decoding auto-detects format:
 
 ```erlang
-{ok, Cap} = esdb_capability:decode(Token).  %% Works for both formats
+{ok, Cap} = reckon_gater_capability:decode(Token).  %% Works for both formats
 ```
 
 ---
@@ -370,10 +370,10 @@ Decoding auto-detects format:
 
 ```erlang
 %% BAD: Token valid for 30 days
-Cap = esdb_capability:create(Iss, Aud, Grants, #{ttl => 30 * 24 * 60 * 60}).
+Cap = reckon_gater_capability:create(Iss, Aud, Grants, #{ttl => 30 * 24 * 60 * 60}).
 
 %% GOOD: Short-lived tokens, refresh as needed
-Cap = esdb_capability:create(Iss, Aud, Grants, #{ttl => 900}).  %% 15 minutes
+Cap = reckon_gater_capability:create(Iss, Aud, Grants, #{ttl => 900}).  %% 15 minutes
 ```
 
 **Why:** If a token is compromised, damage is limited to its lifetime.
@@ -382,10 +382,10 @@ Cap = esdb_capability:create(Iss, Aud, Grants, #{ttl => 900}).  %% 15 minutes
 
 ```erlang
 %% BAD: Admin access for everything
-Grants = [esdb_capability:grant(<<"esdb://myapp/*">>, ?ACTION_ADMIN_ALL)].
+Grants = [reckon_gater_capability:grant(<<"esdb://myapp/*">>, ?ACTION_ADMIN_ALL)].
 
 %% GOOD: Minimum necessary permissions
-Grants = [esdb_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_READ)].
+Grants = [reckon_gater_capability:grant(<<"esdb://myapp/stream/orders-*">>, ?ACTION_STREAM_READ)].
 ```
 
 **Why:** Principle of least privilege limits blast radius.
@@ -404,10 +404,10 @@ PrivKey = <<16#deadbeef:256>>.
 
 ```erlang
 %% BAD: Ignoring errors
-esdb_channel:publish(Channel, Topic, Msg, Token).
+reckon_gater_channel:publish(Channel, Topic, Msg, Token).
 
 %% GOOD: Handle authorization failures
-case esdb_channel:publish(Channel, Topic, Msg, Token) of
+case reckon_gater_channel:publish(Channel, Topic, Msg, Token) of
     ok -> ok;
     {error, {unauthorized, Reason}} ->
         logger:warning("Publish denied: ~p", [Reason]),
@@ -438,18 +438,18 @@ Rotate identity keys periodically:
 
 ### Revocation Strategy
 
-For LAN clusters (typical reckon-db deployment), short TTLs are usually sufficient. Emergency revocation is available via `esdb_revocation` in reckon-db:
+For LAN clusters (typical reckon-db deployment), short TTLs are usually sufficient. Emergency revocation is available via `reckon_db_revocation` in reckon-db:
 
 ```erlang
 %% Server-side (reckon-db) - emergency revocation
-esdb_revocation:revoke(TokenCID).
+reckon_db_revocation:revoke(TokenCID).
 ```
 
 ---
 
 ## API Reference
 
-### esdb_identity (Your Application)
+### reckon_gater_identity (Your Application)
 
 | Function | Description |
 |----------|-------------|
@@ -461,7 +461,7 @@ esdb_revocation:revoke(TokenCID).
 | `private_key(Identity)` | Get 32-byte private key |
 | `public_key_from_did(DID)` | Extract public key from DID |
 
-### esdb_capability (Your Application)
+### reckon_gater_capability (Your Application)
 
 | Function | Description |
 |----------|-------------|
@@ -474,7 +474,7 @@ esdb_revocation:revoke(TokenCID).
 | `grant(Resource, Action)` | Create a grant tuple |
 | `is_expired(Cap)` | Check if token has expired |
 
-### esdb_capability_verifier (reckon-db Server)
+### reckon_db_capability_verifier (reckon-db Server)
 
 | Function | Description |
 |----------|-------------|

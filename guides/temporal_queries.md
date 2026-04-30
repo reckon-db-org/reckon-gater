@@ -15,7 +15,7 @@ In event sourcing, you typically read events by version number:
 
 ```erlang
 %% "Give me events 0-100 from this stream"
-{ok, Events} = esdb_gater_api:stream_forward(Store, Stream, 0, 100).
+{ok, Events} = reckon_gater_api:stream_forward(Store, Stream, 0, 100).
 ```
 
 But sometimes you need to answer **time-based** questions:
@@ -37,7 +37,7 @@ Temporal queries filter events by their `epoch_us` timestamp (microseconds since
 %%--------------------------------------------------------------------
 
 %% Read all events up to a specific moment
-{ok, Events} = esdb_gater_api:read_until(my_store, <<"account-123">>, Timestamp).
+{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-123">>, Timestamp).
 ```
 
 ### How It Works
@@ -59,7 +59,7 @@ Events in stream:
 
 | Operation | Location | Module |
 |-----------|----------|--------|
-| Query events by timestamp | Your Application | `esdb_gater_api` |
+| Query events by timestamp | Your Application | `reckon_gater_api` |
 | Aggregate reconstruction | Your Application | Your aggregate logic |
 | Timestamp storage | reckon-db Server | Automatic with each event |
 
@@ -79,10 +79,10 @@ Read all events up to (and including) a timestamp:
 
 %% Basic usage - timestamp in microseconds since Unix epoch
 Timestamp = 1703001600000000,  %% Dec 19, 2025 12:00:00 UTC
-{ok, Events} = esdb_gater_api:read_until(my_store, <<"account-123">>, Timestamp).
+{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-123">>, Timestamp).
 
 %% With options
-{ok, Events} = esdb_gater_api:read_until(my_store, <<"account-123">>, Timestamp, #{
+{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-123">>, Timestamp, #{
     max_count => 1000       %% Limit number of events returned
 }).
 ```
@@ -100,7 +100,7 @@ Read events within a time window:
 FromTimestamp = 1703001600000000,  %% Dec 19, 2025 12:00:00 UTC
 ToTimestamp = 1703005200000000,    %% Dec 19, 2025 13:00:00 UTC
 
-{ok, Events} = esdb_gater_api:read_range(
+{ok, Events} = reckon_gater_api:read_range(
     my_store,
     <<"account-123">>,
     FromTimestamp,
@@ -118,7 +118,7 @@ Get the stream version at a specific point in time (without fetching events):
 %% Purpose: Find what version the stream was at a given time
 %%--------------------------------------------------------------------
 
-{ok, Version} = esdb_gater_api:version_at(my_store, <<"account-123">>, Timestamp).
+{ok, Version} = reckon_gater_api:version_at(my_store, <<"account-123">>, Timestamp).
 %% => {ok, 42}
 
 %% Useful for:
@@ -146,7 +146,7 @@ Rebuild an aggregate's state as it was at a specific moment:
 %% Reconstruct state at a specific timestamp
 reconstruct_at(StoreId, StreamId, Timestamp) ->
     %% Get all events up to that moment
-    {ok, Events} = esdb_gater_api:read_until(StoreId, StreamId, Timestamp),
+    {ok, Events} = reckon_gater_api:read_until(StoreId, StreamId, Timestamp),
 
     %% Fold them into state (same as normal reconstruction)
     State = reckon_db_aggregator:foldl(Events),
@@ -177,7 +177,7 @@ generate_eod_report(StoreId, Date) ->
     EndOfDay = end_of_day_timestamp(Date),
 
     %% Get all account streams
-    {ok, Streams} = esdb_gater_api:get_streams(StoreId),
+    {ok, Streams} = reckon_gater_api:get_streams(StoreId),
     AccountStreams = [S || S <- Streams, is_account_stream(S)],
 
     %% Reconstruct each account at end of day
@@ -216,7 +216,7 @@ Examine what happened during a specific time window:
 
 investigate(StoreId, StreamPattern, IncidentStart, IncidentEnd) ->
     %% Get events during the incident window
-    {ok, Events} = esdb_gater_api:read_range(
+    {ok, Events} = reckon_gater_api:read_range(
         StoreId,
         StreamPattern,
         IncidentStart,
@@ -305,14 +305,14 @@ iso8601_to_micros(IsoString) ->
 
 1. **Use max_count** - Limit results for large streams:
    ```erlang
-   esdb_gater_api:read_until(Store, Stream, Ts, #{max_count => 1000}).
+   reckon_gater_api:read_until(Store, Stream, Ts, #{max_count => 1000}).
    ```
 
 2. **Combine with snapshots** - For aggregate reconstruction, load snapshot first:
    ```erlang
-   {ok, Snapshot} = esdb_gater_api:read_snapshot(Store, Source, Stream, Version),
+   {ok, Snapshot} = reckon_gater_api:read_snapshot(Store, Source, Stream, Version),
    SnapshotTime = maps:get(timestamp, Snapshot),
-   {ok, NewEvents} = esdb_gater_api:read_range(Store, Stream, SnapshotTime, TargetTime).
+   {ok, NewEvents} = reckon_gater_api:read_range(Store, Stream, SnapshotTime, TargetTime).
    ```
 
 3. **Index awareness** - Events are sorted by version, not timestamp. Temporal queries may scan more events than version queries.

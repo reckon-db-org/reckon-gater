@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">REPL Architecture</text>
+
+  <!-- Terminal Box -->
+  <rect x="50" y="60" width="200" height="120" rx="8" fill="#2d2d2d" filter="url(#shadow)"/>
+  <rect x="50" y="60" width="200" height="25" rx="8" fill="#3d3d3d"/>
+  <circle cx="70" cy="72" r="6" fill="#ff5f57"/>
+  <circle cx="90" cy="72" r="6" fill="#febc2e"/>
+  <circle cx="110" cy="72" r="6" fill="#28c840"/>
+  <text x="150" y="77" text-anchor="middle" font-family="monospace" font-size="11" fill="#aaa">Terminal</text>
+  <text x="60" y="105" font-family="monospace" font-size="10" fill="#0f0">esdb:my_store> read 10</text>
+  <text x="60" y="120" font-family="monospace" font-size="10" fill="#ccc">[0] order_created</text>
+  <text x="60" y="135" font-family="monospace" font-size="10" fill="#ccc">[1] order_paid</text>
+  <text x="60" y="150" font-family="monospace" font-size="10" fill="#ccc">[2] order_shipped</text>
+  <text x="60" y="165" font-family="monospace" font-size="10" fill="#888">Total: 3 events</text>
+
+  <!-- REPL Module -->
+  <rect x="300" y="80" width="180" height="80" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="390" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1976d2">esdb_gater_repl</text>
+  <text x="390" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">State: store, stream</text>
+  <text x="390" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Commands: 25+</text>
+
+  <!-- Gateway API -->
+  <rect x="530" y="80" width="180" height="80" rx="6" fill="#e8f5e9" stroke="#388e3c" stroke-width="2" filter="url(#shadow)"/>
+  <text x="620" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#388e3c">esdb_gater_api</text>
+  <text x="620" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Load Balancing</text>
+  <text x="620" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#666">Retry + Failover</text>
+
+  <!-- Arrows -->
+  <line x1="250" y1="120" x2="295" y2="120" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="480" y1="120" x2="525" y2="120" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Command Categories -->
+  <text x="50" y="220" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Command Categories</text>
+
+  <!-- Store Commands -->
+  <rect x="50" y="240" width="150" height="80" rx="4" fill="#fff3e0" stroke="#ef6c00" stroke-width="1.5"/>
+  <text x="125" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ef6c00">Store</text>
+  <text x="60" y="280" font-family="monospace" font-size="10" fill="#666">stores</text>
+  <text x="60" y="295" font-family="monospace" font-size="10" fill="#666">use STORE</text>
+  <text x="60" y="310" font-family="monospace" font-size="10" fill="#666">health</text>
+
+  <!-- Stream Commands -->
+  <rect x="220" y="240" width="150" height="80" rx="4" fill="#e8eaf6" stroke="#3f51b5" stroke-width="1.5"/>
+  <text x="295" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#3f51b5">Stream</text>
+  <text x="230" y="280" font-family="monospace" font-size="10" fill="#666">streams</text>
+  <text x="230" y="295" font-family="monospace" font-size="10" fill="#666">stream STREAM</text>
+  <text x="230" y="310" font-family="monospace" font-size="10" fill="#666">read, version</text>
+
+  <!-- Causation Commands -->
+  <rect x="390" y="240" width="150" height="80" rx="4" fill="#fce4ec" stroke="#c2185b" stroke-width="1.5"/>
+  <text x="465" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c2185b">Causation</text>
+  <text x="400" y="280" font-family="monospace" font-size="10" fill="#666">effects, cause</text>
+  <text x="400" y="295" font-family="monospace" font-size="10" fill="#666">chain, graph</text>
+  <text x="400" y="310" font-family="monospace" font-size="10" fill="#666">dot FILE</text>
+
+  <!-- Temporal Commands -->
+  <rect x="560" y="240" width="150" height="80" rx="4" fill="#e0f7fa" stroke="#0097a7" stroke-width="1.5"/>
+  <text x="635" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#0097a7">Temporal</text>
+  <text x="570" y="280" font-family="monospace" font-size="10" fill="#666">until TS</text>
+  <text x="570" y="295" font-family="monospace" font-size="10" fill="#666">range T1 T2</text>
+
+  <!-- reckon-db Cluster -->
+  <text x="50" y="360" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Event Store Cluster</text>
+
+  <rect x="50" y="380" width="660" height="100" rx="6" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1" stroke-dasharray="5,5"/>
+
+  <!-- Store Nodes -->
+  <rect x="80" y="400" width="120" height="60" rx="4" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+  <text x="140" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0288d1">Store 1</text>
+  <text x="140" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Leader</text>
+
+  <rect x="230" y="400" width="120" height="60" rx="4" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+  <text x="290" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0288d1">Store 2</text>
+  <text x="290" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Follower</text>
+
+  <rect x="380" y="400" width="120" height="60" rx="4" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+  <text x="440" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0288d1">Store 3</text>
+  <text x="440" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Follower</text>
+
+  <!-- Khepri/Raft -->
+  <rect x="560" y="400" width="130" height="60" rx="4" fill="#ede7f6" stroke="#673ab7" stroke-width="1.5"/>
+  <text x="625" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#673ab7">Khepri/Ra</text>
+  <text x="625" y="437" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Raft Consensus</text>
+  <text x="625" y="452" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#666">Event Storage</text>
+
+  <!-- Connection lines to cluster -->
+  <line x1="620" y1="160" x2="620" y2="200" stroke="#666" stroke-width="1.5"/>
+  <line x1="620" y1="200" x2="400" y2="200" stroke="#666" stroke-width="1.5"/>
+  <line x1="400" y1="200" x2="400" y2="375" stroke="#666" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+</svg>

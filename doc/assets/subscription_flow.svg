@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 280">
+  <defs>
+    <linearGradient id="clientGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="esdbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff3e0"/>
+      <stop offset="100%" style="stop-color:#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="khepriGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fce4ec"/>
+      <stop offset="100%" style="stop-color:#f8bbd9"/>
+    </linearGradient>
+    <linearGradient id="subGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#666"/>
+    </marker>
+    <marker id="dasharrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#999"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="275" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Event Write Flow with Subscriptions</text>
+
+  <!-- Column headers -->
+  <text x="60" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#666">Client</text>
+  <text x="185" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#666">reckon-db</text>
+  <text x="330" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#666">Khepri/Ra</text>
+  <text x="480" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#666">Subscribers</text>
+
+  <!-- Vertical lines -->
+  <line x1="60" y1="60" x2="60" y2="260" stroke="#ddd" stroke-width="2"/>
+  <line x1="185" y1="60" x2="185" y2="260" stroke="#ddd" stroke-width="2"/>
+  <line x1="330" y1="60" x2="330" y2="260" stroke="#ddd" stroke-width="2"/>
+  <line x1="480" y1="60" x2="480" y2="260" stroke="#ddd" stroke-width="2"/>
+
+  <!-- Step 1: append(events) -->
+  <line x1="65" y1="80" x2="175" y2="80" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="120" y="73" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">append(events)</text>
+
+  <!-- Step 2: put(events) -->
+  <line x1="195" y1="110" x2="320" y2="110" stroke="#ff9800" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="257" y="103" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#e65100">put(events)</text>
+
+  <!-- Step 3: Raft consensus -->
+  <rect x="290" y="125" width="80" height="25" rx="4" fill="url(#khepriGrad)" stroke="#e91e63" stroke-width="1"/>
+  <text x="330" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#ad1457">Raft consensus</text>
+
+  <!-- Step 4: {ok, version} back -->
+  <line x1="320" y1="165" x2="195" y2="165" stroke="#ff9800" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="257" y="158" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#e65100">{ok, version}</text>
+
+  <!-- Step 5: Trigger fires -->
+  <line x1="340" y1="190" x2="470" y2="190" stroke="#999" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#dasharrow)"/>
+  <text x="405" y="183" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Trigger fires</text>
+
+  <!-- Step 6: {ok, version} to client -->
+  <line x1="175" y1="220" x2="65" y2="220" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="120" y="213" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">{ok, version}</text>
+
+  <!-- Step 7: {event, E} to subscribers -->
+  <rect x="445" y="200" width="70" height="25" rx="4" fill="url(#subGrad)" stroke="#2196f3" stroke-width="1"/>
+  <text x="480" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">{event, E}</text>
+
+  <!-- Note -->
+  <text x="275" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-style="italic" fill="#666">Triggers only fire AFTER events are committed via Raft consensus</text>
+</svg>

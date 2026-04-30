@@ -47,7 +47,7 @@ Write (immutable):           Read (transformed):
 
 | Operation | Location | Module |
 |-----------|----------|--------|
-| Register schema | Your Application | `esdb_gater_api` |
+| Register schema | Your Application | `reckon_gater_api` |
 | Define upcast functions | Your Application | Your schema module |
 | Store schema definitions | reckon-db Server | `reckon_db_schema_store` |
 | Apply upcasting on read | reckon-db Server | `reckon_db_upcaster` |
@@ -64,7 +64,7 @@ Write (immutable):           Read (transformed):
 %% Purpose: Register initial schema version for an event type
 %%--------------------------------------------------------------------
 
-esdb_gater_api:register_schema(my_store, <<"UserCreated">>, #{
+reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
     version => 1,
     fields => [
         #{name => <<"name">>, type => string, required => true},
@@ -81,7 +81,7 @@ esdb_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %% Purpose: Add new schema version with transformation from v1
 %%--------------------------------------------------------------------
 
-esdb_gater_api:register_schema(my_store, <<"UserCreated">>, #{
+reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
     version => 2,
     fields => [
         #{name => <<"name">>, type => string, required => true},
@@ -106,14 +106,14 @@ esdb_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %%--------------------------------------------------------------------
 
 %% Get current schema for an event type
-{ok, Schema} = esdb_gater_api:get_schema(my_store, <<"UserCreated">>).
+{ok, Schema} = reckon_gater_api:get_schema(my_store, <<"UserCreated">>).
 
 %% Get current version number
-{ok, Version} = esdb_gater_api:get_schema_version(my_store, <<"UserCreated">>).
+{ok, Version} = reckon_gater_api:get_schema_version(my_store, <<"UserCreated">>).
 %% => {ok, 2}
 
 %% List all registered schemas
-{ok, Schemas} = esdb_gater_api:list_schemas(my_store).
+{ok, Schemas} = reckon_gater_api:list_schemas(my_store).
 %% => [
 %%     #{event_type => <<"UserCreated">>, version => 2},
 %%     #{event_type => <<"OrderPlaced">>, version => 3},
@@ -130,10 +130,10 @@ esdb_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %%--------------------------------------------------------------------
 
 %% Read old events
-{ok, OldEvents} = esdb_gater_api:stream_forward(my_store, StreamId, 0, 100),
+{ok, OldEvents} = reckon_gater_api:stream_forward(my_store, StreamId, 0, 100),
 
 %% Upcast to current schema versions
-{ok, UpcastedEvents} = esdb_gater_api:upcast_events(my_store, OldEvents).
+{ok, UpcastedEvents} = reckon_gater_api:upcast_events(my_store, OldEvents).
 
 %% Events are now in current schema version
 ```
@@ -146,7 +146,7 @@ esdb_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %% Purpose: Remove a deprecated event type's schema
 %%--------------------------------------------------------------------
 
-esdb_gater_api:unregister_schema(my_store, <<"DeprecatedEvent">>).
+reckon_gater_api:unregister_schema(my_store, <<"DeprecatedEvent">>).
 ```
 
 ---
@@ -167,7 +167,7 @@ Example with 3 versions:
 %% Purpose: Register schema with full upcast chain
 %%--------------------------------------------------------------------
 
-esdb_gater_api:register_schema(my_store, <<"OrderPlaced">>, #{
+reckon_gater_api:register_schema(my_store, <<"OrderPlaced">>, #{
     version => 3,
     fields => [
         #{name => <<"order_id">>, type => string},
@@ -293,13 +293,13 @@ upcast_from => #{
 
 ```erlang
 %% BAD: Changing v1 schema after events are written
-esdb_gater_api:register_schema(Store, <<"Event">>, #{
+reckon_gater_api:register_schema(Store, <<"Event">>, #{
     version => 1,
     fields => [...different fields...]  %% Breaks existing v1 events!
 }).
 
 %% GOOD: Create new version instead
-esdb_gater_api:register_schema(Store, <<"Event">>, #{
+reckon_gater_api:register_schema(Store, <<"Event">>, #{
     version => 2,
     fields => [...new fields...],
     upcast_from => #{1 => fun(V1) -> ... end}
@@ -389,7 +389,7 @@ Include version in event metadata for traceability:
 %%--------------------------------------------------------------------
 
 create_event(Type, Data, Metadata) ->
-    {ok, Version} = esdb_gater_api:get_schema_version(my_store, Type),
+    {ok, Version} = reckon_gater_api:get_schema_version(my_store, Type),
     #{
         event_type => Type,
         data => Data,

@@ -48,7 +48,7 @@ Memory Usage:
 
 | Operation | Location | Module |
 |-----------|----------|--------|
-| Query pressure level | Your Application | `esdb_gater_api` |
+| Query pressure level | Your Application | `reckon_gater_api` |
 | Monitor memory | reckon-db Server | `reckon_db_memory` |
 | Emit telemetry | reckon-db Server | `reckon_db_telemetry` |
 | Adaptive behavior | Your Application | Your handlers |
@@ -65,7 +65,7 @@ Memory Usage:
 %% Purpose: Check current memory pressure level
 %%--------------------------------------------------------------------
 
-{ok, Level} = esdb_gater_api:get_memory_level(my_store).
+{ok, Level} = reckon_gater_api:get_memory_level(my_store).
 %% => {ok, normal}
 %% => {ok, elevated}
 %% => {ok, critical}
@@ -79,7 +79,7 @@ Memory Usage:
 %% Purpose: Get detailed memory breakdown
 %%--------------------------------------------------------------------
 
-{ok, Stats} = esdb_gater_api:get_memory_stats(my_store).
+{ok, Stats} = reckon_gater_api:get_memory_stats(my_store).
 %% => #{
 %%     level => normal,
 %%     used => 4294967296,        %% 4 GB total used
@@ -140,7 +140,7 @@ Reduce processing load when memory is constrained:
 -module(adaptive_processor).
 
 get_batch_size(StoreId) ->
-    {ok, Level} = esdb_gater_api:get_memory_level(StoreId),
+    {ok, Level} = reckon_gater_api:get_memory_level(StoreId),
     case Level of
         normal -> 1000;    %% Full speed
         elevated -> 500;   %% Half speed
@@ -149,7 +149,7 @@ get_batch_size(StoreId) ->
 
 process_events(StoreId, StreamId) ->
     BatchSize = get_batch_size(StoreId),
-    {ok, Events} = esdb_gater_api:stream_forward(StoreId, StreamId, 0, BatchSize),
+    {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, BatchSize),
     lists:foreach(fun process_event/1, Events).
 ```
 
@@ -192,7 +192,7 @@ Reject expensive operations when memory is scarce:
 -module(resource_guard).
 
 maybe_run_expensive_operation(StoreId, Fun) ->
-    {ok, Level} = esdb_gater_api:get_memory_level(StoreId),
+    {ok, Level} = reckon_gater_api:get_memory_level(StoreId),
     case Level of
         critical ->
             {error, memory_pressure};
@@ -225,7 +225,7 @@ Pause saga processing during pressure:
 -module(order_saga).
 
 handle_event(Event, State) ->
-    {ok, Level} = esdb_gater_api:get_memory_level(State#state.store_id),
+    {ok, Level} = reckon_gater_api:get_memory_level(State#state.store_id),
     case Level of
         critical ->
             %% Defer processing until memory recovers
@@ -282,17 +282,17 @@ handle_pressure_change(
 ```erlang
 %% BAD: Processing without checking memory
 process_all_events(StoreId) ->
-    {ok, Events} = esdb_gater_api:stream_forward(StoreId, Stream, 0, 10000),
+    {ok, Events} = reckon_gater_api:stream_forward(StoreId, Stream, 0, 10000),
     lists:foreach(fun process/1, Events).  %% May OOM!
 
 %% GOOD: Respect memory pressure
 process_all_events(StoreId) ->
-    {ok, Level} = esdb_gater_api:get_memory_level(StoreId),
+    {ok, Level} = reckon_gater_api:get_memory_level(StoreId),
     case Level of
         critical -> {error, memory_pressure};
         _ ->
             BatchSize = get_batch_size(Level),
-            {ok, Events} = esdb_gater_api:stream_forward(StoreId, Stream, 0, BatchSize),
+            {ok, Events} = reckon_gater_api:stream_forward(StoreId, Stream, 0, BatchSize),
             lists:foreach(fun process/1, Events)
     end.
 ```
@@ -302,7 +302,7 @@ process_all_events(StoreId) ->
 ```erlang
 %% BAD: Checking memory on every operation
 process_event(Event) ->
-    {ok, _} = esdb_gater_api:get_memory_level(Store),  %% Every event!
+    {ok, _} = reckon_gater_api:get_memory_level(Store),  %% Every event!
     do_process(Event).
 
 %% GOOD: Check periodically or rely on telemetry
@@ -328,7 +328,7 @@ handle_pressure(critical, State) ->
 
 %% GOOD: State based on current level
 handle_event(Event, State) ->
-    {ok, Level} = esdb_gater_api:get_memory_level(Store),
+    {ok, Level} = reckon_gater_api:get_memory_level(Store),
     case Level of
         critical -> {defer, Event, State};
         elevated -> process_slowly(Event, State);

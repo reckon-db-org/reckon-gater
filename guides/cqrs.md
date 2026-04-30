@@ -156,7 +156,7 @@ init(StoreId) ->
     ets:new(?TABLE, [named_table, public, {read_concurrency, true}]),
 
     %% Subscribe to order events via gateway
-    ok = esdb_gater_api:save_subscription(
+    ok = reckon_gater_api:save_subscription(
         StoreId,
         event_pattern,
         <<"order-*">>,
@@ -166,7 +166,7 @@ init(StoreId) ->
     ),
 
     %% Also subscribe to PubSub channel for real-time delivery
-    ok = esdb_channel_server:subscribe(esdb_channel_events, <<"order.*">>, self()),
+    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"order.*">>, self()),
 
     {ok, #{store_id => StoreId}}.
 
@@ -297,7 +297,7 @@ There's a delay between steps 1 and 4. This is usually milliseconds, but can be 
 case order_commands:handle(PlaceOrderCmd, State) of
     {ok, Events} ->
         %% Write events via gateway
-        {ok, Version} = esdb_gater_api:append_events(
+        {ok, Version} = reckon_gater_api:append_events(
             my_store, StreamId, Events,
             #{expected_version => ExpectedVer}
         ),
@@ -319,7 +319,7 @@ end.
 %% If consistency is critical, query the event store via gateway
 get_order_status(StoreId, OrderId) ->
     StreamId = <<"order-", OrderId/binary>>,
-    {ok, Events} = esdb_gater_api:stream_forward(StoreId, StreamId, 0, 1000),
+    {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, 1000),
 
     %% Derive status from events
     Status = lists:foldl(fun

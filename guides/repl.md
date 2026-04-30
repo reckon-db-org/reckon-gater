@@ -18,10 +18,10 @@ Start the REPL from an Erlang shell:
 
 ```erlang
 %% Start without a store selected
-esdb_gater_repl:start().
+reckon_gater_repl:start().
 
 %% Start with a store pre-selected
-esdb_gater_repl:start(my_store).
+reckon_gater_repl:start(my_store).
 ```
 
 ## Command Reference
@@ -213,7 +213,7 @@ esdb:my_store/orders>           # Store + stream selected
 
 2. **History**: Use up/down arrows if your shell supports it (depends on terminal).
 
-3. **Batch operations**: For bulk operations, use the `esdb_gater_api` module directly instead of the REPL.
+3. **Batch operations**: For bulk operations, use the `reckon_gater_api` module directly instead of the REPL.
 
 4. **DOT files**: The `dot` command generates Graphviz DOT format, which can be converted to PNG, SVG, or PDF using the `dot` command-line tool.
 

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 220">
+  <defs>
+    <linearGradient id="slowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffebee"/>
+      <stop offset="100%" style="stop-color:#ffcdd2"/>
+    </linearGradient>
+    <linearGradient id="fastGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="snapGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#666"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="250" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">Snapshot Performance Comparison</text>
+
+  <!-- Without Snapshots -->
+  <text x="250" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#c62828">Without Snapshots (10,000 events)</text>
+
+  <rect x="30" y="60" width="440" height="50" rx="6" fill="url(#slowGrad)" stroke="#ef5350" stroke-width="2"/>
+  <text x="50" y="80" font-family="Arial, sans-serif" font-size="10" fill="#c62828">Event 1</text>
+  <text x="95" y="85" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="110" y="80" font-family="Arial, sans-serif" font-size="10" fill="#c62828">Event 2</text>
+  <text x="155" y="85" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="175" y="80" font-family="Arial, sans-serif" font-size="10" fill="#666">...</text>
+  <text x="205" y="85" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="220" y="80" font-family="Arial, sans-serif" font-size="10" fill="#c62828">Event 10,000</text>
+  <text x="310" y="85" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="340" y="80" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#c62828">Current State</text>
+  <text x="250" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#c62828">Replay all 10,000 events ~ 500ms</text>
+
+  <!-- With Snapshots -->
+  <text x="250" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2e7d32">With Snapshots</text>
+
+  <rect x="30" y="150" width="440" height="50" rx="6" fill="url(#fastGrad)" stroke="#66bb6a" stroke-width="2"/>
+
+  <!-- Snapshot box -->
+  <rect x="40" y="158" width="100" height="34" rx="4" fill="url(#snapGrad)" stroke="#2196f3" stroke-width="1.5"/>
+  <text x="90" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1565c0">Snapshot @ 9,500</text>
+
+  <text x="150" y="180" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="165" y="175" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">Event 9,501</text>
+  <text x="225" y="180" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="245" y="175" font-family="Arial, sans-serif" font-size="10" fill="#666">...</text>
+  <text x="270" y="180" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="290" y="175" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">Event 10,000</text>
+  <text x="370" y="180" font-family="Arial, sans-serif" font-size="12" fill="#666">&rarr;</text>
+  <text x="400" y="175" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#2e7d32">Current State</text>
+  <text x="250" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2e7d32">Load snapshot + replay 500 events ~ 25ms</text>
+</svg>

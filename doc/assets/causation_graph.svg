@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <linearGradient id="eventGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3730A3;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="rootGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#047857;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DC2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B91C1C;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .title { font: bold 16px sans-serif; fill: #1F2937; }
+    .label { font: 11px sans-serif; fill: white; }
+    .sublabel { font: 9px sans-serif; fill: #9CA3AF; }
+    .arrow-label { font: 10px sans-serif; fill: #6B7280; }
+    .legend { font: 11px sans-serif; fill: #374151; }
+  </style>
+
+  <!-- Background -->
+  <rect width="800" height="400" fill="#F9FAFB"/>
+
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" class="title">Event Causation Graph</text>
+
+  <!-- Root Event (Command) -->
+  <rect x="350" y="60" width="100" height="50" rx="8" fill="url(#rootGrad)"/>
+  <text x="400" y="82" text-anchor="middle" class="label">CreateOrder</text>
+  <text x="400" y="95" text-anchor="middle" class="sublabel">evt-001 (root)</text>
+
+  <!-- Level 2 Events -->
+  <rect x="150" y="160" width="100" height="50" rx="8" fill="url(#eventGrad)"/>
+  <text x="200" y="182" text-anchor="middle" class="label">OrderCreated</text>
+  <text x="200" y="195" text-anchor="middle" class="sublabel">evt-002</text>
+
+  <rect x="350" y="160" width="100" height="50" rx="8" fill="url(#eventGrad)"/>
+  <text x="400" y="182" text-anchor="middle" class="label">PaymentInit</text>
+  <text x="400" y="195" text-anchor="middle" class="sublabel">evt-003</text>
+
+  <rect x="550" y="160" width="100" height="50" rx="8" fill="url(#eventGrad)"/>
+  <text x="600" y="182" text-anchor="middle" class="label">InventoryRes</text>
+  <text x="600" y="195" text-anchor="middle" class="sublabel">evt-004</text>
+
+  <!-- Level 3 Events -->
+  <rect x="100" y="260" width="100" height="50" rx="8" fill="url(#eventGrad)"/>
+  <text x="150" y="282" text-anchor="middle" class="label">EmailSent</text>
+  <text x="150" y="295" text-anchor="middle" class="sublabel">evt-005</text>
+
+  <rect x="250" y="260" width="100" height="50" rx="8" fill="url(#leafGrad)"/>
+  <text x="300" y="282" text-anchor="middle" class="label">AuditLogged</text>
+  <text x="300" y="295" text-anchor="middle" class="sublabel">evt-006 (leaf)</text>
+
+  <rect x="450" y="260" width="100" height="50" rx="8" fill="url(#leafGrad)"/>
+  <text x="500" y="282" text-anchor="middle" class="label">PaymentDone</text>
+  <text x="500" y="295" text-anchor="middle" class="sublabel">evt-007 (leaf)</text>
+
+  <rect x="600" y="260" width="100" height="50" rx="8" fill="url(#leafGrad)"/>
+  <text x="650" y="282" text-anchor="middle" class="label">StockUpdated</text>
+  <text x="650" y="295" text-anchor="middle" class="sublabel">evt-008 (leaf)</text>
+
+  <!-- Arrows (causation relationships) -->
+  <line x1="375" y1="110" x2="225" y2="155" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="400" y1="110" x2="400" y2="155" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="425" y1="110" x2="575" y2="155" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <line x1="175" y1="210" x2="150" y2="255" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="225" y1="210" x2="275" y2="255" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="425" y1="210" x2="475" y2="255" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="625" y1="210" x2="650" y2="255" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Correlation ID box -->
+  <rect x="20" y="340" width="200" height="45" rx="6" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+  <text x="120" y="360" text-anchor="middle" class="legend">correlation_id: order-12345</text>
+  <text x="120" y="375" text-anchor="middle" class="sublabel">All events share this ID</text>
+
+  <!-- Legend -->
+  <rect x="580" y="340" width="200" height="50" rx="6" fill="white" stroke="#E5E7EB"/>
+  <rect x="590" y="350" width="12" height="12" rx="2" fill="url(#rootGrad)"/>
+  <text x="608" y="360" class="legend">Root (no cause)</text>
+  <rect x="590" y="368" width="12" height="12" rx="2" fill="url(#eventGrad)"/>
+  <text x="608" y="378" class="legend">Event</text>
+  <rect x="700" y="350" width="12" height="12" rx="2" fill="url(#leafGrad)"/>
+  <text x="718" y="360" class="legend">Leaf</text>
+</svg>

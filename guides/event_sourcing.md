@@ -33,7 +33,7 @@ You can reconstruct the state at any point in time:
 
 ```erlang
 %% Get account balance as of last month
-{ok, Events} = esdb_gater_api:stream_forward(my_store, <<"account-123">>, 0, 1000),
+{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-123">>, 0, 1000),
 PastEvents = [E || E <- Events, E#event.timestamp < LastMonthTimestamp],
 Balance = lists:foldl(fun apply_event/2, 0, PastEvents).
 ```
@@ -43,7 +43,7 @@ Rebuild read models, fix bugs in projections, or create new views of historical 
 
 ```erlang
 %% Rebuild a projection from scratch
-{ok, Events} = esdb_gater_api:stream_forward(my_store, <<"orders-*">>, 0, 10000),
+{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"orders-*">>, 0, 10000),
 lists:foreach(fun(E) -> update_projection(E) end, Events).
 ```
 
@@ -77,7 +77,7 @@ Events = [
         metadata => #{user_id => <<"user-456">>, correlation_id => <<"req-789">>}
     }
 ],
-{ok, Version} = esdb_gater_api:append_events(my_store, <<"order-ord-123">>, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"order-ord-123">>, Events).
 ```
 
 ### Events
@@ -119,11 +119,11 @@ reckon-db uses optimistic concurrency control to prevent conflicting writes:
 %% expected_version => N >= 0: Stream version must equal N
 
 %% First write to a new stream
-{ok, 0} = esdb_gater_api:append_events(my_store, <<"order-123">>, [Event1],
+{ok, 0} = reckon_gater_api:append_events(my_store, <<"order-123">>, [Event1],
     #{expected_version => -1}).
 
 %% Subsequent writes must specify expected version
-{ok, 1} = esdb_gater_api:append_events(my_store, <<"order-123">>, [Event2],
+{ok, 1} = reckon_gater_api:append_events(my_store, <<"order-123">>, [Event2],
     #{expected_version => 0}).
 
 %% Concurrent writes will fail with version mismatch
@@ -269,7 +269,7 @@ Rebuild aggregate state by reading and folding events:
 %% Load order aggregate from event stream via gateway
 load_order(StoreId, OrderId) ->
     StreamId = <<"order-", OrderId/binary>>,
-    {ok, Events} = esdb_gater_api:stream_forward(StoreId, StreamId, 0, 10000),
+    {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, 10000),
     lists:foldl(fun order_aggregate:apply_event/2, order_aggregate:new(), Events).
 ```
 

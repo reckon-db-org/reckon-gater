@@ -16,7 +16,7 @@ The gateway provides two ways to receive events:
 
 ```erlang
 %% Create a subscription via gateway
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store,                    %% Store ID
     stream,                      %% Type: stream | event_type | event_pattern | event_payload
     <<"order-123">>,             %% Selector
@@ -39,7 +39,7 @@ ok = esdb_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to a single order's events
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store, stream, <<"order-123">>, <<"order_handler">>, self(), #{}
 ).
 ```
@@ -48,7 +48,7 @@ ok = esdb_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to all PaymentReceived events
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store, event_type, <<"PaymentReceived">>, <<"payment_processor">>, self(), #{}
 ).
 ```
@@ -57,7 +57,7 @@ ok = esdb_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to all order streams
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store, event_pattern, <<"order-*">>, <<"order_projection">>, self(), #{}
 ).
 ```
@@ -66,7 +66,7 @@ ok = esdb_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to high-value orders
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store, event_payload, #{total => {gt, 10000}}, <<"high_value_handler">>, self(), #{}
 ).
 ```
@@ -75,7 +75,7 @@ ok = esdb_gater_api:save_subscription(
 
 ```erlang
 %% List all subscriptions
-{ok, Subscriptions} = esdb_gater_api:get_subscriptions(my_store).
+{ok, Subscriptions} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Each subscription contains:
 %% - type, selector, subscription_name
@@ -86,7 +86,7 @@ ok = esdb_gater_api:save_subscription(
 
 ```erlang
 %% Remove a subscription
-ok = esdb_gater_api:remove_subscription(
+ok = reckon_gater_api:remove_subscription(
     my_store, event_pattern, <<"order-*">>, <<"order_projection">>
 ).
 ```
@@ -95,7 +95,7 @@ ok = esdb_gater_api:remove_subscription(
 
 ```erlang
 %% Acknowledge event processing (for at-least-once delivery)
-ok = esdb_gater_api:ack_event(my_store, SubscriptionName, StreamId, EventVersion).
+ok = reckon_gater_api:ack_event(my_store, SubscriptionName, StreamId, EventVersion).
 ```
 
 ## PubSub Channels
@@ -106,19 +106,19 @@ For real-time event delivery, use the gateway's built-in PubSub channels:
 
 | Channel | Priority | Purpose |
 |---------|----------|---------|
-| `esdb_channel_events` | high | Business events |
-| `esdb_channel_alerts` | critical | System alerts |
-| `esdb_channel_system` | normal | System notifications |
-| `esdb_channel_metrics` | normal | Performance metrics |
+| `reckon_gater_channel_events` | high | Business events |
+| `reckon_gater_channel_alerts` | critical | System alerts |
+| `reckon_gater_channel_system` | normal | System notifications |
+| `reckon_gater_channel_metrics` | normal | Performance metrics |
 
 ### Subscribing to Channels
 
 ```erlang
 %% Subscribe to a topic pattern
-ok = esdb_channel_server:subscribe(esdb_channel_events, <<"order.*">>, self()).
+ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"order.*">>, self()).
 
 %% Subscribe with wildcard
-ok = esdb_channel_server:subscribe(esdb_channel_events, <<"*">>, self()).
+ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"*">>, self()).
 ```
 
 ### Receiving Channel Messages
@@ -129,10 +129,10 @@ ok = esdb_channel_server:subscribe(esdb_channel_events, <<"*">>, self()).
 
 init([]) ->
     %% Subscribe to order events
-    ok = esdb_channel_server:subscribe(esdb_channel_events, <<"order.*">>, self()),
+    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"order.*">>, self()),
     {ok, #{}}.
 
-handle_info({channel_message, esdb_channel_events, Topic, Event}, State) ->
+handle_info({channel_message, reckon_gater_channel_events, Topic, Event}, State) ->
     %% Process the event
     logger:info("Received ~s: ~p", [Topic, Event]),
     handle_event(Topic, Event),
@@ -150,7 +150,7 @@ handle_event(<<"order.shipped">>, Event) ->
 
 ```erlang
 %% Unsubscribe from a topic
-ok = esdb_channel_server:unsubscribe(esdb_channel_events, <<"order.*">>, self()).
+ok = reckon_gater_channel_server:unsubscribe(reckon_gater_channel_events, <<"order.*">>, self()).
 ```
 
 ## Event Handler Patterns
@@ -169,12 +169,12 @@ start_link(StoreId) ->
 
 init([StoreId]) ->
     %% Create subscription via gateway
-    ok = esdb_gater_api:save_subscription(
+    ok = reckon_gater_api:save_subscription(
         StoreId, event_pattern, <<"order-*">>, <<"order_handler">>, self(), #{}
     ),
 
     %% Also subscribe to PubSub for real-time delivery
-    ok = esdb_channel_server:subscribe(esdb_channel_events, <<"order.*">>, self()),
+    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"order.*">>, self()),
 
     {ok, #{store_id => StoreId}}.
 
@@ -206,7 +206,7 @@ init([StoreId]) ->
     LastPosition = load_checkpoint(StoreId),
 
     %% Subscribe starting from checkpoint
-    ok = esdb_gater_api:save_subscription(
+    ok = reckon_gater_api:save_subscription(
         StoreId, event_pattern, <<"order-*">>, <<"checkpointed_handler">>, self(),
         #{start_from => LastPosition}
     ),
@@ -218,7 +218,7 @@ handle_info({event, #event{version = Version} = Event}, #{store_id := StoreId} =
     handle_event(Event),
 
     %% Acknowledge and checkpoint
-    ok = esdb_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, Event#event.stream_id, Version),
+    ok = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, Event#event.stream_id, Version),
     save_checkpoint(StoreId, Version),
 
     {noreply, State#{last_position => Version}}.
@@ -231,7 +231,7 @@ handle_info({event, #event{version = Version} = Event}, #{store_id := StoreId} =
 
 start_pool(StoreId, PoolSize) ->
     %% Create subscription
-    ok = esdb_gater_api:save_subscription(
+    ok = reckon_gater_api:save_subscription(
         StoreId, event_pattern, <<"order-*">>, <<"handler_pool">>, undefined,
         #{pool_size => PoolSize}
     ),
@@ -246,7 +246,7 @@ start_pool(StoreId, PoolSize) ->
 
 init([StoreId, WorkerId]) ->
     %% Subscribe to PubSub for load-balanced delivery
-    ok = esdb_channel_server:subscribe(esdb_channel_events, <<"*">>, self()),
+    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"*">>, self()),
     {ok, #{store_id => StoreId, worker_id => WorkerId}}.
 ```
 
@@ -256,13 +256,13 @@ Process historical events before receiving live events:
 
 ```erlang
 %% Start from beginning (catch up on all history)
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store, event_pattern, <<"order-*">>, <<"new_projection">>, self(),
     #{start_from => 0}
 ).
 
 %% Resume from a specific position
-ok = esdb_gater_api:save_subscription(
+ok = reckon_gater_api:save_subscription(
     my_store, event_pattern, <<"order-*">>, <<"resumed_projection">>, self(),
     #{start_from => 12345}
 ).
@@ -291,7 +291,7 @@ Track how far behind your subscription is:
 
 ```erlang
 check_lag(StoreId, StreamId, ProcessedVersion) ->
-    {ok, StreamVersion} = esdb_gater_api:get_version(StoreId, StreamId),
+    {ok, StreamVersion} = reckon_gater_api:get_version(StoreId, StreamId),
     Lag = StreamVersion - ProcessedVersion,
     case Lag > 1000 of
         true -> logger:warning("Subscription lag: ~p events", [Lag]);
@@ -305,7 +305,7 @@ Clean up subscriptions on shutdown:
 
 ```erlang
 terminate(_Reason, #{store_id := StoreId}) ->
-    esdb_channel_server:unsubscribe(esdb_channel_events, <<"order.*">>, self()),
+    reckon_gater_channel_server:unsubscribe(reckon_gater_channel_events, <<"order.*">>, self()),
     ok.
 ```
 
