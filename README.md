@@ -18,6 +18,7 @@ reckon-gater is an Erlang gateway service providing:
 - **Capability-Based Security**: UCAN-inspired tokens for decentralized authorization
 - **PubSub Channels**: 10 dedicated channels with priority-based delivery
 - **HMAC Security**: Message signing for critical channels
+- **Tamper-Resistance Primitives** *(new in 2.1.0)*: Canonical encoder and HMAC + hash-chain helpers used by `reckon-db` 2.1.0 to make stored events and snapshots tamper-evident. See `reckon_gater_canonical` and `reckon_gater_integrity` modules.
 - **Telemetry**: BEAM telemetry with optional OpenTelemetry exporters
 
 ## Installation
@@ -26,7 +27,7 @@ Add to your `rebar.config`:
 
 ```erlang
 {deps, [
-    {reckon_gater, "1.0.0"}
+    {reckon_gater, "2.1.0"}
 ]}.
 ```
 

@@ -5,6 +5,92 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-05-15
+
+### Added — Tamper-resistance primitives (Layer 1 of the 2.1 cross-package effort)
+
+This release adds the shared cryptographic primitives and record-shape
+extensions that downstream `reckon-db` 2.1.0 will use to make events
+and snapshots tamper-evident. Pure additions — no breaking changes,
+no API removals.
+
+#### New fields on `#event{}`
+
+Three new fields, all defaulting to `undefined` for events written
+before 2.1.0 ("legacy events"):
+
+- **`prev_event_hash :: binary() | undefined`** — SHA-256 chain hash
+  linking this event back to its predecessor in the stream. Makes
+  insertion / deletion / reordering of events detectable. Verifiable
+  WITHOUT the HMAC key, so projections and external (gateway)
+  consumers can chain-check independently.
+- **`mac :: {KeyId, MacBytes} | undefined`** — HMAC-SHA256 over the
+  canonical bytes of the event, keyed by a per-store secret. Provides
+  authenticity that survives disk-level tampering by an attacker who
+  does not hold the key. `KeyId` is reserved for the 2.2 key-rotation
+  feature; 2.1 always writes `KeyId = 1`.
+- **`signature :: binary() | undefined`** — Reserved for Ed25519
+  signatures in 2.2+. Not populated in 2.1.
+
+#### New fields on `#snapshot{}`
+
+- **`anchor_hash :: binary() | undefined`** — Chain hash of the event
+  at the snapshot's version, captured at snapshot time. On load,
+  refusing snapshots whose anchor disagrees with the actual chain
+  closes the snapshot-bypass attack against event-level integrity.
+- **`mac :: {KeyId, MacBytes} | undefined`** — HMAC-SHA256 over the
+  snapshot, domain-tagged so it cannot be substituted for an event
+  MAC even if the same key is reused.
+
+#### New modules
+
+- **`reckon_gater_canonical`** — Deterministic ETF encoder
+  (`term_to_binary/2` with the `deterministic` flag) plus
+  domain-separation tags (`evt|`, `snap|`, `chain|`) for MAC and
+  chain-hash inputs. Algorithm identifier: `sha256-deterministic-etf-v1`.
+- **`reckon_gater_integrity`** — Pure functions to compute and verify
+  the new integrity fields: `compute_chain_hash/2`,
+  `compute_event_mac/2`, `compute_snapshot_mac/2`, `verify_event/3`,
+  `verify_snapshot/3`, `is_legacy_event/1`, `is_legacy_snapshot/1`,
+  `genesis_prev_hash/0`. Uses OTP `crypto:hash/2` and `crypto:mac/4`
+  directly — no `reckon-nifs` dependency required (OpenSSL-backed
+  primitives are already fast enough; per-event integrity overhead
+  is approximately 5–10 µs).
+
+#### New types
+
+- **`integrity_violation()`** — Structured error term returned when
+  any integrity check fails. Non-retriable by design (distinct from
+  `wrong_expected_version`); downstream callers (`evoq` dispatcher,
+  `reckon-db` storage layer) must classify this as terminal.
+- **`integrity_failure_kind()`** — One of `mac_mismatch`,
+  `chain_mismatch`, `missing_integrity`, `snapshot_anchor_mismatch`,
+  `snapshot_mac_mismatch`.
+
+#### Compatibility
+
+- 100% backward-compatible with `reckon-gater` 2.0.x consumers.
+  Existing code that constructs `#event{}` or `#snapshot{}` records
+  without the new fields continues to compile and run; the new fields
+  default to `undefined` and are interpreted as "legacy" by the
+  integrity helpers.
+- Downstream `reckon-db` 2.0.x continues to work against
+  `reckon-gater` 2.1.0. Integrity verification only activates in
+  `reckon-db` 2.1.0 when a store explicitly enables it.
+
+#### Design reference
+
+The full cross-package design — threat model, migration plan via
+per-stream `chain_start_version` watermarks, key-management MVP,
+per-layer rollout sequence — is documented in
+`plans/PLAN_TAMPER_RESISTANCE.md` in the `reckon-db` repository.
+
+### Fixed
+
+- `src/reckon_gater.app.src` — `{links, [{"GitHub", ...}]}` replaced
+  by `{links, [{"Codeberg", ...}]}` to match the canonical hosting
+  location.
+
 ## [2.0.1] - 2026-04-24
 
 ### Fixed

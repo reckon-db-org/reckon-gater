@@ -8,7 +8,7 @@
     <meta name="project" content="reckon_gater v2.1.0">
 
 
-    <title>reckon_gater_sup — reckon_gater v2.1.0</title>
+    <title>reckon_gater_canonical — reckon_gater v2.1.0</title>
 
     <link rel="stylesheet" href="dist/html-erlang-7YNYEB7F.css" />
 
@@ -93,7 +93,7 @@ reckon_gater
 <div id="top-content">
   <div class="heading-with-actions top-heading">
     <h1>
-      <span translate="no">reckon_gater_sup</span> 
+      <span translate="no">reckon_gater_canonical</span> 
       <small class="app-vsn" translate="no">(reckon_gater v2.1.0)</small>
 
     </h1>
@@ -107,7 +107,7 @@ reckon_gater
 
 
     <section id="moduledoc">
-<p>Top-level supervisor for reckon-gater</p><h3 id="module-supervision-tree" class="section-heading"><a href="#module-supervision-tree" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Supervision_Tree">Supervision Tree</a></span></h3><p>reckon_gater_sup (one_for_one) - reckon_gater_cluster_sup (rest_for_one) - reckon_gater_worker_registry - reckon_gater_cluster_monitor - reckon_gater_channel_sup (one_for_one) - 10x channel workers</p><p>Note: reckon_gater_api is a stateless API module, not a supervised process.</p>
+<p>Canonical encoding for tamper-resistance integrity computations.</p><p>Provides deterministic byte representation of Erlang terms so that the same event record always produces identical bytes -- required for reproducible HMAC computation and chain hashing across cluster nodes and across recompiles.</p><h3 id="module-why-this-exists" class="section-heading"><a href="#module-why-this-exists" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Why_this_exists">Why this exists</a></span></h3><p>term_to_binary/1 is NOT canonical: map iteration order, atom encoding choices, and ETF minor-version selection can all vary across OTP releases and runtime conditions. Two BEAM nodes computing an HMAC over the &quot;same&quot; event with the default term_to_binary/1 could produce different bytes and disagree on the MAC.</p><p>term_to_binary/2 with the deterministic flag (added in OTP 26) sorts map keys lexicographically before encoding, fixes atom encoding, and is documented as stable across nodes. That is what this module relies on.</p><h3 id="module-algorithm-identifier" class="section-heading"><a href="#module-algorithm-identifier" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Algorithm_identifier">Algorithm identifier</a></span></h3><p>This module implements the wire format identified to external verifiers as &quot;sha256-deterministic-etf-v1&quot;:</p><ul><li>hash function: SHA-256</li><li>canonical encoding: term_to_binary/2 with [deterministic, {minor_version, 2}]</li><li>format version: v1</li></ul><p>External consumers reading the chain hash through reckon-gateway can reproduce the canonical bytes if they hold a compatible ETF decoder/encoder -- for cross-language verification (Go / Python / Rust clients) a CBOR-canonical alternate encoding is a future addition (out of scope for 2.1.0).</p><h3 id="module-domain-separation-tags" class="section-heading"><a href="#module-domain-separation-tags" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text"><a name="Domain-separation_tags">Domain-separation tags</a></span></h3><p>The encoder prefixes the canonical bytes with a short domain tag that distinguishes between:</p><ul><li>&lt;&lt;&quot;evt|&quot;&gt;&gt; -- event MAC input</li><li>&lt;&lt;&quot;snap|&quot;&gt;&gt; -- snapshot MAC input</li><li>&lt;&lt;&quot;chain|&quot;&gt;&gt; -- chain hash input</li></ul><p>Domain separation prevents cross-protocol substitution attacks: an attacker who recovers a snapshot MAC cannot replay it as an event MAC, because the inputs hashed under each were tagged differently.</p>
     </section>
 
 </div>
@@ -126,17 +126,31 @@ reckon_gater
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#init/1" data-no-tooltip="" translate="no">init(_)</a>
+        <a href="#encode/1" data-no-tooltip="" translate="no">encode(Term)</a>
 
       </div>
+
+        <div class="summary-synopsis"><p>Canonically encode an Erlang term to a deterministic binary.</p></div>
 
     </div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#start_link/0" data-no-tooltip="" translate="no">start_link()</a>
+        <a href="#encode_for_chain/2" data-no-tooltip="" translate="no">encode_for_chain(EventMinusIntegrity, PrevEventHash)</a>
 
       </div>
+
+        <div class="summary-synopsis"><p>Canonical bytes to feed into the chain hash computation.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#encode_for_mac/2" data-no-tooltip="" translate="no">encode_for_mac(_, EventMinusMac)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Canonical bytes to feed into an HMAC computation, domain-tagged.</p></div>
 
     </div>
 
@@ -154,36 +168,14 @@ reckon_gater
     </h1>
 
     <div class="functions-list">
-<section class="detail" id="init/1">
+<section class="detail" id="encode/1">
 
   <div class="detail-header">
-    <a href="#init/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#encode/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">init(_)</h1>
-
-
-        <a href="https://codeberg.org/reckon-db-org/reckon-gater" class="icon-action" rel="help" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-
-  </section>
-</section>
-<section class="detail" id="start_link/0">
-
-  <div class="detail-header">
-    <a href="#start_link/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">start_link()</h1>
+      <h1 class="signature" translate="no">encode(Term)</h1>
 
 
         <a href="https://codeberg.org/reckon-db-org/reckon-gater" class="icon-action" rel="help" aria-label="View Source">
@@ -197,11 +189,67 @@ reckon_gater
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">-spec</span> start_link() -> {ok, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:pid/0">pid</a>()} | {error, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()}.</pre>
+          <pre translate="no"><span class="attribute">-spec</span> encode(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>().</pre>
 
       </div>
 
+<p>Canonically encode an Erlang term to a deterministic binary.</p><p>Uses term_to_binary/2 with the deterministic flag (OTP 26+), which sorts map keys before encoding and otherwise stabilises atom and small-integer encoding choices. Same input term always produces byte-identical output, regardless of node, OTP minor version, or process state.</p><p>This is the foundation primitive -- both encode_for_mac/2 and encode_for_chain/2 build on top of it by adding domain-separation tags.</p>
+  </section>
+</section>
+<section class="detail" id="encode_for_chain/2">
 
+  <div class="detail-header">
+    <a href="#encode_for_chain/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">encode_for_chain(EventMinusIntegrity, PrevEventHash)</h1>
+
+
+        <a href="https://codeberg.org/reckon-db-org/reckon-gater" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> encode_for_chain(<a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>(), <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:binary/0">binary</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:iolist/0">iolist</a>().</pre>
+
+      </div>
+
+<p>Canonical bytes to feed into the chain hash computation.</p><p>The chain input is:</p><p>&quot;chain|&quot; ++ canonical_encode(event_minus_integrity_fields) ++ prev_event_hash</p><p>For event version 0 (start of stream), PrevEventHash is the all-zero 32-byte binary -- a stable &quot;genesis&quot; value rather than special-casing on 'undefined'. This means the chain-hash function is a pure function of (event, prev_hash) with no nil/undefined branches in the cryptographic path.</p><p>Returns an iolist suitable for crypto:hash(sha256, _).</p>
+  </section>
+</section>
+<section class="detail" id="encode_for_mac/2">
+
+  <div class="detail-header">
+    <a href="#encode_for_mac/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">encode_for_mac(_, EventMinusMac)</h1>
+
+
+        <a href="https://codeberg.org/reckon-db-org/reckon-gater" class="icon-action" rel="help" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> encode_for_mac(event | snapshot, <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:term/0">term</a>()) -> <a href="https://www.erlang.org/doc/apps/erts/erlang.html#t:iolist/0">iolist</a>().</pre>
+
+      </div>
+
+<p>Canonical bytes to feed into an HMAC computation, domain-tagged.</p><p>Returns an iolist (cheaper than concatenating to a binary) suitable for direct passing to crypto:mac(hmac, sha256, Key, _).</p><p>The Domain parameter is 'event' or 'snapshot' -- extending this list requires a new domain tag constant above.</p>
   </section>
 </section>
 

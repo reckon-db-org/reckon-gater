@@ -1,6 +1,6 @@
 {application, reckon_gater, [
     {description, "Gateway for reckon-db event store with capability-based security"},
-    {vsn, "2.0.1"},
+    {vsn, "2.1.0"},
     {registered, []},
     {mod, {reckon_gater_app, []}},
     {applications, [
@@ -22,5 +22,5 @@
     ]},
     {modules, []},
     {licenses, ["Apache-2.0"]},
-    {links, [{"GitHub", "https://github.com/reckon-db-org/reckon-gater"}]}
+    {links, [{"Codeberg", "https://codeberg.org/reckon-db-org/reckon-gater"}]}
 ]}.

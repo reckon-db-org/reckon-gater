@@ -35,8 +35,8 @@ dist/lato-latin-700-normal-2XVSBPG4.woff2
 dist/lato-latin-ext-400-normal-N27NCBWW.woff2
 dist/lato-latin-ext-700-normal-Q2L5DVMW.woff2
 dist/remixicon-QPNJX265.woff2
-dist/search_data-2ECB6C3C.js
-dist/sidebar_items-A3A957DA.js
+dist/search_data-722295F5.js
+dist/sidebar_items-833597EE.js
 event_sourcing.html
 index.html
 license.html
@@ -44,6 +44,7 @@ memory_pressure.html
 readme.html
 reckon_gater_api.html
 reckon_gater_app.html
+reckon_gater_canonical.html
 reckon_gater_capability.html
 reckon_gater_channel.html
 reckon_gater_channel_alerts.html
@@ -63,6 +64,7 @@ reckon_gater_cluster_sup.html
 reckon_gater_config.html
 reckon_gater_crypto_nif.html
 reckon_gater_identity.html
+reckon_gater_integrity.html
 reckon_gater_pubsub_security.html
 reckon_gater_repl.html
 reckon_gater_retry.html
