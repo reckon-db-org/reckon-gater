@@ -26,7 +26,9 @@ retry_test_() ->
         {"with_retry exhausts retries",
          fun retry_exhausted_test/0},
         {"default config returns expected values",
-         fun default_config_test/0}
+         fun default_config_test/0},
+        {"invalid_stream_id is non-retriable (fails fast)",
+         fun retry_skips_invalid_stream_id_test/0}
      ]}.
 
 setup() ->
@@ -106,3 +108,20 @@ default_config_test() ->
     ?assert(Config#retry_config.base_delay_ms > 0),
     ?assert(Config#retry_config.max_delay_ms >= Config#retry_config.base_delay_ms),
     ?assert(Config#retry_config.max_retries >= 0).
+
+%% Validator-style errors must short-circuit immediately — they will
+%% never become valid through retries, and the gRPC client would
+%% otherwise hit its deadline before the retry loop gave up.
+retry_skips_invalid_stream_id_test() ->
+    Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
+    CallCount = counters:new(1, []),
+    Err = {invalid_stream_id, malformed_user_id, <<"partition$abc">>},
+    Fun = fun() ->
+        counters:add(CallCount, 1, 1),
+        {error, Err}
+    end,
+    Result = reckon_gater_retry:with_retry(test_store, Fun, Config),
+    %% Returned as-is, NOT wrapped in {retries_exhausted, _}
+    ?assertEqual({error, Err}, Result),
+    %% Called exactly once — no retries
+    ?assertEqual(1, counters:get(CallCount, 1)).

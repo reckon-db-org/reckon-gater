@@ -5,6 +5,26 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-05-18
+
+### Fixed — Validation errors now fail fast through the retry layer
+
+`reckon_gater_retry:is_retriable_error/1` now treats
+`{invalid_stream_id, _, _}` as non-retriable. reckon-db 2.3.3
+introduced an append-time stream-id format validator that returns
+this error shape; without this fix the retry loop treated it as a
+transient failure and burned through 10× exponential backoff
+(~30 seconds) before giving up — long enough that gRPC clients
+hit their deadline and saw `DeadlineExceeded` instead of the real
+`InvalidArgument` cause.
+
+One-line whitelist addition; one new unit test (14/14 pass) that
+asserts the validator error returns after a single call with no
+retries.
+
+This release ships ahead of any reckon-db consumer that needs the
+behaviour; reckon-db 2.3.4 bumps its dep to pull it in.
+
 ## [2.1.0] - 2026-05-15
 
 ### Added — Tamper-resistance primitives (Layer 1 of the 2.1 cross-package effort)

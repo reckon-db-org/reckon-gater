@@ -94,6 +94,12 @@ do_retry(StoreId, Fun, Config, Attempt) ->
 %% - stream_not_found: The stream doesn't exist (caller should handle)
 %% - wrong_expected_version: Optimistic concurrency conflict (caller should reload)
 %% - not_found: Resource doesn't exist
+%% - invalid_stream_id: Validation rejection — the id will never become
+%%   valid no matter how many times we retry. Wrapping shape:
+%%   `{invalid_stream_id, Reason, StreamId}'. Emitted by
+%%   `reckon_db_stream_id' (added in reckon-db 2.3.3); whitelisted
+%%   here so the gRPC client sees `InvalidArgument' immediately
+%%   instead of timing out after exponential backoff.
 %%
 %% All other errors are assumed transient and will be retried.
 -spec is_retriable_error(term()) -> boolean().
@@ -102,6 +108,7 @@ is_retriable_error({stream_not_found, _}) -> false;
 is_retriable_error({wrong_expected_version, _}) -> false;
 is_retriable_error({wrong_expected_version, _, _}) -> false;
 is_retriable_error(not_found) -> false;
+is_retriable_error({invalid_stream_id, _, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 
