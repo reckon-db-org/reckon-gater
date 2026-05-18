@@ -120,6 +120,9 @@ is_retriable_error({invalid_filter, _}) -> false;
 %% Same logic for re-acking after a remove/recreate cycle on a
 %% different key. Synchronous via reckon-gater 2.1.3+.
 is_retriable_error({subscription_not_found, _}) -> false;
+%% Scavenge on a stream without a snapshot rejects at the worker;
+%% retrying can't conjure a snapshot, so back off to gRPC fast.
+is_retriable_error({no_snapshot, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 

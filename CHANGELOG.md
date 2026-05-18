@@ -5,6 +5,20 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.4] - 2026-05-18
+
+### Added — `no_snapshot` whitelisted in retry layer
+
+`reckon_db_scavenge:check_snapshot_requirement/3` returns
+`{error, {no_snapshot, StreamId}}` when `require_snapshot` is true
+(the default) and the target stream has no snapshot. This is a
+caller-side condition (typically: scavenging a stream that doesn't
+exist or has no checkpoint yet); retrying cannot create the snapshot.
+
+Without the whitelist, every `ScavengeDryRun` against such a stream
+hit the full retry chain and ran out the gRPC deadline before
+surfacing the error. Surfaces as `InvalidArgument` in ms now.
+
 ## [2.1.3] - 2026-05-18
 
 ### Changed (breaking) — `remove_subscription/4` and `ack_event/4` are synchronous
