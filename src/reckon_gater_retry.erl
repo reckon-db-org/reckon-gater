@@ -115,6 +115,11 @@ is_retriable_error({invalid_stream_id, _, _}) -> false;
 %% malformed for the chosen subscription type — retrying with
 %% the same input will produce the same error.
 is_retriable_error({invalid_filter, _}) -> false;
+%% Ack of a subscription that no longer exists — surface to caller as
+%% InvalidArgument; backoff cannot conjure the subscription back.
+%% Same logic for re-acking after a remove/recreate cycle on a
+%% different key. Synchronous via reckon-gater 2.1.3+.
+is_retriable_error({subscription_not_found, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 

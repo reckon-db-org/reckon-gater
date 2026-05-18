@@ -319,17 +319,25 @@ get_subscription(StoreId, SubscriptionName) ->
 save_subscription(StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber) ->
     route_call(StoreId, {save_subscription, StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber}).
 
-%% @doc Remove a subscription
--spec remove_subscription(atom(), atom(), binary() | map(), binary()) -> ok.
+%% @doc Remove a subscription.
+%%
+%% Returns `ok' on success (including the idempotent case where the
+%% subscription was already gone), `{error, Reason}' on transport
+%% failure. Removing a non-existent subscription is NOT an error;
+%% removal is the desired terminal state regardless of starting state.
+-spec remove_subscription(atom(), atom(), binary() | map(), binary()) ->
+    ok | {error, term()}.
 remove_subscription(StoreId, Type, Selector, SubscriptionName) ->
-    route_cast(StoreId, {remove_subscription, StoreId, Type, Selector, SubscriptionName}),
-    ok.
+    route_call(StoreId, {remove_subscription, StoreId, Type, Selector, SubscriptionName}).
 
-%% @doc Acknowledge receipt of an event by a subscriber
--spec ack_event(atom(), binary(), pid(), map()) -> ok.
+%% @doc Acknowledge receipt of an event by a subscriber.
+%%
+%% Returns `ok' on success, `{error, {subscription_not_found, _}}' if
+%% the subscription has been removed (acking a dead subscription is a
+%% caller error; surface it). Non-retriable.
+-spec ack_event(atom(), binary(), pid(), map()) -> ok | {error, term()}.
 ack_event(StoreId, SubscriptionName, SubscriberPid, Event) ->
-    route_cast(StoreId, {ack_event, StoreId, SubscriptionName, SubscriberPid, Event}),
-    ok.
+    route_call(StoreId, {ack_event, StoreId, SubscriptionName, SubscriberPid, Event}).
 
 %%====================================================================
 %% Snapshot Operations

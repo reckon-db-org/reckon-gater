@@ -5,6 +5,34 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2026-05-18
+
+### Changed (breaking) — `remove_subscription/4` and `ack_event/4` are synchronous
+
+Same silent-failure pattern as the 2.1.2 `save_subscription/6`
+conversion. Both calls used to be fire-and-forget `route_cast` that
+returned a hardcoded `ok`. The worker could reject the request and
+the gRPC client would never know.
+
+Now `route_call` returning the worker's real result:
+
+- `remove_subscription/4` — returns `ok | {error, Reason}`. Removing
+  a non-existent subscription is treated as `ok` (idempotent;
+  removal is the desired terminal state regardless of starting state).
+- `ack_event/4` — returns `ok | {error, Reason}`. Acking a removed
+  subscription surfaces as `{error, {subscription_not_found, _}}`.
+
+Consumers must update call sites. Existing
+`ok = remove_subscription(...)` / `ok = ack_event(...)` patterns
+will crash with `badmatch`.
+
+### Added — `subscription_not_found` whitelisted in retry layer
+
+`reckon_gater_retry:is_retriable_error/1` now returns `false` for
+`{subscription_not_found, _}`. The error is caller-side (acking a
+subscription that was already removed); backoff cannot conjure the
+subscription back. Surfaces to gRPC as `InvalidArgument` in ms.
+
 ## [2.1.2] - 2026-05-18
 
 ### Changed (breaking) — `save_subscription/6` is synchronous
