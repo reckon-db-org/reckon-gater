@@ -15,7 +15,8 @@
 %%
 %% == Subscription Operations ==
 %%
-%%   ok = reckon_gater_api:save_subscription(my_store, by_stream, Selector, Name).
+%%   {ok, Key} = reckon_gater_api:save_subscription(
+%%       my_store, by_stream, Selector, Name, 0, self()).
 %%   ok = reckon_gater_api:remove_subscription(my_store, by_stream, Selector, Name).
 %%
 %% == Snapshot Operations ==
@@ -301,11 +302,22 @@ get_subscriptions(StoreId) ->
 get_subscription(StoreId, SubscriptionName) ->
     route_call(StoreId, {get_subscription, StoreId, SubscriptionName}).
 
-%% @doc Save a subscription
--spec save_subscription(atom(), atom(), binary() | map(), binary(), non_neg_integer(), pid() | undefined) -> ok.
+%% @doc Save (create) a subscription.
+%%
+%% Synchronous as of reckon-gater 2.1.2 — the previous
+%% `route_cast' fire-and-forget swallowed errors like
+%% `{invalid_filter, _}', so a client subscribe call would see
+%% gRPC ok while no events ever flowed. Now returns the worker's
+%% real result; consumers (gateway handlers, application code)
+%% can translate to a proper user-visible error.
+%%
+%% Returns `{ok, Key}' on success (Key is the subscription's
+%% internal id), `{error, Reason}' on validation / filter
+%% failure (non-retriable; see {@link reckon_gater_retry}).
+-spec save_subscription(atom(), atom(), binary() | map(), binary(), non_neg_integer(), pid() | undefined) ->
+    {ok, binary()} | {error, term()}.
 save_subscription(StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber) ->
-    route_cast(StoreId, {save_subscription, StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber}),
-    ok.
+    route_call(StoreId, {save_subscription, StoreId, Type, Selector, SubscriptionName, StartFrom, Subscriber}).
 
 %% @doc Remove a subscription
 -spec remove_subscription(atom(), atom(), binary() | map(), binary()) -> ok.

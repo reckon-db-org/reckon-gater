@@ -5,6 +5,40 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2026-05-18
+
+### Changed (breaking) — `save_subscription/6` is synchronous
+
+`reckon_gater_api:save_subscription/6` used to be a fire-and-forget
+`route_cast` that always returned `ok`. If the worker rejected the
+subscription (e.g. malformed filter selector), the gateway logged
+a warning and the gRPC client never knew — Subscribe RPCs would
+"succeed" while no events ever flowed.
+
+Now `route_call` and returns the worker's real result:
+
+  `{ok, Key} | {error, Reason}`
+
+Consumers MUST update their call sites. Existing
+`ok = save_subscription(...)` patterns will crash with `badmatch`.
+
+### Added — `invalid_filter` whitelisted in retry layer
+
+`reckon_gater_retry:is_retriable_error/1` now treats
+`{invalid_filter, _}` as non-retriable. The selector is malformed
+for the requested subscription type; retrying won't help and
+would otherwise burn ~30s of exponential backoff before giving up.
+14 → 15 retry-module unit tests; all pass.
+
+### Compatibility
+
+This release coordinates with reckon-db 2.3.5
+(`reckon_db_gateway_worker` becomes `handle_call` for the
+matching message) and reckon-gateway 0.4.10 (subscription
+handlers translate the new error tuples to gRPC
+`InvalidArgument`). Older versions of either consumer will
+break.
+
 ## [2.1.1] - 2026-05-18
 
 ### Fixed — Validation errors now fail fast through the retry layer

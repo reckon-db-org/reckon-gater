@@ -28,7 +28,9 @@ retry_test_() ->
         {"default config returns expected values",
          fun default_config_test/0},
         {"invalid_stream_id is non-retriable (fails fast)",
-         fun retry_skips_invalid_stream_id_test/0}
+         fun retry_skips_invalid_stream_id_test/0},
+        {"invalid_filter is non-retriable (fails fast)",
+         fun retry_skips_invalid_filter_test/0}
      ]}.
 
 setup() ->
@@ -124,4 +126,20 @@ retry_skips_invalid_stream_id_test() ->
     %% Returned as-is, NOT wrapped in {retries_exhausted, _}
     ?assertEqual({error, Err}, Result),
     %% Called exactly once — no retries
+    ?assertEqual(1, counters:get(CallCount, 1)).
+
+%% Subscription-filter validation errors come back synchronously
+%% from save_subscription/6 (reckon-gater 2.1.2+). They're also
+%% permanent — the selector is malformed for the requested
+%% subscription type, retrying won't help.
+retry_skips_invalid_filter_test() ->
+    Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
+    CallCount = counters:new(1, []),
+    Err = {invalid_filter, invalid_stream},
+    Fun = fun() ->
+        counters:add(CallCount, 1, 1),
+        {error, Err}
+    end,
+    Result = reckon_gater_retry:with_retry(test_store, Fun, Config),
+    ?assertEqual({error, Err}, Result),
     ?assertEqual(1, counters:get(CallCount, 1)).

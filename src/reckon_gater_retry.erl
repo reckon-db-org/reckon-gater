@@ -109,6 +109,12 @@ is_retriable_error({wrong_expected_version, _}) -> false;
 is_retriable_error({wrong_expected_version, _, _}) -> false;
 is_retriable_error(not_found) -> false;
 is_retriable_error({invalid_stream_id, _, _}) -> false;
+%% Subscription-filter validation errors come back from
+%% reckon_db_subscriptions:subscribe/5 via the newly-synchronous
+%% save_subscription/6 (reckon-gater 2.1.2+). The selector is
+%% malformed for the chosen subscription type — retrying with
+%% the same input will produce the same error.
+is_retriable_error({invalid_filter, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 
