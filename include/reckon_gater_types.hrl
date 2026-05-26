@@ -137,6 +137,33 @@
 -type tag_match() :: any | all.
 
 %%====================================================================
+%% DCB Tag Filter (Dynamic Consistency Boundary — reckon-db 3.1.0+)
+%%====================================================================
+
+%% A `tag_filter()` describes the consistency context for a
+%% `append_if_no_tag_matches` call. Per-event semantics:
+%%
+%%   any_of(Tags)    - matches events bearing ANY of the given tags
+%%   all_of(Tags)    - matches events bearing ALL of the given tags
+%%   and_(Filters)   - per-event AND of sub-filters
+%%   or_(Filters)    - per-event OR of sub-filters
+%%
+%% Concrete examples:
+%%   {any_of, [<<"email:alice@example.com">>]}  - uniqueness on one tag
+%%   {all_of, [<<"tenant:42">>, <<"resource:gpu">>]} - allocation check
+%%   {or_, [{any_of, [<<"a">>]}, {all_of, [<<"b">>, <<"c">>]}]} - nested
+-type tag_filter() ::
+      {any_of, [binary()]}
+    | {all_of, [binary()]}
+    | {and_, [tag_filter()]}
+    | {or_,  [tag_filter()]}.
+
+%% Cutoff semantics:
+%%   N >= 0 - "I saw events through seq N"; seqs > N are conflicts
+%%   -1     - "I saw nothing yet"; ANY matching event is a conflict
+-type seq_cutoff() :: integer().
+
+%%====================================================================
 %% Subscription Types
 %%====================================================================
 

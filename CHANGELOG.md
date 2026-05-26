@@ -5,6 +5,43 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-05-27
+
+### Added — DCB wire types and API (paired with reckon-db 3.1.0)
+
+`tag_filter()` and `seq_cutoff()` types in
+`include/reckon_gater_types.hrl`. `tag_filter()` is the consistency-
+boundary spec for `append_if_no_tag_matches`: per-event AND/OR
+composition over `any_of`/`all_of` tag predicates.
+
+```erlang
+-type tag_filter() ::
+      {any_of, [binary()]}
+    | {all_of, [binary()]}
+    | {and_, [tag_filter()]}
+    | {or_,  [tag_filter()]}.
+
+-type seq_cutoff() :: integer().  %% -1 means "saw nothing"
+```
+
+New API verb in `reckon_gater_api`:
+
+```erlang
+reckon_gater_api:append_if_no_tag_matches(
+    StoreId, TagFilter, SeqCutoff, Events).
+```
+
+Routes through `route_call/2` like every other write verb. Backends
+that don't implement the underlying primitive will surface
+`{error, not_supported}` at the gateway worker layer.
+
+### Notes
+
+This release adds the wire surface for DCB. The reckon-db backend
+implementing the primitive ships in reckon-db 3.1.0. The reckon-evoq
+adapter passthrough ships in reckon-evoq 2.3.0 (or whichever release
+follows reckon-evoq 2.2.x). Apps that don't use DCB are unaffected.
+
 ## [2.2.0] - 2026-05-26
 
 ### Added — `reckon_gater_stream_id` (moved from reckon-db)
