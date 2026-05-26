@@ -80,9 +80,12 @@
 -type validation_error() ::
     empty
     | not_binary
-    | invalid_prefix
     | malformed_user_id
     | malformed_system_id.
+%% Note: `invalid_prefix' is NOT a `validation_error/0' — it is the
+%% reason class raised by `new/1' via `erlang:error/1' when the
+%% supplied prefix is malformed. `validate/1' itself never sees a
+%% prefix in isolation, so it cannot produce that variant.
 
 %% Compile the regexes once at module load via persistent_term so
 %% the hot path doesn't pay for re:compile per call.
@@ -139,7 +142,7 @@ is_system(_) ->
 %% reckon_gater_stream_id:new(order).
 %% %% => <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>
 %% '''
--spec new(prefix()) -> binary().
+-spec new(prefix()) -> nonempty_binary().
 new(Prefix) ->
     Bin = to_prefix_bin(Prefix),
     case re:run(Bin, prefix_re(), [{capture, none}]) of
