@@ -5,6 +5,57 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-05-26
+
+### Added — `reckon_gater_stream_id` (moved from reckon-db)
+
+Stream-id format validator + generator now lives in reckon-gater, where
+the protocol contract belongs. Both reckon-db (write-time validation)
+and reckon-evoq (adapter-time generation) reach for it; previously
+only reckon-db could enforce the format and consumers had no shared
+helper for minting new ids.
+
+### Changed (breaking) — user-stream regex tightened
+
+The user-stream regex tightens from `^[A-Za-z]+-[A-Fa-f0-9]+$` to
+`^[a-z]{1,32}-[a-f0-9]{32}$`:
+
+- Prefix is now `[a-z]{1,32}` (lowercase only, capped at 32 chars).
+  Was `[A-Za-z]+`.
+- Suffix is now exactly 32 lowercase hex chars (128 bits — one
+  UUID-worth of entropy). Was `[A-Fa-f0-9]+` (any length, any case).
+
+Rationale: the permissive shape admitted `a-0`, `Order-DEADBEEF`, and
+`demo-1779045695...` — inconsistent ids that made logging, projection
+grouping, and downstream tooling unreliable. Lowercase + fixed-length
+hex gives every id predictable length and a uniform 128-bit entropy
+floor.
+
+Migration: previously stored ids that don't conform are still
+readable; they can't accept new events. No production deployments
+to migrate.
+
+### Added — `new/1` helper
+
+`reckon_gater_stream_id:new(Prefix)` mints a fresh, regex-compliant
+stream id with a UUIDv7-derived suffix — time-sortable AND uniform.
+Accepts atom or binary prefixes; raises `{invalid_prefix, Prefix}`
+on malformed input.
+
+```erlang
+reckon_gater_stream_id:new(<<"sess">>).
+%% => <<"sess-019d7a4f3c2a7d8c9e0f1234567890ab">>
+
+reckon_gater_stream_id:new(order).
+%% => <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>
+```
+
+### Added — `prefix_of/1` + `suffix_of/1` parsers
+
+Convenience for log parsers, projection groupers, and audit tooling
+that needs to split a stream id into its two parts without re-running
+the validation regex.
+
 ## [2.1.4] - 2026-05-18
 
 ### Added — `no_snapshot` whitelisted in retry layer

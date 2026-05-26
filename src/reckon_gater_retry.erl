@@ -97,7 +97,8 @@ do_retry(StoreId, Fun, Config, Attempt) ->
 %% - invalid_stream_id: Validation rejection — the id will never become
 %%   valid no matter how many times we retry. Wrapping shape:
 %%   `{invalid_stream_id, Reason, StreamId}'. Emitted by
-%%   `reckon_db_stream_id' (added in reckon-db 2.3.3); whitelisted
+%%   `reckon_gater_stream_id' (moved here from reckon-db in 2.2.0;
+%%   was `reckon_db_stream_id' in reckon-db 2.3.3+); whitelisted
 %%   here so the gRPC client sees `InvalidArgument' immediately
 %%   instead of timing out after exponential backoff.
 %%
