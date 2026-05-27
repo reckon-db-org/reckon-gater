@@ -199,16 +199,16 @@ append_events(StoreId, StreamId, ExpectedVersion, Events) ->
     route_call(StoreId, {append_events, StoreId, StreamId, ExpectedVersion, Events}).
 
 %% @doc Conditionally append events under the DCB pseudo-stream
-%% (Dynamic Consistency Boundary — reckon-db 3.1.0+).
+%% (Dynamic Consistency Boundary, reckon-db 3.1.0+).
 %%
-%% Unlike `append_events/3,4`, the precondition is NOT a stream-version
-%% check — it's a tag-filter context query. Returns
-%% `{error, {context_changed, MaxSeq}}` when any event matching
-%% `TagFilter` has seq > `SeqCutoff`. Nothing is written in the
-%% conflict case.
+%% Unlike append_events/3,4, the precondition is NOT a stream-version
+%% check; it is a tag-filter context query. Returns
+%% {error, {context_changed, MaxSeq}} when any event matching
+%% TagFilter has seq greater than SeqCutoff. Nothing is written in
+%% the conflict case.
 %%
 %% v1 backend (reckon-db 3.1.0) refuses on stores with integrity
-%% enabled — returns `{error, integrity_not_supported_in_dcb_v1}`.
+%% enabled; returns {error, integrity_not_supported_in_dcb_v1}.
 %%
 %% See: PLAN_DCB_IMPLEMENTATION.md in reckon-db for the full design.
 -spec append_if_no_tag_matches(
