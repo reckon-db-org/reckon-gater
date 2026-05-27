@@ -5,6 +5,21 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-05-27
+
+### Fixed — EDoc-incompatible backticks in `append_if_no_tag_matches/4` doc
+
+2.3.0 shipped with markdown-style backticks in the `@doc` block for
+`append_if_no_tag_matches/4`. EDoc's parser rejected the block with
+`` `-quote ended unexpectedly ``, breaking the hex docs build for 2.3.0.
+Backticks replaced with plain text; `rebar3 ex_doc` now builds clean.
+
+### Chore — Generated `doc/` untracked
+
+The `doc/` directory (ex_doc output) was inadvertently checked into the
+repo. Added to `.gitignore` and removed from version control. The other
+three repos in the DCB stack already ignored it.
+
 ## [2.3.0] - 2026-05-27
 
 ### Added — DCB wire types and API (paired with reckon-db 3.1.0)
