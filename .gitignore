@@ -34,3 +34,6 @@ ebin/
 # Crash dumps
 rebar3.crashdump
 erl_crash.dump
+
+# Generated docs
+doc/
