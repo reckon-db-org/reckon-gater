@@ -135,8 +135,12 @@ emit_retry_telemetry(StoreId, Attempt, Delay, Reason) ->
         #{delay_ms => Delay, attempt => Attempt + 1},
         #{store_id => StoreId, reason => Reason}
     ),
-    logger:warning("Retry attempt ~p for store ~p after ~pms: ~p",
-                  [Attempt + 1, StoreId, Delay, Reason]).
+    %% ~P (depth-limited) on Reason: store/Ra errors can carry the full
+    %% ra_server_state (multi-MB). Unbounded ~p here pegged a whole core
+    %% pretty-printing it under retry pressure (logger sync mode formats
+    %% inline in the caller). Cap depth so a retry log stays cheap.
+    logger:warning("Retry attempt ~p for store ~p after ~pms: ~P",
+                  [Attempt + 1, StoreId, Delay, Reason, 30]).
 
 %% @private Emit telemetry for exhausted retries
 -spec emit_exhausted_telemetry(atom(), non_neg_integer(), term()) -> ok.
@@ -146,5 +150,7 @@ emit_exhausted_telemetry(StoreId, MaxRetries, Reason) ->
         #{total_attempts => MaxRetries + 1},
         #{store_id => StoreId, reason => Reason}
     ),
-    logger:error("Retries exhausted for store ~p after ~p attempts: ~p",
-                [StoreId, MaxRetries + 1, Reason]).
+    %% ~P (depth-limited): see emit_retry_telemetry/4 — Reason may embed the
+    %% full ra_server_state; unbounded ~p on it is a CPU pitfall.
+    logger:error("Retries exhausted for store ~p after ~p attempts: ~P",
+                [StoreId, MaxRetries + 1, Reason, 30]).
