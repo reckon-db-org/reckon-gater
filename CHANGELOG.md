@@ -5,6 +5,22 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-05-29
+
+### Fixed — Unbounded `~p` of retry Reason pegged the CPU
+
+The retry logs in `reckon_gater_retry` formatted the failure Reason with
+an unbounded `~p`. A store/Ra error Reason can carry the full
+ra_server_state (a multi-MB nested term). Under retry pressure the
+default logger handler flips to synchronous mode, so the *calling*
+process (the store) pretty-prints that giant term inline (via
+`io_lib_pretty`) — pegging a whole scheduler continuously, independent of
+real workload. Both log calls now use depth-limited `~P` (depth 30),
+keeping a retry log cheap regardless of the Reason's size. Diagnosed live
+on the parksim fleet (per-tenant CPU ~95% to ~3% once formatting was
+bounded). Consumers should also set a global logger formatter depth /
+chars_limit so other components' reports are bounded too.
+
 ## [2.3.1] - 2026-05-27
 
 ### Fixed — EDoc-incompatible backticks in `append_if_no_tag_matches/4` doc
