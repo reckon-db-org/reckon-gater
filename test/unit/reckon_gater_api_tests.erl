@@ -26,13 +26,6 @@ exports_test_() ->
         ?_assert(lists:member({scavenge_matching, 3}, Exports)),
         ?_assert(lists:member({scavenge_dry_run, 3}, Exports)),
 
-        %% Causation operations
-        ?_assert(lists:member({get_effects, 2}, Exports)),
-        ?_assert(lists:member({get_cause, 2}, Exports)),
-        ?_assert(lists:member({get_causation_chain, 2}, Exports)),
-        ?_assert(lists:member({get_correlated, 2}, Exports)),
-        ?_assert(lists:member({build_causation_graph, 2}, Exports)),
-
         %% Schema operations
         ?_assert(lists:member({get_schema, 2}, Exports)),
         ?_assert(lists:member({list_schemas, 1}, Exports)),

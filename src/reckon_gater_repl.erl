@@ -1,7 +1,7 @@
 %% @doc Interactive REPL for reckon-gater
 %%
 %% Provides an interactive shell for exploring event stores, streams,
-%% causation chains, and temporal queries.
+%% and temporal queries.
 %%
 %% Start the REPL:
 %% ```
@@ -22,13 +22,6 @@
 %%   read STREAM [N]     Read N events from specified stream
 %%   version             Get version of current stream
 %%   version STREAM      Get version of specified stream
-%%
-%% CAUSATION COMMANDS
-%%   effects ID          Get events caused by event ID
-%%   cause ID            Get event that caused this event
-%%   chain ID            Get full causation chain
-%%   graph ID            Build causation graph
-%%   dot ID FILE         Export causation graph as DOT file
 %%
 %% TEMPORAL COMMANDS
 %%   until TS            Read events until timestamp
@@ -56,9 +49,6 @@
 -module(reckon_gater_repl).
 
 -export([start/0, start/1]).
-
-%% For testing
--export([graph_to_dot/1]).
 
 -record(state, {
     store :: atom() | undefined,
@@ -153,18 +143,6 @@ handle_input("version", State) ->
     handle_version("", State);
 handle_input("version " ++ Rest, State) ->
     handle_version(string:trim(Rest), State);
-
-%% Causation commands
-handle_input("effects " ++ Rest, State) ->
-    handle_effects(string:trim(Rest), State);
-handle_input("cause " ++ Rest, State) ->
-    handle_cause(string:trim(Rest), State);
-handle_input("chain " ++ Rest, State) ->
-    handle_chain(string:trim(Rest), State);
-handle_input("graph " ++ Rest, State) ->
-    handle_graph(string:trim(Rest), State);
-handle_input("dot " ++ Rest, State) ->
-    handle_dot(string:trim(Rest), State);
 
 %% Temporal commands
 handle_input("until " ++ Rest, State) ->
@@ -304,110 +282,6 @@ do_version(Store, Stream) ->
         {error, Reason} ->
             io:format("Error: ~p~n", [Reason])
     end.
-
-%%====================================================================
-%% Command Handlers - Causation
-%%====================================================================
-
-handle_effects(_, #state{store = undefined} = State) ->
-    io:format("Error: No store selected. Use 'use STORE' first~n"),
-    {ok, State};
-handle_effects("", State) ->
-    io:format("Usage: effects EVENT_ID~n"),
-    {ok, State};
-handle_effects(IdStr, #state{store = Store} = State) ->
-    EventId = list_to_binary(IdStr),
-    case reckon_gater_api:get_effects(Store, EventId) of
-        {ok, {ok, Events}} ->
-            io:format("~nEvents caused by ~s:~n", [EventId]),
-            format_events(Events),
-            io:format("~nTotal: ~p effects~n~n", [length(Events)]);
-        {ok, []} ->
-            io:format("No effects found~n");
-        {error, Reason} ->
-            io:format("Error: ~p~n", [Reason])
-    end,
-    {ok, State}.
-
-handle_cause(_, #state{store = undefined} = State) ->
-    io:format("Error: No store selected. Use 'use STORE' first~n"),
-    {ok, State};
-handle_cause("", State) ->
-    io:format("Usage: cause EVENT_ID~n"),
-    {ok, State};
-handle_cause(IdStr, #state{store = Store} = State) ->
-    EventId = list_to_binary(IdStr),
-    case reckon_gater_api:get_cause(Store, EventId) of
-        {ok, {ok, Event}} ->
-            io:format("~nCause of ~s:~n", [EventId]),
-            format_event(Event);
-        {ok, {error, no_cause}} ->
-            io:format("No cause found (root event)~n");
-        {error, Reason} ->
-            io:format("Error: ~p~n", [Reason])
-    end,
-    {ok, State}.
-
-handle_chain(_, #state{store = undefined} = State) ->
-    io:format("Error: No store selected. Use 'use STORE' first~n"),
-    {ok, State};
-handle_chain("", State) ->
-    io:format("Usage: chain EVENT_ID~n"),
-    {ok, State};
-handle_chain(IdStr, #state{store = Store} = State) ->
-    EventId = list_to_binary(IdStr),
-    case reckon_gater_api:get_causation_chain(Store, EventId) of
-        {ok, {ok, Events}} ->
-            io:format("~nCausation chain to ~s:~n", [EventId]),
-            format_chain(Events),
-            io:format("~nChain length: ~p~n~n", [length(Events)]);
-        {ok, []} ->
-            io:format("Empty chain (root event)~n");
-        {error, Reason} ->
-            io:format("Error: ~p~n", [Reason])
-    end,
-    {ok, State}.
-
-handle_graph(_, #state{store = undefined} = State) ->
-    io:format("Error: No store selected. Use 'use STORE' first~n"),
-    {ok, State};
-handle_graph("", State) ->
-    io:format("Usage: graph EVENT_ID|CORRELATION_ID~n"),
-    {ok, State};
-handle_graph(IdStr, #state{store = Store} = State) ->
-    Id = list_to_binary(IdStr),
-    case reckon_gater_api:build_causation_graph(Store, Id) of
-        {ok, {ok, Graph}} ->
-            format_graph(Graph);
-        {error, Reason} ->
-            io:format("Error: ~p~n", [Reason])
-    end,
-    {ok, State}.
-
-handle_dot(_, #state{store = undefined} = State) ->
-    io:format("Error: No store selected. Use 'use STORE' first~n"),
-    {ok, State};
-handle_dot(Args, #state{store = Store} = State) ->
-    case string:tokens(Args, " ") of
-        [IdStr, FileStr] ->
-            Id = list_to_binary(IdStr),
-            case reckon_gater_api:build_causation_graph(Store, Id) of
-                {ok, {ok, Graph}} ->
-                    %% Generate DOT content
-                    Dot = graph_to_dot(Graph),
-                    case file:write_file(FileStr, Dot) of
-                        ok ->
-                            io:format("DOT file written to: ~s~n", [FileStr]);
-                        {error, Reason} ->
-                            io:format("Error writing file: ~p~n", [Reason])
-                    end;
-                {error, Reason} ->
-                    io:format("Error: ~p~n", [Reason])
-            end;
-        _ ->
-            io:format("Usage: dot EVENT_ID FILE~n")
-    end,
-    {ok, State}.
 
 %%====================================================================
 %% Command Handlers - Temporal
@@ -601,13 +475,6 @@ STREAM COMMANDS
   version             Get version of current stream
   version STREAM      Get version of stream
 
-CAUSATION COMMANDS
-  effects ID          Get events caused by event
-  cause ID            Get event that caused this
-  chain ID            Get full causation chain
-  graph ID            Build and display causation graph
-  dot ID FILE         Export graph as Graphviz DOT file
-
 TEMPORAL COMMANDS
   until TS            Read events until timestamp
   range T1 T2         Read events in time range
@@ -658,40 +525,6 @@ format_event(Event) when is_tuple(Event) ->
 format_event(Event) ->
     io:format("  ~p~n", [Event]).
 
-format_chain([]) ->
-    io:format("  (empty chain)~n");
-format_chain(Events) ->
-    format_chain(Events, 1).
-
-format_chain([], _) ->
-    ok;
-format_chain([Event | Rest], N) ->
-    Id = get_event_field(Event, event_id, <<"?">>),
-    Type = get_event_field(Event, event_type, <<"?">>),
-    Prefix = if N =:= 1 -> "  "; true -> "  -> " end,
-    io:format("~s[~p] ~s (~s)~n", [Prefix, N, Type, Id]),
-    format_chain(Rest, N + 1).
-
-format_graph(#{nodes := Nodes, edges := Edges, root := Root}) ->
-    io:format("~nCausation Graph:~n"),
-    io:format("  Root: ~s~n", [Root]),
-    io:format("  Nodes: ~p~n", [length(Nodes)]),
-    io:format("  Edges: ~p~n~n", [length(Edges)]),
-
-    io:format("  Nodes:~n"),
-    lists:foreach(fun(Node) ->
-        Id = get_event_field(Node, event_id, <<"?">>),
-        Type = get_event_field(Node, event_type, <<"?">>),
-        io:format("    ~s (~s)~n", [Id, Type])
-    end, Nodes),
-
-    io:format("~n  Edges:~n"),
-    lists:foreach(fun({From, To}) ->
-        io:format("    ~s -> ~s~n", [From, To])
-    end, Edges);
-format_graph(Graph) ->
-    io:format("Graph: ~p~n", [Graph]).
-
 format_map(Map, Indent) when is_map(Map) ->
     maps:foreach(fun(K, V) ->
         io:format("~s~p: ~p~n", [Indent, K, V])
@@ -699,86 +532,6 @@ format_map(Map, Indent) when is_map(Map) ->
     io:format("~n");
 format_map(Other, _) ->
     io:format("~p~n", [Other]).
-
-get_event_field(Event, Field, Default) when is_map(Event) ->
-    maps:get(Field, Event, maps:get(atom_to_binary(Field), Event, Default));
-get_event_field(Event, Field, Default) when is_tuple(Event) ->
-    case Field of
-        event_id when tuple_size(Event) >= 2 -> element(2, Event);
-        event_type when tuple_size(Event) >= 3 -> element(3, Event);
-        _ -> Default
-    end;
-get_event_field(_, _, Default) ->
-    Default.
-
-%%====================================================================
-%% DOT Generation
-%%====================================================================
-
-graph_to_dot(#{nodes := Nodes, edges := Edges}) ->
-    Header = <<"digraph causation {\n">>,
-    Indent = <<"  ">>,
-
-    %% Graph attributes
-    Attrs = [
-        Indent, <<"rankdir=TB;\n">>,
-        Indent, <<"node [shape=box, fontname=\"Helvetica\"];\n">>,
-        Indent, <<"edge [color=\"#666666\"];\n">>,
-        <<"\n">>
-    ],
-
-    %% Node definitions
-    NodeLines = lists:map(
-        fun(Node) ->
-            Id = get_event_field(Node, event_id, <<"unknown">>),
-            Type = get_event_field(Node, event_type, <<"unknown">>),
-            EscId = escape_dot(Id),
-            EscType = escape_dot(Type),
-            Label = io_lib:format("~s [label=\"~s\\n~s\"];", [EscId, EscType, short_id(Id)]),
-            [Indent, list_to_binary(Label), <<"\n">>]
-        end,
-        Nodes
-    ),
-
-    %% Edge definitions
-    EdgeLines = lists:map(
-        fun({From, To}) ->
-            Line = io_lib:format("~s -> ~s;", [escape_dot(From), escape_dot(To)]),
-            [Indent, list_to_binary(Line), <<"\n">>]
-        end,
-        Edges
-    ),
-
-    Footer = <<"}\n">>,
-
-    iolist_to_binary([Header, Attrs, NodeLines, <<"\n">>, EdgeLines, Footer]);
-graph_to_dot(_) ->
-    <<"digraph causation {\n  // empty graph\n}\n">>.
-
-escape_dot(Bin) when is_binary(Bin) ->
-    %% Replace special characters for DOT format
-    Str = binary_to_list(Bin),
-    %% Use a sanitized identifier
-    Sanitized = lists:map(fun(C) ->
-        case C of
-            $- -> $_;
-            $. -> $_;
-            $/ -> $_;
-            _ when C >= $a, C =< $z -> C;
-            _ when C >= $A, C =< $Z -> C;
-            _ when C >= $0, C =< $9 -> C;
-            _ -> $_
-        end
-    end, Str),
-    list_to_binary(Sanitized);
-escape_dot(Other) ->
-    escape_dot(term_to_binary(Other)).
-
-short_id(Id) when is_binary(Id), byte_size(Id) > 12 ->
-    <<Short:8/binary, _/binary>> = Id,
-    <<Short/binary, "...">>;
-short_id(Id) ->
-    Id.
 
 %%====================================================================
 %% Argument Parsing

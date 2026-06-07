@@ -106,15 +106,6 @@
     scavenge_dry_run/3
 ]).
 
-%% Causation operations
--export([
-    get_effects/2,
-    get_cause/2,
-    get_causation_chain/2,
-    get_correlated/2,
-    build_causation_graph/2
-]).
-
 %% Schema operations
 -export([
     get_schema/2,
@@ -514,35 +505,6 @@ scavenge_matching(StoreId, Pattern, Opts) ->
 -spec scavenge_dry_run(atom(), binary(), map()) -> {ok, map()} | {error, term()}.
 scavenge_dry_run(StoreId, StreamId, Opts) ->
     route_call(StoreId, {scavenge_dry_run, StoreId, StreamId, Opts}).
-
-%%====================================================================
-%% Causation Operations
-%%====================================================================
-
-%% @doc Get events caused by an event
--spec get_effects(atom(), binary()) -> {ok, list()} | {error, term()}.
-get_effects(StoreId, EventId) ->
-    route_call(StoreId, {get_effects, StoreId, EventId}).
-
-%% @doc Get the event that caused another
--spec get_cause(atom(), binary()) -> {ok, map()} | {error, term()}.
-get_cause(StoreId, EventId) ->
-    route_call(StoreId, {get_cause, StoreId, EventId}).
-
-%% @doc Get the full causation chain for an event
--spec get_causation_chain(atom(), binary()) -> {ok, list()} | {error, term()}.
-get_causation_chain(StoreId, EventId) ->
-    route_call(StoreId, {get_causation_chain, StoreId, EventId}).
-
-%% @doc Get all events with the same correlation ID
--spec get_correlated(atom(), binary()) -> {ok, list()} | {error, term()}.
-get_correlated(StoreId, CorrelationId) ->
-    route_call(StoreId, {get_correlated, StoreId, CorrelationId}).
-
-%% @doc Build a causation graph for visualization
--spec build_causation_graph(atom(), binary()) -> {ok, map()} | {error, term()}.
-build_causation_graph(StoreId, Id) ->
-    route_call(StoreId, {build_causation_graph, StoreId, Id}).
 
 %%====================================================================
 %% Schema Operations

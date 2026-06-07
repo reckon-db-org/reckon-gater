@@ -5,6 +5,21 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-06-07
+
+### Removed — causation/correlation API (BREAKING)
+
+Removed `reckon_gater_api:get_effects/2`, `get_cause/2`,
+`get_causation_chain/2`, `get_correlated/2`, `build_causation_graph/2`
+and the corresponding REPL commands (`effects`, `cause`, `chain`,
+`graph`, `dot`).
+
+Causation/correlation traversal is not an event-store concern.
+`causation_id` and `correlation_id` remain ordinary keys in an event's
+`metadata` map — the gateway stores and returns metadata verbatim and
+does not interpret it. Consumers that need lineage build a read
+model/projection. Pairs with reckon-proto 0.5.0 and reckon-db 4.0.0.
+
 ## [2.3.2] - 2026-05-29
 
 ### Fixed — Unbounded `~p` of retry Reason pegged the CPU
