@@ -56,6 +56,7 @@
     read_by_event_types/3,
     read_by_tags/2,
     read_by_tags/3,
+    read_by_metadata/3,
     read_all_global/3
 ]).
 
@@ -293,6 +294,23 @@ read_by_tags(StoreId, Tags, Opts) ->
     Match = maps:get(match, Opts, any),
     BatchSize = maps:get(batch_size, Opts, 1000),
     route_call(StoreId, {read_by_tags, StoreId, Tags, Match, BatchSize}).
+
+%% @doc Read events whose metadata key = value.
+%%
+%% The sanctioned primitive for cross-cutting lookups by a metadata field
+%% (e.g. an application's causation_id / correlation_id read model). When
+%% the store declared the `{meta, Key}' secondary index this is an
+%% O(matches) indexed read; otherwise the server falls back to a whole-store
+%% scan. The store does NOT interpret what the key means — lineage
+%% traversal/graphs are the application's job.
+%%
+%% @param StoreId The store identifier
+%% @param Key The metadata key (binary)
+%% @param Value The value to match (binary)
+-spec read_by_metadata(atom(), binary(), binary()) ->
+    {ok, list()} | {error, term()}.
+read_by_metadata(StoreId, Key, Value) ->
+    route_call(StoreId, {read_by_metadata, StoreId, Key, Value}).
 
 %% @doc Read all events across all streams sorted by epoch_us (global ordering).
 %%

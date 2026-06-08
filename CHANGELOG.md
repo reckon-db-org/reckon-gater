@@ -5,6 +5,27 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-06-08
+
+### Added — `reckon_gater_api:read_by_metadata/3`
+
+Client-facing API for reckon-db's new metadata index: read events whose
+metadata key = value.
+
+```erlang
+reckon_gater_api:read_by_metadata(StoreId, <<"causation_id">>, <<"evt-7">>).
+```
+
+Routes a `{read_by_metadata, StoreId, Key, Value}` call to the store's
+gateway worker. When the store declared the `{meta, Key}` secondary index
+this is an O(matches) indexed read; otherwise the server falls back to a
+whole-store scan. The store does not interpret the key — lineage
+traversal/graphs/read models are the application's job. Companion to the
+existing `read_by_tags/2,3` and `read_by_event_types/3`.
+
+Additive and backward-compatible. Requires reckon-db with the
+`read_by_metadata` worker handler + secondary index (reckon-db 3.0.0+).
+
 ## [3.1.0] - 2026-06-08
 
 ### Added — `reckon_gater_stream_id:parts/1`
