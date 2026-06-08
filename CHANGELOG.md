@@ -5,6 +5,31 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-06-08
+
+### Added — `reckon_gater_stream_id:parts/1`
+
+`parts/1` decomposes a stream id into the structural segments a layout
+keys on, and is the single source of truth for that split:
+
+```erlang
+parts(<<"ride-018f...">>)   %% => {user, <<"ride">>, <<"018f...">>}
+parts(<<"$link:hot">>)      %% => {system, <<"link">>, <<"hot">>}
+parts(<<"_dcb">>)           %% => {error, malformed}
+```
+
+- `{user, Type, Id}` — prefix and 32-hex suffix.
+- `{system, Ns, Name}` — namespace (without the leading `$`) and the
+  remainder after the first `:`.
+- `{error, malformed}` — anything `validate/1` rejects, including the
+  reckon-db-internal `_dcb` pseudo-stream.
+
+`prefix_of/1` is now a thin wrapper over `parts/1`. `validate/1`,
+`new/1`, `is_system/1`, and `suffix_of/1` are unchanged.
+
+Additive and backward-compatible. Underpins reckon-db's Model C
+structural stream namespace (`[streams, Type, Id, Version]`).
+
 ## [3.0.0] - 2026-06-07
 
 ### Removed — causation/correlation API (BREAKING)
