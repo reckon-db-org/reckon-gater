@@ -194,3 +194,76 @@ suffix_of_test_() ->
         ?_assertEqual(undefined, reckon_gater_stream_id:suffix_of(<<"a-0">>)),
         ?_assertEqual(undefined, reckon_gater_stream_id:suffix_of(<<"$link:x">>))
     ].
+
+%%====================================================================
+%% parts/1
+%%====================================================================
+
+parts_user_test_() ->
+    [
+        ?_assertEqual(
+            {user, <<"order">>, <<"018f6a7b8c9d4e5f60718293a4b5c6d7">>},
+            reckon_gater_stream_id:parts(
+                <<"order-018f6a7b8c9d4e5f60718293a4b5c6d7">>)),
+        ?_assertEqual(
+            {user, <<"sess">>, <<"005774fd728b1b2866cd18ff294467e1">>},
+            reckon_gater_stream_id:parts(
+                <<"sess-005774fd728b1b2866cd18ff294467e1">>)),
+        %% Single-letter prefix
+        ?_assertEqual(
+            {user, <<"a">>, <<"0123456789abcdef0123456789abcdef">>},
+            reckon_gater_stream_id:parts(
+                <<"a-0123456789abcdef0123456789abcdef">>))
+    ].
+
+parts_system_test_() ->
+    [
+        %% Namespace stripped of leading $, name after first ':'
+        ?_assertEqual({system, <<"link">>, <<"high-value-orders">>},
+            reckon_gater_stream_id:parts(<<"$link:high-value-orders">>)),
+        %% Hyphenated namespace
+        ?_assertEqual({system, <<"link-sub">>, <<"revenue">>},
+            reckon_gater_stream_id:parts(<<"$link-sub:revenue">>)),
+        ?_assertEqual({system, <<"et">>, <<"UserCreated">>},
+            reckon_gater_stream_id:parts(<<"$et:UserCreated">>)),
+        %% Name may contain '.', '_', '-'
+        ?_assertEqual({system, <<"stats">>, <<"host_01.example">>},
+            reckon_gater_stream_id:parts(<<"$stats:host_01.example">>))
+    ].
+
+parts_malformed_test_() ->
+    [
+        %% DCB pseudo-stream is reckon-db-internal, not a valid id
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(<<"_dcb">>)),
+        %% Suffix too short
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(<<"a-0">>)),
+        %% Uppercase prefix
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(<<"Order-018f6a7b8c9d4e5f60718293a4b5c6d7">>)),
+        %% Multiple hyphens (user shape only allows one)
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(
+                <<"parking-session-018f6a7b8c9d4e5f60718293a4b5c6d7">>)),
+        %% Malformed system id ($ with no ':')
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(<<"$weird">>)),
+        %% $all sentinel is not an id
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(<<"$all">>)),
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(<<>>)),
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(undefined)),
+        ?_assertEqual({error, malformed},
+            reckon_gater_stream_id:parts(42))
+    ].
+
+%% Round-trip: new/1 ∘ parts/1 reproduces the prefix as the user Type.
+parts_roundtrips_new_test_() ->
+    Prefixes = [<<"a">>, <<"order">>, <<"sess">>, <<"vehicle">>,
+                <<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">>],
+    [?_assertMatch({user, P, _Hex},
+        reckon_gater_stream_id:parts(reckon_gater_stream_id:new(P)))
+     || P <- Prefixes].

@@ -70,13 +70,18 @@
     is_valid/1,
     is_system/1,
     new/1,
+    parts/1,
     prefix_of/1,
     suffix_of/1
 ]).
 
--export_type([validation_error/0, prefix/0]).
+-export_type([validation_error/0, prefix/0, parts/0]).
 
 -type prefix() :: atom() | binary().
+-type parts() ::
+    {user,   Type :: binary(), Id   :: binary()} |
+    {system, Ns   :: binary(), Name :: binary()} |
+    {error, malformed}.
 -type validation_error() ::
     empty
     | not_binary
@@ -153,21 +158,65 @@ new(Prefix) ->
             erlang:error({invalid_prefix, Prefix})
     end.
 
+%% @doc Decompose a well-formed stream id into its structural parts.
+%%
+%% This is the single source of truth for splitting a stream id into the
+%% pieces a structural store layout keys on:
+%%
+%% <ul>
+%% <li>**User** `&lt;type&gt;-&lt;hex&gt;' → `{user, Type, Id}' where `Type'
+%%     is the prefix and `Id' the 32-hex suffix.</li>
+%% <li>**System** `$&lt;ns&gt;:&lt;name&gt;' → `{system, Ns, Name}' where
+%%     `Ns' is the namespace WITHOUT the leading `$' and `Name' the
+%%     remainder after the first `:'.</li>
+%% <li>Anything that fails `validate/1' → `{error, malformed}'. The DCB
+%%     pseudo-stream (`_dcb') is reckon-db-internal and is NOT a valid id
+%%     here — it never flows through validation; the store handles it
+%%     directly.</li>
+%% </ul>
+%%
+%% Examples:
+%% ```
+%% parts(<<"ride-018f6a7b8c9d4e5f60718293a4b5c6d7">>).
+%% %% => {user, <<"ride">>, <<"018f6a7b8c9d4e5f60718293a4b5c6d7">>}
+%% parts(<<"$link:hot-orders">>).
+%% %% => {system, <<"link">>, <<"hot-orders">>}
+%% parts(<<"_dcb">>).
+%% %% => {error, malformed}
+%% '''
+-spec parts(term()) -> parts().
+parts(<<"$", Rest/binary>> = Id) when is_binary(Id) ->
+    case is_valid(Id) of
+        true ->
+            %% Namespace is [a-z][a-z0-9-]*, name is after the first ':'.
+            %% Name cannot contain ':' (per system_re), so split-on-first
+            %% recovers the two parts unambiguously.
+            [Ns, Name] = binary:split(Rest, <<":">>),
+            {system, Ns, Name};
+        false ->
+            {error, malformed}
+    end;
+parts(Id) when is_binary(Id) ->
+    case binary:split(Id, <<"-">>) of
+        [Type, Suffix] ->
+            case is_valid(Id) of
+                true  -> {user, Type, Suffix};
+                false -> {error, malformed}
+            end;
+        _ ->
+            {error, malformed}
+    end;
+parts(_) ->
+    {error, malformed}.
+
 %% @doc Extract the prefix segment from a well-formed user stream id.
 %% Returns `undefined' for system ids and malformed ids.
 -spec prefix_of(binary()) -> binary() | undefined.
-prefix_of(StreamId) when is_binary(StreamId) ->
-    case binary:split(StreamId, <<"-">>) of
-        [Prefix, _Suffix] ->
-            case is_valid(StreamId) of
-                true  -> Prefix;
-                false -> undefined
-            end;
-        _ ->
-            undefined
-    end;
-prefix_of(_) ->
-    undefined.
+prefix_of(StreamId) ->
+    case parts(StreamId) of
+        {user, Type, _Id} -> Type;
+        _                 -> undefined
+    end.
 
 %% @doc Extract the hex-suffix segment from a well-formed user stream id.
 %% Returns `undefined' for system ids and malformed ids.
