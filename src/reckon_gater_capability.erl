@@ -55,6 +55,13 @@
     decode/1
 ]).
 
+%% API - Verification
+-export([
+    verify/1,
+    verify/2,
+    authorize/3
+]).
+
 %% API - Inspection
 -export([
     issuer/1,
@@ -211,6 +218,11 @@ encode(Cap, jwt) ->
     encode_jwt(Cap).
 
 %% @doc Decode a capability from either format (auto-detected)
+%%
+%% SECURITY: decoding performs NO verification. The returned record
+%% is untrusted attacker-supplied data until it has passed verify/1
+%% (or reckon_db_capability_verifier:authorize/3). Never make an
+%% authorization decision from a merely-decoded capability.
 -spec decode(binary()) -> {ok, capability()} | {error, term()}.
 decode(<<131, _/binary>> = Bin) ->
     %% Erlang external term format
@@ -231,6 +243,104 @@ decode(<<"ey", _/binary>> = Jwt) ->
     decode_jwt(Jwt);
 decode(_) ->
     {error, unknown_format}.
+
+%%====================================================================
+%% API - Verification
+%%====================================================================
+
+%% @doc Verify an encoded capability token.
+%%
+%% Checks, in order: the algorithm is pinned to EdDSA / typ UCAN (the
+%% header is attacker-controlled — honoring its `alg' invites
+%% algorithm-confusion), expiry, not-before, and the Ed25519
+%% signature against the public key derived from the ISSUER's
+%% did:key. Returns the verified capability or the first failure.
+%%
+%% Revocation and proof-chain validation are NOT performed here; the
+%% full verifier (reckon_db_capability_verifier in reckon-db) layers
+%% those on top. This standalone verifier exists so a gater without
+%% reckon-db loaded still fails closed on bad tokens instead of
+%% skipping verification.
+-spec verify(binary()) -> {ok, capability()} | {error, term()}.
+verify(Token) ->
+    verify(Token, #{}).
+
+%% @doc Verify with options. Supported: now => Secs (test clock).
+-spec verify(binary(), map()) -> {ok, capability()} | {error, term()}.
+verify(Token, Opts) when is_binary(Token) ->
+    case decode(Token) of
+        {ok, Cap} -> verify_decoded(Cap, Opts);
+        {error, Reason} -> {error, {parse_error, Reason}}
+    end.
+
+%% @doc Verify a token AND check it grants Action on Resource.
+-spec authorize(binary(), binary(), binary()) ->
+    {ok, capability()} | {error, term()}.
+authorize(Token, Resource, Action) ->
+    case verify(Token) of
+        {ok, Cap} -> check_grant(Cap, Resource, Action);
+        {error, _} = Error -> Error
+    end.
+
+%% @private
+verify_decoded(Cap, Opts) ->
+    Now = maps:get(now, Opts, erlang:system_time(second)),
+    Steps = [
+        fun() -> check_header(Cap) end,
+        fun() -> check_expiry(Cap, Now) end,
+        fun() -> check_nbf(Cap, Now) end,
+        fun() -> check_signature(Cap) end
+    ],
+    run_checks(Steps, Cap).
+
+run_checks([], Cap) ->
+    {ok, Cap};
+run_checks([Step | Rest], Cap) ->
+    case Step() of
+        ok -> run_checks(Rest, Cap);
+        {error, _} = E -> E
+    end.
+
+check_header(#capability{alg = <<"EdDSA">>, typ = <<"UCAN">>}) ->
+    ok;
+check_header(#capability{alg = Alg, typ = Typ}) ->
+    {error, {unsupported_token_header, Alg, Typ}}.
+
+check_expiry(#capability{exp = Exp}, Now) when is_integer(Exp), Exp > Now ->
+    ok;
+check_expiry(#capability{exp = Exp}, _Now) ->
+    {error, {expired, Exp}}.
+
+check_nbf(#capability{nbf = undefined}, _Now) ->
+    ok;
+check_nbf(#capability{nbf = Nbf}, Now) when is_integer(Nbf), Nbf =< Now ->
+    ok;
+check_nbf(#capability{nbf = Nbf}, _Now) ->
+    {error, {not_yet_valid, Nbf}}.
+
+check_signature(#capability{sig = Sig}) when not is_binary(Sig) ->
+    {error, not_signed};
+check_signature(#capability{iss = Iss, sig = Sig} = Cap) ->
+    case reckon_gater_identity:public_key_from_did(Iss) of
+        {ok, PubKey} ->
+            Payload = encode_payload_for_signing(Cap),
+            case crypto:verify(eddsa, none, Payload, Sig, [PubKey, ed25519]) of
+                true -> ok;
+                false -> {error, invalid_signature}
+            end;
+        {error, Reason} ->
+            {error, {invalid_issuer_did, Reason}}
+    end.
+
+%% @private A verified capability authorizes (Resource, Action) when
+%% any of its grants covers it (same wildcard semantics as
+%% delegation attenuation).
+check_grant(#capability{att = Grants} = Cap, Resource, Action) ->
+    Wanted = #{with => Resource, can => Action},
+    case grant_is_subset(Wanted, Grants) of
+        true -> {ok, Cap};
+        false -> {error, {insufficient_permissions, Resource, Action}}
+    end.
 
 %%====================================================================
 %% API - Inspection

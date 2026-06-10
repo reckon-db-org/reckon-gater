@@ -126,58 +126,18 @@ init({Module, Opts}) ->
             {stop, Reason}
     end.
 
-handle_call({publish, Topic, Message}, _From, State) ->
-    #state{
-        module = Module,
-        channel_name = ChannelName,
-        callback_state = CallbackState,
-        requires_signature = RequiresSig,
-        max_rate = MaxRate,
-        rate_limiter = RateLimiter
-    } = State,
+%% Plain publish/subscribe delegate to the capability-aware handlers
+%% with an empty token so the effective capability mode gates EVERY
+%% entry point. Pre-3.3.0 these paths skipped capability checks
+%% entirely, which made `required' mode (global or per-channel)
+%% advisory: any caller could bypass it via the tokenless API. Under
+%% `disabled'/`optional' an empty token still passes, so tokenless
+%% internal callers are unaffected.
+handle_call({publish, Topic, Message}, From, State) ->
+    handle_call({publish_with_cap, Topic, Message, <<>>}, From, State);
 
-    %% Check rate limit
-    case check_rate_limit(Topic, MaxRate, RateLimiter) of
-        {ok, NewRateLimiter} ->
-            %% Verify signature if required
-            case verify_signature(Message, RequiresSig) of
-                ok ->
-                    %% Delegate to callback module
-                    case Module:handle_publish(Topic, Message, CallbackState) of
-                        {ok, NewCallbackState} ->
-                            %% Broadcast to subscribers
-                            broadcast(Topic, Message, ChannelName),
-                            {reply, ok, State#state{
-                                callback_state = NewCallbackState,
-                                rate_limiter = NewRateLimiter
-                            }};
-                        {error, Reason} ->
-                            {reply, {error, Reason}, State#state{rate_limiter = NewRateLimiter}}
-                    end;
-                {error, Reason} ->
-                    {reply, {error, Reason}, State}
-            end;
-        {error, rate_limited} ->
-            {reply, {error, rate_limited}, State}
-    end;
-
-handle_call({subscribe, Topic, Pid}, _From, State) ->
-    #state{module = Module, callback_state = CallbackState} = State,
-
-    %% Join pg group for topic
-    ok = pg:join(?PG_SCOPE, Topic, Pid),
-
-    %% Monitor subscriber
-    erlang:monitor(process, Pid),
-
-    %% Delegate to callback
-    case Module:handle_subscribe(Topic, Pid, CallbackState) of
-        {ok, NewCallbackState} ->
-            {reply, ok, State#state{callback_state = NewCallbackState}};
-        {error, Reason} ->
-            pg:leave(?PG_SCOPE, Topic, Pid),
-            {reply, {error, Reason}, State}
-    end;
+handle_call({subscribe, Topic, Pid}, From, State) ->
+    handle_call({subscribe_with_cap, Topic, Pid, <<>>}, From, State);
 
 %% Capability-aware publish
 handle_call({publish_with_cap, Topic, Message, CapabilityToken}, _From, State) ->
@@ -403,10 +363,16 @@ verify_capability_with_mode(_Token, _Resource, _Action, optional) ->
     ok.
 
 %% @private Actually verify the capability token
+%%
+%% Prefer the full verifier in reckon-db (adds revocation hooks on
+%% top of signature/expiry/grant checks). Standalone — reckon-db not
+%% loaded — fall back to reckon_gater_capability:authorize/3, the
+%% in-repo verifier (signature against issuer did:key, exp/nbf, alg
+%% pinned to EdDSA, grant match). Pre-3.3.0 the standalone path
+%% returned {error, verifier_not_available}, refusing every token
+%% rather than verifying it.
 -spec do_verify_capability(binary(), binary(), binary()) -> ok | {error, term()}.
 do_verify_capability(Token, Resource, Action) ->
-    %% Note: reckon_db_capability_verifier is in reckon-db, which depends on reckon-gater.
-    %% At runtime, both modules are available in the same node.
     case code:ensure_loaded(reckon_db_capability_verifier) of
         {module, reckon_db_capability_verifier} ->
             case reckon_db_capability_verifier:authorize(Token, Resource, Action) of
@@ -414,7 +380,8 @@ do_verify_capability(Token, Resource, Action) ->
                 {error, Reason} -> {error, Reason}
             end;
         {error, _} ->
-            %% Verifier not available (reckon-db not loaded)
-            %% This happens when running reckon-gater standalone
-            {error, verifier_not_available}
+            case reckon_gater_capability:authorize(Token, Resource, Action) of
+                {ok, _Cap} -> ok;
+                {error, Reason} -> {error, Reason}
+            end
     end.

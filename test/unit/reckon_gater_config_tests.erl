@@ -38,8 +38,8 @@ cleanup(Original) ->
 %%====================================================================
 
 default_mode_test() ->
-    %% Default should be disabled for backwards compatibility
-    ?assertEqual(disabled, reckon_gater_config:capability_mode()).
+    %% Secure default since 3.3.0: presented tokens are verified
+    ?assertEqual(optional, reckon_gater_config:capability_mode()).
 
 set_mode_test() ->
     %% Test setting each valid mode

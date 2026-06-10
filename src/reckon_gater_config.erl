@@ -30,10 +30,16 @@
 -export_type([capability_mode/0]).
 
 %% @doc Get the global capability mode
-%% Defaults to `disabled' for backwards compatibility.
+%%
+%% Defaults to `optional' (since 3.3.0): a presented token is always
+%% verified, so a forged or expired token is rejected instead of
+%% waved through, while tokenless internal callers keep working. The
+%% pre-3.3.0 default was `disabled', which made every capability
+%% check a no-op unless an operator remembered to flip the mode.
+%% Production deployments that issue tokens should set `required'.
 -spec capability_mode() -> capability_mode().
 capability_mode() ->
-    application:get_env(reckon_gater, capability_mode, disabled).
+    application:get_env(reckon_gater, capability_mode, optional).
 
 %% @doc Set the global capability mode at runtime
 %% Use for testing or dynamic configuration.

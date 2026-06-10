@@ -5,6 +5,44 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-06-10
+
+### Security — capability checks on by default, real token verification
+
+Fixes the 2026-06-10 audit findings: the global `capability_mode`
+defaulted to `disabled` (every check a no-op), the tokenless
+`publish/3` / `subscribe/3` paths skipped capability checks entirely
+(so even `required` mode was bypassable), and
+`reckon_gater_capability:decode/1` parsed tokens without verifying
+the signature, expiry, or algorithm.
+
+- **Default `capability_mode` is now `optional`** (was `disabled`):
+  a presented token is always verified — forged, expired, or
+  algorithm-confused tokens are rejected instead of waved through —
+  while tokenless internal callers keep working. Set `required` in
+  production once callers carry tokens; set `disabled` explicitly to
+  restore the old behavior.
+- **Every entry point is gated.** Plain `publish/3` / `subscribe/3`
+  now route through the capability check with an empty token, so
+  `required` (global or per-channel `requires_capability`) actually
+  denies tokenless callers instead of only guarding the `_with_cap`
+  variants.
+- **New `reckon_gater_capability:verify/1,2` and `authorize/3`.**
+  Ed25519 signature verification against the issuer's did:key,
+  exp/nbf enforcement, and the algorithm pinned to EdDSA/UCAN (the
+  attacker-controlled header can no longer select the algorithm).
+  `decode/1` is documented as parse-only: a decoded capability is
+  untrusted data until verified.
+- **Standalone verification fallback.** When reckon-db (and its full
+  verifier with revocation hooks) is not loaded, channel capability
+  checks fall back to the in-repo verifier instead of failing with
+  `verifier_not_available`.
+
+Migration: deployments relying on the implicit `disabled` default
+get `optional` after upgrading. Tokenless traffic is unaffected;
+traffic presenting *invalid* tokens — previously accepted — is now
+rejected. That is the point of the fix.
+
 ## [3.2.0] - 2026-06-08
 
 ### Added — `reckon_gater_api:read_by_metadata/3`

@@ -256,3 +256,86 @@ create_payload_for_verify(#capability{} = Cap) ->
     },
     SortedPairs = lists:sort(maps:to_list(Payload)),
     term_to_binary(SortedPairs).
+
+%%====================================================================
+%% Tests - Verification (2026-06-10 audit fix: decode is parse-only,
+%% verify/authorize do the actual checking)
+%%====================================================================
+
+signed_token() ->
+    signed_token(#{}).
+
+signed_token(Opts) ->
+    Issuer = reckon_gater_identity:generate(),
+    Audience = reckon_gater_identity:generate(),
+    Grants = [reckon_gater_capability:grant(<<"esdb://realm/channel/alerts/*">>,
+                                            <<"channel:publish">>)],
+    Cap = reckon_gater_capability:create(Issuer, Audience, Grants, Opts),
+    Signed = reckon_gater_capability:sign(
+                 Cap, reckon_gater_identity:private_key(Issuer)),
+    {Issuer, reckon_gater_capability:encode(Signed, jwt)}.
+
+verify_valid_token_test() ->
+    {_Issuer, Token} = signed_token(),
+    ?assertMatch({ok, _}, reckon_gater_capability:verify(Token)).
+
+verify_rejects_expired_test() ->
+    {_Issuer, Token} = signed_token(#{ttl => 1}),
+    Future = erlang:system_time(second) + 3600,
+    ?assertMatch({error, {expired, _}},
+                 reckon_gater_capability:verify(Token, #{now => Future})).
+
+verify_rejects_not_yet_valid_test() ->
+    {_Issuer, Token} = signed_token(#{nbf => erlang:system_time(second) + 3600}),
+    ?assertMatch({error, {not_yet_valid, _}},
+                 reckon_gater_capability:verify(Token)).
+
+verify_rejects_tampered_payload_test() ->
+    {_Issuer, Token} = signed_token(),
+    {ok, Cap} = reckon_gater_capability:decode(Token),
+    Tampered = Cap#capability{aud = <<"did:key:zAttacker">>},
+    TamperedJwt = reckon_gater_capability:encode(Tampered, jwt),
+    ?assertMatch({error, invalid_signature},
+                 reckon_gater_capability:verify(TamperedJwt)).
+
+verify_rejects_foreign_alg_test() ->
+    %% Attacker-controlled header must not select the algorithm.
+    {_Issuer, Token} = signed_token(),
+    {ok, Cap} = reckon_gater_capability:decode(Token),
+    Confused = Cap#capability{alg = <<"HS256">>},
+    ConfusedJwt = reckon_gater_capability:encode(Confused, jwt),
+    ?assertMatch({error, {unsupported_token_header, _, _}},
+                 reckon_gater_capability:verify(ConfusedJwt)).
+
+verify_rejects_unsigned_test() ->
+    Issuer = reckon_gater_identity:generate(),
+    Cap = reckon_gater_capability:create(Issuer, Issuer, []),
+    %% encode/2 refuses unsigned caps, so feed verify a JWT with an
+    %% empty signature segment instead.
+    Signed = reckon_gater_capability:sign(
+                 Cap, reckon_gater_identity:private_key(Issuer)),
+    Jwt = reckon_gater_capability:encode(Signed, jwt),
+    [H, P, _S] = binary:split(Jwt, <<".">>, [global]),
+    ?assertMatch({error, invalid_signature},
+                 reckon_gater_capability:verify(<<H/binary, ".", P/binary, ".", "AAAA">>)).
+
+authorize_grants_match_test() ->
+    {_Issuer, Token} = signed_token(),
+    ?assertMatch({ok, _},
+                 reckon_gater_capability:authorize(
+                     Token,
+                     <<"esdb://realm/channel/alerts/disk">>,
+                     <<"channel:publish">>)).
+
+authorize_rejects_unmatched_grant_test() ->
+    {_Issuer, Token} = signed_token(),
+    ?assertMatch({error, {insufficient_permissions, _, _}},
+                 reckon_gater_capability:authorize(
+                     Token,
+                     <<"esdb://realm/channel/security/keys">>,
+                     <<"channel:publish">>)),
+    ?assertMatch({error, {insufficient_permissions, _, _}},
+                 reckon_gater_capability:authorize(
+                     Token,
+                     <<"esdb://realm/channel/alerts/disk">>,
+                     <<"channel:subscribe">>)).
