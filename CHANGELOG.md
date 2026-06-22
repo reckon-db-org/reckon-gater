@@ -5,6 +5,40 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-06-22
+
+### Added — `{event_type, binary()}` leaf in `tag_filter()`
+
+Adds spec-conformant event-type filtering to the DCB consistency algebra.
+
+The canonical DCB spec (dcb.events) defines a query model where each query
+item can restrict by event type in addition to tags. `tag_filter()` previously
+only operated on tags, requiring callers to encode type into a tag by
+convention (e.g. `<<"type:user_registered_v1">>`). That workaround is no
+longer needed.
+
+New filter variant:
+
+```erlang
+{event_type, binary()}  %% matches events whose event_type field equals Type
+```
+
+Composes with the full algebra:
+
+```erlang
+{and_, [
+    {event_type, <<"user_registered_v1">>},
+    {any_of, [<<"email:alice@example.com">>]}
+]}
+```
+
+reckon-db evaluates this using a `[by_event_type, Type, SeqKey]` index
+written alongside the existing tag index at DCB-append time — same
+O(bounded-subtree) cost as tag lookups. Requires reckon-db 5.2.0+.
+
+**Backward compatible:** existing `{any_of, ...}`, `{all_of, ...}`,
+`{and_, ...}`, `{or_, ...}` filters are unchanged.
+
 ## [3.3.0] - 2026-06-10
 
 ### Security — capability checks on by default, real token verification

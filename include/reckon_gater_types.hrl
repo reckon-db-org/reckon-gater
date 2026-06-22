@@ -143,18 +143,22 @@
 %% A `tag_filter()` describes the consistency context for a
 %% `append_if_no_tag_matches` call. Per-event semantics:
 %%
-%%   any_of(Tags)    - matches events bearing ANY of the given tags
-%%   all_of(Tags)    - matches events bearing ALL of the given tags
-%%   and_(Filters)   - per-event AND of sub-filters
-%%   or_(Filters)    - per-event OR of sub-filters
+%%   any_of(Tags)       - matches events bearing ANY of the given tags
+%%   all_of(Tags)       - matches events bearing ALL of the given tags
+%%   event_type(Type)   - matches events whose event_type equals Type
+%%   and_(Filters)      - per-event AND of sub-filters
+%%   or_(Filters)       - per-event OR of sub-filters
 %%
 %% Concrete examples:
 %%   {any_of, [<<"email:alice@example.com">>]}  - uniqueness on one tag
 %%   {all_of, [<<"tenant:42">>, <<"resource:gpu">>]} - allocation check
 %%   {or_, [{any_of, [<<"a">>]}, {all_of, [<<"b">>, <<"c">>]}]} - nested
+%%   {and_, [{event_type, <<"user_registered_v1">>},
+%%           {any_of, [<<"email:alice@example.com">>]}]} - type + tag
 -type tag_filter() ::
       {any_of, [binary()]}
     | {all_of, [binary()]}
+    | {event_type, binary()}
     | {and_, [tag_filter()]}
     | {or_,  [tag_filter()]}.
 
