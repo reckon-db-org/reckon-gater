@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L7,3 z" fill="#555"/>
+    </marker>
+    <linearGradient id="esGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f3e5f5"/>
+      <stop offset="100%" style="stop-color:#e1bee7"/>
+    </linearGradient>
+    <linearGradient id="aggGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff3e0"/>
+      <stop offset="100%" style="stop-color:#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="cccGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="dcbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="reckonGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e0f2f1"/>
+      <stop offset="100%" style="stop-color:#b2dfdb"/>
+    </linearGradient>
+    <linearGradient id="cccConceptGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fce4ec"/>
+      <stop offset="100%" style="stop-color:#f8bbd0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="300" y="22" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#212121">Event Sourcing Consistency Taxonomy</text>
+  <text x="300" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#757575">After Rico Fritzsche, "Simply Event Sourcing" (2025)</text>
+
+  <!-- Root: Event Sourcing -->
+  <rect x="200" y="52" width="200" height="44" rx="8" fill="url(#esGrad)" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="300" y="71" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4a148c">Event Sourcing</text>
+  <text x="300" y="86" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#6a1b9a">persisted event history as source of truth</text>
+
+  <!-- Branch lines from root -->
+  <line x1="300" y1="96" x2="300" y2="112" stroke="#555" stroke-width="1.5"/>
+  <line x1="120" y1="112" x2="480" y2="112" stroke="#555" stroke-width="1.5"/>
+  <line x1="120" y1="112" x2="120" y2="130" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="480" y1="112" x2="480" y2="130" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- L1: Aggregate Stream Versioning -->
+  <rect x="20" y="132" width="200" height="52" rx="8" fill="url(#aggGrad)" stroke="#e65100" stroke-width="1.5"/>
+  <text x="120" y="151" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#bf360c">Aggregate Stream</text>
+  <text x="120" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#bf360c">Versioning</text>
+  <text x="120" y="179" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#e65100">protects one predefined stream</text>
+
+  <!-- L1: Command Context Consistency -->
+  <rect x="380" y="132" width="200" height="52" rx="8" fill="url(#cccGrad)" stroke="#1565c0" stroke-width="2"/>
+  <text x="480" y="151" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0d47a1">Command Context</text>
+  <text x="480" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0d47a1">Consistency (CCC)</text>
+  <text x="480" y="179" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">query the relevant history; protect it atomically</text>
+
+  <!-- Branch from CCC -->
+  <line x1="480" y1="184" x2="480" y2="204" stroke="#555" stroke-width="1.5"/>
+  <line x1="330" y1="204" x2="580" y2="204" stroke="#555" stroke-width="1.5"/>
+  <line x1="330" y1="204" x2="330" y2="222" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="580" y1="204" x2="580" y2="222" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- CCC Conceptual -->
+  <rect x="240" y="224" width="180" height="62" rx="8" fill="url(#cccConceptGrad)" stroke="#c2185b" stroke-width="1.5"/>
+  <text x="330" y="242" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#880e4f">CCC Conceptual</text>
+  <text x="330" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ad1457">context query is</text>
+  <text x="330" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ad1457">implementation-defined</text>
+  <text x="330" y="279" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ad1457">payload predicates allowed</text>
+
+  <!-- DCB -->
+  <rect x="440" y="224" width="180" height="62" rx="8" fill="url(#dcbGrad)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="530" y="242" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b5e20">Dynamic Consistency</text>
+  <text x="530" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b5e20">Boundary (DCB)</text>
+  <text x="530" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">tag-based contract</text>
+  <text x="530" y="279" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">event data opaque to store</text>
+
+  <!-- Arrow from DCB down to ReckonDB -->
+  <line x1="530" y1="286" x2="530" y2="306" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ReckonDB -->
+  <rect x="390" y="308" width="280" height="72" rx="8" fill="url(#reckonGrad)" stroke="#00695c" stroke-width="2"/>
+  <text x="530" y="327" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#004d40">ReckonDB</text>
+  <text x="530" y="341" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#00695c">DCB: tag + event_type filters (any_of, all_of)</text>
+  <text x="530" y="354" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#00695c">CCC+: payload_match (single-field index)</text>
+  <text x="530" y="367" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#00695c">CCC+: payload_hash_match (composite hash index)</text>
+  <text x="530" y="379" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-style="italic" fill="#00897b">all checked atomically in Khepri transaction</text>
+
+  <!-- Note on aggregate versioning -->
+  <rect x="20" y="214" width="200" height="52" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="120" y="233" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#f57f17">Stream version check is still available</text>
+  <text x="120" y="246" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#f57f17">in ReckonDB via expected_version on</text>
+  <text x="120" y="259" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#f57f17">append/3. The approaches are orthogonal</text>
+  <text x="120" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#f57f17">and can be used in the same system.</text>
+
+  <!-- Footer -->
+  <text x="300" y="395" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#bdbdbd">CCC principle: Fritzsche (2024), Westphal (2024) — DCB contract: Pellegrini &amp; Savic (2023)</text>
+</svg>

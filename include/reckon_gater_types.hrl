@@ -137,28 +137,62 @@
 -type tag_match() :: any | all.
 
 %%====================================================================
-%% DCB Tag Filter (Dynamic Consistency Boundary — reckon-db 3.1.0+)
+%% CCC/DCB Context Filter (reckon-db 3.1.0+, extended in 5.3.0)
 %%====================================================================
 
 %% A `tag_filter()` describes the consistency context for a
-%% `append_if_no_tag_matches` call. Per-event semantics:
+%% `append_if_no_tag_matches` call. It is the query contract for both
+%% Dynamic Consistency Boundary (DCB) and the broader Command Context
+%% Consistency (CCC) principle.
 %%
-%%   any_of(Tags)       - matches events bearing ANY of the given tags
-%%   all_of(Tags)       - matches events bearing ALL of the given tags
-%%   event_type(Type)   - matches events whose event_type equals Type
-%%   and_(Filters)      - per-event AND of sub-filters
-%%   or_(Filters)       - per-event OR of sub-filters
+%% DCB uses event types and tags as its query contract — values that
+%% must be written explicitly by the producer. CCC is the general
+%% principle that extends this to payload predicates: any field in
+%% event data that is indexed at write time can participate in the
+%% consistency check. The `payload_match` and `payload_hash_match`
+%% variants below implement CCC payload predicate support.
 %%
-%% Concrete examples:
-%%   {any_of, [<<"email:alice@example.com">>]}  - uniqueness on one tag
-%%   {all_of, [<<"tenant:42">>, <<"resource:gpu">>]} - allocation check
-%%   {or_, [{any_of, [<<"a">>]}, {all_of, [<<"b">>, <<"c">>]}]} - nested
-%%   {and_, [{event_type, <<"user_registered_v1">>},
-%%           {any_of, [<<"email:alice@example.com">>]}]} - type + tag
+%% See guides/ccc.md for the full conceptual background and examples.
+%%
+%% Per-event semantics:
+%%
+%%   any_of(Tags)                  matches events bearing ANY of the tags
+%%   all_of(Tags)                  matches events bearing ALL of the tags
+%%   event_type(Type)              matches events whose event_type = Type
+%%   payload_match(Key, Val)       matches events where event.data[Key] = Val
+%%                                 (requires {payload, Key} index declared)
+%%   payload_hash_match(Keys, Vals) matches events where data[K]=V for all K/V
+%%                                 (requires {payload_hash, Keys} index declared;
+%%                                  single Khepri read regardless of field count)
+%%   and_(Filters)                 per-event AND of sub-filters
+%%   or_(Filters)                  per-event OR of sub-filters
+%%
+%% Composition examples:
+%%
+%%   {any_of, [<<"email:alice@example.com">>]}
+%%     - unique email (DCB, tag-based)
+%%
+%%   {and_, [{event_type, <<"seat_reserved_v1">>},
+%%           {payload_hash_match, [<<"flight_id">>, <<"seat_no">>],
+%%                                [<<"LH441">>,    <<"12A">>]}]}
+%%     - seat uniqueness per flight (CCC, composite payload index)
+%%
+%%   {and_, [{payload_match, <<"account_id">>, <<"acc-42">>},
+%%           {or_, [{event_type, <<"credit_reserved_v1">>},
+%%                  {event_type, <<"credit_released_v1">>}]}]}
+%%     - credit events for one account (CCC, single-field payload index)
+%%
+%% Constraint: payload_match and payload_hash_match only index top-level
+%% binary (string) fields from event.data JSON. Numeric values must be
+%% serialised to binary by the writer (e.g. zero-padded integers).
+%% Fields not declared in the store's index_config are not indexed and
+%% cannot participate in append_if_no_tag_matches.
 -type tag_filter() ::
-      {any_of, [binary()]}
-    | {all_of, [binary()]}
-    | {event_type, binary()}
+      {any_of,            [binary()]}
+    | {all_of,            [binary()]}
+    | {event_type,        binary()}
+    | {payload_match,     Key :: binary(), Value :: binary()}
+    | {payload_hash_match, Keys :: [binary()], Values :: [binary()]}
     | {and_, [tag_filter()]}
     | {or_,  [tag_filter()]}.
 

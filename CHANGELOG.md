@@ -5,6 +5,59 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-06-23
+
+### Added — CCC payload filter variants in `tag_filter()`
+
+Extends `tag_filter()` with two new leaf variants implementing Command
+Context Consistency (CCC) payload predicate support. These allow
+`AppendIfNoTagMatches` to enforce consistency based on indexed event
+payload fields, not just tags and event types.
+
+New variants:
+
+```erlang
+{payload_match, Key :: binary(), Value :: binary()}
+```
+
+Matches events where `event.data[Key] = Value` (top-level JSON field,
+binary value). Requires the store to declare `{payload, Key}` in its
+`index_config`. Composes with `and_`/`or_` via sequence-set intersection
+in the DCB filter — same cost model as `{any_of, ...}`.
+
+```erlang
+{payload_hash_match, Keys :: [binary()], Values :: [binary()]}
+```
+
+Matches events where all `Keys[i] = Values[i]` in `event.data`. Requires
+the store to declare `{payload_hash, Keys}` in its `index_config`. The
+hash of the sorted `[{K, V}]` pairs is used as a single Khepri path
+component — one subtree read regardless of how many fields are in the
+combination. The query must supply all declared fields.
+
+Both variants can be combined freely with existing `{any_of, ...}`,
+`{all_of, ...}`, `{event_type, ...}`, `{and_, ...}`, `{or_, ...}` filters.
+
+**Index declarations** (in `reckon_db.hrl`, required: reckon-db 5.3.0+):
+- `{payload, Key :: binary()}` — single-field index, `[by_payload, Key, Value, SeqKey]`
+- `{payload_hash, Keys :: [binary()]}` — composite index, `[by_payload_hash, Hash, SeqKey]`
+
+Both index types only cover events written AFTER the declaration is added.
+Top-level binary JSON values only; non-binary field values are silently
+skipped (no index entry, event not visible to that filter).
+
+### Added — `guides/ccc.md` and CCC SVG diagrams
+
+New guide explaining the CCC vs DCB distinction, ReckonDB's position in
+the consistency taxonomy, payload index declarations, worked examples for
+seat reservation and credit reservation, retry semantics, and full
+literature references (Fritzsche, Westphal, Pellegrini/Savic, Verraes,
+Fowler).
+
+New SVG diagrams in `assets/`:
+- `ccc_decision_flow.svg` — the read-decide-append loop with store interaction
+- `ccc_vs_dcb_taxonomy.svg` — Aggregate versioning vs CCC vs DCB taxonomy tree
+
 ## [3.4.1] - 2026-06-23
 
 ### Added — DCB read API: `dcb_read_log/3`, `dcb_all_tags/1`, `dcb_all_event_types/1`

@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#555"/>
+    </marker>
+    <marker id="arrow-conflict" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c62828"/>
+    </marker>
+    <linearGradient id="cmdGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f5e9"/>
+      <stop offset="100%" style="stop-color:#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="storeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd"/>
+      <stop offset="100%" style="stop-color:#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="conflictGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffebee"/>
+      <stop offset="100%" style="stop-color:#ffcdd2"/>
+    </linearGradient>
+    <linearGradient id="successGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e0f2f1"/>
+      <stop offset="100%" style="stop-color:#b2dfdb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="180" y="22" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#212121">Command Context Consistency</text>
+  <text x="180" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#757575">Decision flow in ReckonDB</text>
+
+  <!-- Lane labels -->
+  <text x="90" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#2e7d32">Command Handler</text>
+  <text x="270" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1565c0">ReckonDB Store</text>
+  <line x1="180" y1="50" x2="180" y2="510" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- 1: Command arrives -->
+  <rect x="20" y="68" width="140" height="40" rx="6" fill="url(#cmdGrad)" stroke="#43a047" stroke-width="1.5"/>
+  <text x="90" y="84" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1b5e20">Command arrives</text>
+  <text x="90" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">e.g. ReserveSeat</text>
+
+  <!-- Arrow down -->
+  <line x1="90" y1="108" x2="90" y2="128" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 2: ReadDcbContext -->
+  <rect x="20" y="130" width="140" height="50" rx="6" fill="url(#cmdGrad)" stroke="#43a047" stroke-width="1.5"/>
+  <text x="90" y="149" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1b5e20">ReadDcbContext</text>
+  <text x="90" y="163" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">tag_filter + batch_size</text>
+  <text x="90" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">→ events + max_seq</text>
+
+  <!-- Cross-lane arrow: request to store -->
+  <line x1="160" y1="155" x2="210" y2="155" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Store: read indexes -->
+  <rect x="210" y="130" width="130" height="50" rx="6" fill="url(#storeGrad)" stroke="#1976d2" stroke-width="1.5"/>
+  <text x="275" y="149" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">Read indexes</text>
+  <text x="275" y="163" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">by_tag / by_event_type</text>
+  <text x="275" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">by_payload / by_payload_hash</text>
+
+  <!-- Arrow back: events + max_seq -->
+  <line x1="210" y1="168" x2="160" y2="168" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Arrow down -->
+  <line x1="90" y1="180" x2="90" y2="200" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 3: Temporary Decision Data -->
+  <rect x="20" y="202" width="140" height="50" rx="6" fill="url(#cmdGrad)" stroke="#43a047" stroke-width="1.5"/>
+  <text x="90" y="221" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1b5e20">Temporary Decision</text>
+  <text x="90" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b5e20">Data</text>
+  <text x="90" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">project from events</text>
+
+  <!-- Arrow down -->
+  <line x1="90" y1="252" x2="90" y2="272" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 4: Apply Rule -->
+  <rect x="20" y="274" width="140" height="40" rx="6" fill="url(#cmdGrad)" stroke="#43a047" stroke-width="1.5"/>
+  <text x="90" y="291" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1b5e20">Apply Rule</text>
+  <text x="90" y="307" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">produce new events</text>
+
+  <!-- Arrow down -->
+  <line x1="90" y1="314" x2="90" y2="334" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 5: AppendIfNoTagMatches -->
+  <rect x="20" y="336" width="140" height="52" rx="6" fill="url(#cmdGrad)" stroke="#43a047" stroke-width="1.5"/>
+  <text x="90" y="354" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b5e20">AppendIfNo</text>
+  <text x="90" y="367" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b5e20">TagMatches</text>
+  <text x="90" y="381" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">filter + seq_cutoff=max_seq</text>
+
+  <!-- Cross-lane arrow: atomic append -->
+  <line x1="160" y1="362" x2="210" y2="362" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Store: in-transaction check -->
+  <rect x="210" y="336" width="130" height="52" rx="6" fill="url(#storeGrad)" stroke="#1976d2" stroke-width="1.5"/>
+  <text x="275" y="354" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">In-transaction</text>
+  <text x="275" y="367" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">context check</text>
+  <text x="275" y="381" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">max_matching_seq &gt; cutoff?</text>
+
+  <!-- Decision diamond -->
+  <polygon points="275,406 305,426 275,446 245,426" fill="white" stroke="#555" stroke-width="1.5"/>
+  <text x="275" y="430" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#333">conflict?</text>
+  <line x1="275" y1="388" x2="275" y2="406" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- NO path: success -->
+  <line x1="275" y1="446" x2="275" y2="468" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="282" y="460" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">no</text>
+  <rect x="210" y="468" width="130" height="32" rx="6" fill="url(#successGrad)" stroke="#00897b" stroke-width="1.5"/>
+  <text x="275" y="484" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#004d40">Committed</text>
+  <text x="275" y="496" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#00695c">→ last_seq returned</text>
+
+  <!-- YES path: conflict -->
+  <line x1="245" y1="426" x2="160" y2="426" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrow-conflict)"/>
+  <text x="200" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#c62828">yes</text>
+  <rect x="20" y="410" width="140" height="32" rx="6" fill="url(#conflictGrad)" stroke="#e53935" stroke-width="1.5"/>
+  <text x="90" y="426" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#b71c1c">Conflict</text>
+  <text x="90" y="438" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#c62828">→ max_seq returned, retry</text>
+
+  <!-- Footer note -->
+  <text x="180" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9e9e9e">Context check is atomic — no events can appear between</text>
+  <text x="180" y="521" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9e9e9e">the check and the write inside the Khepri transaction</text>
+</svg>
