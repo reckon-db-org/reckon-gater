@@ -5,6 +5,22 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.1] - 2026-06-23
+
+### Fixed — CCC guide and decision flow diagram
+
+- `guides/ccc.md`: Three code examples called non-existent
+  `reckon_gater_api:dcb_read_context/3`. Replaced with correct API calls:
+  - Tag-filter example → `read_by_tags/3`
+  - Composite payload hash example → `ccc_read_by_payload_hash/4`
+  - Mixed type+payload example → `read_by_event_types/3` + `ccc_read_by_payload/4`,
+    then intersect and compute cutoff
+- `guides/ccc.md`: Retry Semantics section now distinguishes re-read strategy
+  by filter type (tag/event_type vs payload vs composed).
+- `assets/ccc_decision_flow.svg`: ReadDcbContext "Read indexes" box incorrectly
+  listed `by_payload / by_payload_hash`. These indexes are only consulted inside
+  the `AppendIfNoTagMatches` Khepri transaction. Fixed both boxes.
+
 ## [3.6.0] - 2026-06-23
 
 ### Changed — rename payload-read API functions to `ccc_` prefix

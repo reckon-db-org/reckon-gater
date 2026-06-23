@@ -54,7 +54,7 @@
   <rect x="210" y="130" width="130" height="50" rx="6" fill="url(#storeGrad)" stroke="#1976d2" stroke-width="1.5"/>
   <text x="275" y="149" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">Read indexes</text>
   <text x="275" y="163" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">by_tag / by_event_type</text>
-  <text x="275" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">by_payload / by_payload_hash</text>
+  <text x="275" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">(payload: ccc_read_by_payload*)</text>
 
   <!-- Arrow back: events + max_seq -->
   <line x1="210" y1="168" x2="160" y2="168" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -90,9 +90,10 @@
 
   <!-- Store: in-transaction check -->
   <rect x="210" y="336" width="130" height="52" rx="6" fill="url(#storeGrad)" stroke="#1976d2" stroke-width="1.5"/>
-  <text x="275" y="354" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">In-transaction</text>
-  <text x="275" y="367" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">context check</text>
-  <text x="275" y="381" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">max_matching_seq &gt; cutoff?</text>
+  <text x="275" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">In-transaction</text>
+  <text x="275" y="362" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0d47a1">context check</text>
+  <text x="275" y="374" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">all indexes: tag / type</text>
+  <text x="275" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">payload / payload_hash</text>
 
   <!-- Decision diamond -->
   <polygon points="275,406 305,426 275,446 245,426" fill="white" stroke="#555" stroke-width="1.5"/>

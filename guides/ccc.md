@@ -57,9 +57,19 @@ tags to the event.
 
 The three steps:
 
-**1. Read the relevant history.** Call `ReadDcbContext` with a `tag_filter`
-that describes the events relevant to this decision. The response contains
-the matching events and `max_seq` — the highest DCB sequence number seen.
+**1. Read the relevant history.** Fetch the events that could invalidate your
+decision. Use the API call that matches your filter type:
+
+- **Tag / event_type filters** (`any_of`, `all_of`, `event_type`, `and_`, `or_`):
+  call `ReadDcbContext` (HTTP/gRPC) or `read_by_tags` / `read_by_event_types`
+  (Erlang API). The store reads `by_tag` and `by_event_type` indexes.
+
+- **Payload filters** (`payload_match`, `payload_hash_match`): call
+  `ccc_read_by_payload/4` or `ccc_read_by_payload_hash/4` (Erlang API). The
+  store reads `by_payload` or `by_payload_hash` indexes.
+
+Take `max(event.version)` across the returned events — or `-1` if the result
+is empty — as the `seq_cutoff` for step 3.
 
 **2. Build temporary decision data.** Project from the returned events into
 whatever data structure the rule needs. This is ephemeral — built once per
@@ -67,11 +77,12 @@ command, discarded after the write. The store does not hold this; it belongs
 to the command handler.
 
 **3. Append with cutoff.** Call `AppendIfNoTagMatches` with the same
-`tag_filter` and `seq_cutoff = max_seq`. The store verifies, inside a single
-Khepri transaction, that no matching event appeared after `max_seq`. If the
-context is still valid, it writes the new events. If not, it returns a
-`Conflict` response with the current `max_seq` — the handler retries from
-step 1.
+`tag_filter` and `seq_cutoff`. The store verifies, inside a single
+Khepri transaction, that no matching event appeared after `seq_cutoff`. The
+in-transaction check evaluates **all** filter types — tag, event_type,
+payload, and payload_hash indexes — atomically. If the context is still valid,
+it writes the new events. If not, it returns a `Conflict` response with the
+current `max_seq` — the handler retries from step 1.
 
 The check and write are atomic. Nothing can slip between them.
 
@@ -137,12 +148,20 @@ is written for that event — the event is simply invisible to that filter.
 ```erlang
 %% Writer tags the event — DCB style, no payload index needed
 Tags = [<<"email:", Email/binary>>],
-Event = #event{event_type = <<"user_registered_v1">>, tags = Tags, ...},
+Event = #{event_type => <<"user_registered_v1">>, tags => Tags, data => ...},
 
-%% Reader checks
-Filter = {any_of, [<<"email:", Email/binary>>]},
-{ok, #{events := _, max_seq := Cutoff}} =
-    reckon_gater_api:dcb_read_context(StoreId, Filter, 100),
+%% 1. Read context: any event with this email tag
+EmailTag = <<"email:", Email/binary>>,
+{ok, Events} = reckon_gater_api:read_by_tags(StoreId, [EmailTag], #{
+    match => any, batch_size => 100
+}),
+Cutoff = case [E#event.version || E <- Events] of
+    [] -> -1;
+    Vs -> lists:max(Vs)
+end,
+
+%% 3. Append conditionally
+Filter = {any_of, [EmailTag]},
 reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, Cutoff, [Event]).
 ```
 
@@ -153,18 +172,22 @@ reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, Cutoff, [Event]).
 %%   {payload_hash, [<<"flight_id">>, <<"seat_no">>]}
 
 %% Writer does NOT need to add tags — the store indexes the payload fields
-Event = #event{
-    event_type = <<"seat_reserved_v1">>,
-    data = jsx:encode(#{flight_id => FlightId, seat_no => SeatNo, ...}),
-    ...
+Event = #{
+    event_type => <<"seat_reserved_v1">>,
+    data => json:encode(#{flight_id => FlightId, seat_no => SeatNo, ...})
 },
 
-%% Reader queries by payload combination
-Filter = {payload_hash_match,
-          [<<"flight_id">>, <<"seat_no">>],
-          [FlightId,        SeatNo]},
-{ok, #{events := _, max_seq := Cutoff}} =
-    reckon_gater_api:dcb_read_context(StoreId, Filter, 100),
+%% 1. Read context: any event with this flight+seat combination
+Keys   = [<<"flight_id">>, <<"seat_no">>],
+Values = [FlightId, SeatNo],
+{ok, Events} = reckon_gater_api:ccc_read_by_payload_hash(StoreId, Keys, Values, 100),
+Cutoff = case [E#event.version || E <- Events] of
+    [] -> -1;
+    Vs -> lists:max(Vs)
+end,
+
+%% 3. Append conditionally — in-transaction check uses the same hash index
+Filter = {payload_hash_match, Keys, Values},
 reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, Cutoff, [Event]).
 ```
 
@@ -174,15 +197,25 @@ reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, Cutoff, [Event]).
 %% Declare at store creation:
 %%   {payload, <<"account_id">>}
 
+%% 1. Read context: both event types AND payload field.
+%%    Read each dimension separately then take the union.
+Types = [<<"credit_reserved_v1">>, <<"credit_released_v1">>],
+{ok, ByType}    = reckon_gater_api:read_by_event_types(StoreId, Types, 1000),
+{ok, ByPayload} = reckon_gater_api:ccc_read_by_payload(StoreId, <<"account_id">>, AccountId, 1000),
+%% Intersect by event identity (same stream + version), keep DCB events only
+History = intersect_events(ByType, ByPayload),
+Cutoff  = case [E#event.version || E <- History] of
+    [] -> -1;
+    Vs -> lists:max(Vs)
+end,
+
+%% 3. Append conditionally with a composed filter that the in-transaction
+%%    check evaluates atomically against both indexes
 Filter = {and_, [
     {or_, [{event_type, <<"credit_reserved_v1">>},
            {event_type, <<"credit_released_v1">>}]},
     {payload_match, <<"account_id">>, AccountId}
 ]},
-{ok, #{events := History, max_seq := Cutoff}} =
-    reckon_gater_api:dcb_read_context(StoreId, Filter, 1000),
-
-%% Project the balance from History, decide, then append:
 AvailableCredit = project_available(History),
 case AvailableCredit >= RequestedAmount of
     true ->
@@ -216,10 +249,13 @@ The practical guidance:
 A `Conflict` response from `AppendIfNoTagMatches` is not an error — it means
 the world changed while the command was deciding. The handler must:
 
-1. Re-call `ReadDcbContext` with the same filter to get the updated history.
-2. Re-project the temporary decision data.
+1. Re-read the updated history using the same API call(s) as in step 1:
+   - **Tag / event_type filters**: call `read_by_tags` or `read_by_event_types` again.
+   - **Payload filters**: call `ccc_read_by_payload` or `ccc_read_by_payload_hash` again.
+   - **Composed filters**: re-read each dimension separately, then intersect as before.
+2. Re-project the temporary decision data from the refreshed events.
 3. Re-evaluate the rule.
-4. Re-attempt the append.
+4. Re-attempt the append with the new `seq_cutoff`.
 
 If the rule still holds, the new append will succeed. If the rule no longer
 holds (a concurrent writer got there first), the handler returns a domain
