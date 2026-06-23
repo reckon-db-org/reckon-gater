@@ -5,6 +5,28 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-06-23
+
+### Changed — rename payload-read API functions to `ccc_` prefix
+
+`dcb_read_by_payload/4` and `dcb_read_by_payload_hash/4` renamed to
+`ccc_read_by_payload/4` and `ccc_read_by_payload_hash/4`.
+
+These functions read by CCC payload indexes — they are not DCB operations.
+The internal routing keys (`{dcb_read_by_payload, ...}`) are unchanged;
+no reckon-db update required.
+
+This was released the same day as 3.5.1 (before any downstream consumer
+wired up the old names), so the rename is effectively free.
+
+### Upgrading from 3.5.1
+
+Replace `dcb_read_by_payload` → `ccc_read_by_payload` and
+`dcb_read_by_payload_hash` → `ccc_read_by_payload_hash` at call sites.
+No behavioural changes.
+
+---
+
 ## [3.5.1] - 2026-06-23
 
 ### Added — Payload-index read API functions
