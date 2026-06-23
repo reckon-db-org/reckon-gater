@@ -41,6 +41,13 @@
     pick_worker/3
 ]).
 
+%% DCB read operations (reckon-gater 3.4.1+)
+-export([
+    dcb_read_log/3,
+    dcb_all_tags/1,
+    dcb_all_event_types/1
+]).
+
 %% Stream operations
 -export([
     append_events/3,
@@ -217,6 +224,34 @@ append_events(StoreId, StreamId, ExpectedVersion, Events) ->
 append_if_no_tag_matches(StoreId, TagFilter, SeqCutoff, Events) ->
     route_call(StoreId,
         {append_if_no_tag_matches, StoreId, TagFilter, SeqCutoff, Events}).
+
+%%====================================================================
+%% DCB Read Operations
+%%====================================================================
+
+%% @doc Read DCB events in ascending seq order.
+%%
+%% Returns {ok, #{events => Events, total_count => N}} on success.
+%% FromSeq is inclusive (0 = beginning). Limit is capped to 200 on
+%% the gateway side for admin UI use.
+-spec dcb_read_log(atom(), non_neg_integer(), pos_integer()) ->
+    {ok, map()} | {error, term()}.
+dcb_read_log(StoreId, FromSeq, Limit) ->
+    route_call(StoreId, {dcb_read_log, StoreId, FromSeq, Limit}).
+
+%% @doc Return all tags in the DCB log with event counts.
+%%
+%% Returns {ok, [{Tag, Count}]} sorted descending by Count.
+-spec dcb_all_tags(atom()) -> {ok, [{binary(), non_neg_integer()}]} | {error, term()}.
+dcb_all_tags(StoreId) ->
+    route_call(StoreId, {dcb_all_tags, StoreId}).
+
+%% @doc Return all event types in the DCB log with event counts.
+%%
+%% Returns {ok, [{EventType, Count}]} sorted descending by Count.
+-spec dcb_all_event_types(atom()) -> {ok, [{binary(), non_neg_integer()}]} | {error, term()}.
+dcb_all_event_types(StoreId) ->
+    route_call(StoreId, {dcb_all_event_types, StoreId}).
 
 %% @doc Get events from a stream
 -spec get_events(atom(), binary(), integer(), integer(), forward | backward) ->

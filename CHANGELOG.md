@@ -5,6 +5,19 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.1] - 2026-06-23
+
+### Added — DCB read API: `dcb_read_log/3`, `dcb_all_tags/1`, `dcb_all_event_types/1`
+
+New functions in `reckon_gater_api` that proxy to the corresponding
+`reckon_db_dcb` read functions (requires reckon-db 5.2.2+):
+
+- `dcb_read_log(StoreId, FromSeq, Limit)` — paginated log read.
+- `dcb_all_tags(StoreId)` — enumerate tags with event counts.
+- `dcb_all_event_types(StoreId)` — enumerate event types with event counts.
+
+Used by the new admin UI DCB views in reckon-gateway 0.12.0.
+
 ## [3.4.0] - 2026-06-22
 
 ### Added — `{event_type, binary()}` leaf in `tag_filter()`
