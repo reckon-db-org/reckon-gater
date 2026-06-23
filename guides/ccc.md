@@ -61,12 +61,14 @@ The three steps:
 decision. Use the API call that matches your filter type:
 
 - **Tag / event_type filters** (`any_of`, `all_of`, `event_type`, `and_`, `or_`):
-  call `ReadDcbContext` (HTTP/gRPC) or `read_by_tags` / `read_by_event_types`
-  (Erlang API). The store reads `by_tag` and `by_event_type` indexes.
+  call `read_by_tags/3` or `read_by_event_types/3` (Erlang API) or the
+  `POST /dcb/context` HTTP endpoint. The store reads `by_tag` and
+  `by_event_type` indexes.
 
 - **Payload filters** (`payload_match`, `payload_hash_match`): call
-  `ccc_read_by_payload/4` or `ccc_read_by_payload_hash/4` (Erlang API). The
-  store reads `by_payload` or `by_payload_hash` indexes.
+  `ccc_read_by_payload/4` or `ccc_read_by_payload_hash/4` (Erlang API) or
+  `GET /dcb/by-payload` / `POST /dcb/by-payload-hash` (HTTP). The store reads
+  `by_payload` or `by_payload_hash` indexes.
 
 Take `max(event.version)` across the returned events — or `-1` if the result
 is empty — as the `seq_cutoff` for step 3.

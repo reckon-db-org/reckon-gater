@@ -5,6 +5,21 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.2] - 2026-06-23
+
+### Fixed — "ReadDcbContext" removed from CCC decision flow diagram and guide
+
+`ReadDcbContext` is a DCB-specific endpoint name and has no place in a CCC
+diagram. The CCC decision flow SVG step is now "Read relevant history" with
+subtitle "tags / types / payload". The store-side box shows both index families
+(`by_tag / by_event_type` and `by_payload / by_payload_hash`) without
+confusing parentheticals.
+
+`guides/ccc.md` Step 1 description now names the actual Erlang API functions
+(`read_by_tags/3`, `read_by_event_types/3`, `ccc_read_by_payload/4`,
+`ccc_read_by_payload_hash/4`) and HTTP endpoints (`/dcb/context`,
+`/dcb/by-payload`, `/dcb/by-payload-hash`) instead of `ReadDcbContext`.
+
 ## [3.6.1] - 2026-06-23
 
 ### Fixed — CCC guide and decision flow diagram
