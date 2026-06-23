@@ -48,6 +48,12 @@
     dcb_all_event_types/1
 ]).
 
+%% DCB payload-index reads (reckon-gater 3.5.1+)
+-export([
+    dcb_read_by_payload/4,
+    dcb_read_by_payload_hash/4
+]).
+
 %% Stream operations
 -export([
     append_events/3,
@@ -252,6 +258,25 @@ dcb_all_tags(StoreId) ->
 -spec dcb_all_event_types(atom()) -> {ok, [{binary(), non_neg_integer()}]} | {error, term()}.
 dcb_all_event_types(StoreId) ->
     route_call(StoreId, {dcb_all_event_types, StoreId}).
+
+%% @doc Read DCB events that have a specific payload field value.
+%%
+%% Requires the store to declare {payload, Key} in its index config.
+%% Returns {ok, Events} with at most Limit events in ascending seq order.
+-spec dcb_read_by_payload(atom(), binary(), binary(), pos_integer()) ->
+    {ok, [event()]} | {error, term()}.
+dcb_read_by_payload(StoreId, Key, Value, Limit) ->
+    route_call(StoreId, {dcb_read_by_payload, StoreId, Key, Value, Limit}).
+
+%% @doc Read DCB events matching a composite payload field combination.
+%%
+%% Requires {payload_hash, Keys} declared in the store's index config.
+%% All Keys must match their corresponding Values; field order is ignored.
+%% Returns {ok, Events} with at most Limit events in ascending seq order.
+-spec dcb_read_by_payload_hash(atom(), [binary()], [binary()], pos_integer()) ->
+    {ok, [event()]} | {error, term()}.
+dcb_read_by_payload_hash(StoreId, Keys, Values, Limit) ->
+    route_call(StoreId, {dcb_read_by_payload_hash, StoreId, Keys, Values, Limit}).
 
 %% @doc Get events from a stream
 -spec get_events(atom(), binary(), integer(), integer(), forward | backward) ->

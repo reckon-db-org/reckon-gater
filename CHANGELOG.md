@@ -5,6 +5,22 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.1] - 2026-06-23
+
+### Added — Payload-index read API functions
+
+`dcb_read_by_payload/4` and `dcb_read_by_payload_hash/4` added to
+`reckon_gater_api`. Both route through the existing `route_call/2`
+mechanism to the gateway worker in reckon-db 5.3.0+.
+
+- `dcb_read_by_payload(StoreId, Key, Value, Limit)` — returns events
+  where `data[Key] = Value` in ascending seq order (up to Limit).
+  Requires `{payload, Key}` declared in the store.
+
+- `dcb_read_by_payload_hash(StoreId, Keys, Values, Limit)` — returns
+  events matching the composite payload combination in ascending seq
+  order. Requires `{payload_hash, Keys}` declared in the store.
+
 ## [3.5.0] - 2026-06-23
 
 ### Added — CCC payload filter variants in `tag_filter()`
