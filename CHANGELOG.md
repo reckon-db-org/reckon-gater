@@ -5,6 +5,18 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.4] - 2026-06-23
+
+### Added — DCB guide
+
+`guides/dcb.md`: reckon-gater-focused DCB guide covering the decision loop,
+`read_by_tags/2,3`, `read_by_event_types/3`, `append_if_no_tag_matches/4`,
+the full TagFilter algebra, seq-cutoff semantics, two worked examples (email
+uniqueness, seat reservation), HTTP endpoint reference, and cross-links to the
+CCC guide and the reckon-db DCB internals guide.
+
+Also added to ex_doc extras (rendered on hexdocs) and README Overview.
+
 ## [3.6.3] - 2026-06-23
 
 ### Fixed — README and causation guide audit

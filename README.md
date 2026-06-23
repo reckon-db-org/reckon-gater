@@ -19,7 +19,7 @@ reckon-gater is an Erlang gateway service providing:
 - **PubSub Channels**: 10 dedicated channels with priority-based delivery
 - **HMAC Security**: Message signing for critical channels
 - **Tamper-Resistance Primitives** *(new in 2.1.0)*: Canonical encoder and HMAC + hash-chain helpers used by `reckon-db` 2.1.0 to make stored events and snapshots tamper-evident. See `reckon_gater_canonical` and `reckon_gater_integrity` modules.
-- **DCB Wire API** *(new in 2.3.0)*: `reckon_gater_api:append_if_no_tag_matches/4` plus the `tag_filter()` + `seq_cutoff()` types in `include/reckon_gater_types.hrl`. Wire surface for reckon-db's [Dynamic Consistency Boundary](https://codeberg.org/reckon-db-org/reckon-db/src/branch/main/guides/dcb.md) primitive.
+- **DCB Wire API** *(new in 2.3.0)*: `reckon_gater_api:append_if_no_tag_matches/4` plus the `tag_filter()` + `seq_cutoff()` types in `include/reckon_gater_types.hrl`. Cross-stream conditional append with atomic consistency check. See [DCB Guide](guides/dcb.md).
 - **CCC Payload Indexes** *(new in 3.5.0)*: `ccc_read_by_payload/4` and `ccc_read_by_payload_hash/4` read from store-side payload indexes, enabling consistency boundaries over JSON payload fields without requiring tags. See [CCC Guide](guides/ccc.md).
 - **Telemetry**: BEAM telemetry with optional OpenTelemetry exporters
 

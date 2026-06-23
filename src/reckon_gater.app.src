@@ -1,6 +1,6 @@
 {application, reckon_gater, [
     {description, "Gateway for reckon-db event store with capability-based security"},
-    {vsn, "3.6.3"},
+    {vsn, "3.6.4"},
     {registered, []},
     {mod, {reckon_gater_app, []}},
     {applications, [
