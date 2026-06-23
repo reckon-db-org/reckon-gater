@@ -204,7 +204,7 @@ reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, Cutoff, [Event]).
 Types = [<<"credit_reserved_v1">>, <<"credit_released_v1">>],
 {ok, ByType}    = reckon_gater_api:read_by_event_types(StoreId, Types, 1000),
 {ok, ByPayload} = reckon_gater_api:ccc_read_by_payload(StoreId, <<"account_id">>, AccountId, 1000),
-%% Intersect by event identity (same stream + version), keep DCB events only
+%% Intersect: keep events that appear in both result sets
 History = intersect_events(ByType, ByPayload),
 Cutoff  = case [E#event.version || E <- History] of
     [] -> -1;

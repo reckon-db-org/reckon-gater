@@ -5,6 +5,24 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.3] - 2026-06-23
+
+### Fixed — README and causation guide audit
+
+- `README.md`: Installation snippet updated from stale `"2.1.0"` to `"~> 3.6"`.
+- `README.md`: Added DCB/CCC Operations API reference section documenting
+  `append_if_no_tag_matches/4`, `read_by_tags/2,3`, `read_by_event_types/3`,
+  `ccc_read_by_payload/4`, and `ccc_read_by_payload_hash/4`.
+- `README.md`: Added CCC Payload Indexes bullet to Overview feature list.
+- `README.md`: Removed Causation Tracking API section that documented
+  non-existent functions (`get_effects`, `get_cause`, `get_causation_chain`,
+  `get_correlated`, `build_causation_graph`). The CausationService was removed
+  in June 2026. Replaced with a one-line note about `causation_id` /
+  `correlation_id` as metadata fields.
+- `guides/causation.md`: Rewritten to reflect current reality — causation
+  fields are writer-set metadata; lineage queries require a read-model
+  projection. All references to removed API functions removed.
+
 ## [3.6.2] - 2026-06-23
 
 ### Fixed — "ReadDcbContext" removed from CCC decision flow diagram and guide

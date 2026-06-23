@@ -20,6 +20,7 @@ reckon-gater is an Erlang gateway service providing:
 - **HMAC Security**: Message signing for critical channels
 - **Tamper-Resistance Primitives** *(new in 2.1.0)*: Canonical encoder and HMAC + hash-chain helpers used by `reckon-db` 2.1.0 to make stored events and snapshots tamper-evident. See `reckon_gater_canonical` and `reckon_gater_integrity` modules.
 - **DCB Wire API** *(new in 2.3.0)*: `reckon_gater_api:append_if_no_tag_matches/4` plus the `tag_filter()` + `seq_cutoff()` types in `include/reckon_gater_types.hrl`. Wire surface for reckon-db's [Dynamic Consistency Boundary](https://codeberg.org/reckon-db-org/reckon-db/src/branch/main/guides/dcb.md) primitive.
+- **CCC Payload Indexes** *(new in 3.5.0)*: `ccc_read_by_payload/4` and `ccc_read_by_payload_hash/4` read from store-side payload indexes, enabling consistency boundaries over JSON payload fields without requiring tags. See [CCC Guide](guides/ccc.md).
 - **Telemetry**: BEAM telemetry with optional OpenTelemetry exporters
 
 ## Installation
@@ -28,7 +29,7 @@ Add to your `rebar.config`:
 
 ```erlang
 {deps, [
-    {reckon_gater, "2.1.0"}
+    {reckon_gater, "~> 3.6"}
 ]}.
 ```
 
@@ -166,33 +167,42 @@ reckon_gater_api:scavenge_dry_run(StoreId, StreamId, Opts) ->
     {ok, Preview} | {error, term()}.
 ```
 
-### Causation Tracking
+### DCB / CCC Operations
 
-Track event lineage for debugging and auditing. See [Causation Guide](guides/causation.md).
-
-![Causation Graph](assets/causation_graph.svg)
+Conditional append with atomic consistency check. See [CCC Guide](guides/ccc.md)
+and [DCB Guide](https://codeberg.org/reckon-db-org/reckon-db/src/branch/main/guides/dcb.md).
 
 ```erlang
-%% Get events caused by an event
-reckon_gater_api:get_effects(StoreId, EventId) ->
+%% Conditional append: write events only if no matching events appeared
+%% after seq_cutoff. Returns {ok, LastSeq} or {error, {context_changed, MaxSeq}}.
+reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, SeqCutoff, Events) ->
+    {ok, pos_integer()} | {error, {context_changed, pos_integer()}} | {error, term()}.
+
+%% Read events from the tag index (for DCB / tag-based CCC context reads)
+reckon_gater_api:read_by_tags(StoreId, Tags) ->
+    {ok, [Event]} | {error, term()}.
+reckon_gater_api:read_by_tags(StoreId, Tags, Opts) ->
     {ok, [Event]} | {error, term()}.
 
-%% Get the event that caused this one
-reckon_gater_api:get_cause(StoreId, EventId) ->
-    {ok, Event} | {error, not_found}.
-
-%% Get full causation chain (root to this event)
-reckon_gater_api:get_causation_chain(StoreId, EventId) ->
+%% Read events from the event-type index
+reckon_gater_api:read_by_event_types(StoreId, EventTypes, BatchSize) ->
     {ok, [Event]} | {error, term()}.
 
-%% Get all events with the same correlation ID
-reckon_gater_api:get_correlated(StoreId, CorrelationId) ->
+%% Read events from the payload index (CCC payload-based context reads)
+reckon_gater_api:ccc_read_by_payload(StoreId, Key, Value, Limit) ->
     {ok, [Event]} | {error, term()}.
 
-%% Build causation graph for visualization
-reckon_gater_api:build_causation_graph(StoreId, EventId) ->
-    {ok, Graph} | {error, term()}.
+%% Read events from the composite payload-hash index
+reckon_gater_api:ccc_read_by_payload_hash(StoreId, Keys, Values, Limit) ->
+    {ok, [Event]} | {error, term()}.
 ```
+
+### Causation Metadata
+
+Events carry `causation_id` and `correlation_id` metadata fields (see the
+event record in `include/reckon_gater_types.hrl`). There is no dedicated
+query API for causation — lineage queries are a read-model concern. See
+[Causation Guide](guides/causation.md).
 
 ### Schema Operations
 
