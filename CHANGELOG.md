@@ -5,6 +5,26 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0] - 2026-06-24
+
+### Added — store index introspection API
+
+Two new functions in `reckon_gater_api` for inspecting which payload fields are
+indexed in a store's config:
+
+- `get_payload_indexes/1` — returns `{ok, [binary()]}`, the list of payload
+  field keys declared as `{payload, Key}` in the store's index config. Callers
+  can check this before calling `ccc_read_by_payload/4` to know whether the
+  read will be O(matches) or a full-store scan.
+
+- `get_payload_hash_indexes/1` — returns `{ok, [[binary()]]}`, the list of
+  key-sets declared as `{payload_hash, Keys}` in the store's index config.
+  Callers can check this before calling `ccc_read_by_payload_hash/4`.
+
+Both functions use `route_call` and are served by the gateway worker on the
+reckon-db side (requires reckon-db >= 5.5.0). The worker reads directly from the
+`#store_config{}` it holds in state — no additional store I/O.
+
 ## [3.6.4] - 2026-06-23
 
 ### Added — DCB guide

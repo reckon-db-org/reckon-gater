@@ -54,6 +54,12 @@
     ccc_read_by_payload_hash/4
 ]).
 
+%% Store index introspection (reckon-gater 3.7.0+)
+-export([
+    get_payload_indexes/1,
+    get_payload_hash_indexes/1
+]).
+
 %% Stream operations
 -export([
     append_events/3,
@@ -277,6 +283,24 @@ ccc_read_by_payload(StoreId, Key, Value, Limit) ->
     {ok, [event()]} | {error, term()}.
 ccc_read_by_payload_hash(StoreId, Keys, Values, Limit) ->
     route_call(StoreId, {dcb_read_by_payload_hash, StoreId, Keys, Values, Limit}).
+
+%% @doc Return the payload field keys that are individually indexed in a store.
+%%
+%% Each returned binary is a key that was declared as {payload, Key} in the
+%% store's index config. Use these to know which ccc_read_by_payload/4 calls
+%% will be O(matches) rather than a full-store scan.
+-spec get_payload_indexes(atom()) -> {ok, [binary()]} | {error, term()}.
+get_payload_indexes(StoreId) ->
+    route_call(StoreId, {get_payload_indexes, StoreId}).
+
+%% @doc Return the payload field key-sets that are hash-indexed in a store.
+%%
+%% Each element is a list of keys declared as {payload_hash, Keys} in the
+%% store's index config. Use these to know which ccc_read_by_payload_hash/4
+%% combinations will be O(matches) rather than a full-store scan.
+-spec get_payload_hash_indexes(atom()) -> {ok, [[binary()]]} | {error, term()}.
+get_payload_hash_indexes(StoreId) ->
+    route_call(StoreId, {get_payload_hash_indexes, StoreId}).
 
 %% @doc Get events from a stream
 -spec get_events(atom(), binary(), integer(), integer(), forward | backward) ->
