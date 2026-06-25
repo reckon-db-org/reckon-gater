@@ -69,23 +69,23 @@ default_config() ->
     retry_result().
 do_retry(StoreId, Fun, Config, Attempt) ->
     #retry_config{max_retries = MaxRetries} = Config,
-    case Fun() of
-        {ok, _} = Success ->
-            Success;
-        {error, Reason} = Error ->
-            case is_retriable_error(Reason) of
-                true when Attempt < MaxRetries ->
-                    Delay = calculate_delay(Attempt, Config),
-                    emit_retry_telemetry(StoreId, Attempt, Delay, Reason),
-                    timer:sleep(Delay),
-                    do_retry(StoreId, Fun, Config, Attempt + 1);
-                true ->
-                    emit_exhausted_telemetry(StoreId, MaxRetries, Reason),
-                    {error, {retries_exhausted, Reason}};
-                false ->
-                    %% Non-transient error, return immediately without retry
-                    Error
-            end
+    handle_call_result(Fun(), StoreId, Fun, Config, Attempt, MaxRetries).
+
+handle_call_result({ok, _} = Success, _StoreId, _Fun, _Config, _Attempt, _MaxRetries) ->
+    Success;
+handle_call_result({error, Reason} = Error, StoreId, Fun, Config, Attempt, MaxRetries) ->
+    case is_retriable_error(Reason) of
+        true when Attempt < MaxRetries ->
+            Delay = calculate_delay(Attempt, Config),
+            emit_retry_telemetry(StoreId, Attempt, Delay, Reason),
+            timer:sleep(Delay),
+            do_retry(StoreId, Fun, Config, Attempt + 1);
+        true ->
+            emit_exhausted_telemetry(StoreId, MaxRetries, Reason),
+            {error, {retries_exhausted, Reason}};
+        false ->
+            %% Non-transient error, return immediately without retry
+            Error
     end.
 
 %% @private Determine if an error is transient and worth retrying

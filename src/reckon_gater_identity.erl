@@ -135,17 +135,15 @@ decode_did(DID) ->
     PrefixLen = byte_size(Prefix),
     case DID of
         <<Prefix:PrefixLen/binary, $z, Base58/binary>> ->
-            case base58_decode(Base58) of
-                {ok, <<16#ed, 16#01, PubKey:32/binary>>} ->
-                    {ok, PubKey};
-                {ok, _} ->
-                    {error, unsupported_key_type};
-                Error ->
-                    Error
-            end;
+            decoded_pubkey(base58_decode(Base58));
         _ ->
             {error, invalid_did_format}
     end.
+
+%% @private
+decoded_pubkey({ok, <<16#ed, 16#01, PubKey:32/binary>>}) -> {ok, PubKey};
+decoded_pubkey({ok, _}) -> {error, unsupported_key_type};
+decoded_pubkey(Error) -> Error.
 
 %%====================================================================
 %% NIF Detection
@@ -223,17 +221,17 @@ base58_decode_erlang(Base58) ->
     %% Decode rest to integer
     case decode_base58_int(Base58, 0) of
         {ok, Int} ->
-            %% Convert integer to binary
-            Decoded = case Int of
-                0 -> <<>>;
-                _ -> binary:encode_unsigned(Int, big)
-            end,
-            %% Prepend zero bytes
+            %% Convert integer to binary, prepend leading zero bytes
+            Decoded = encode_unsigned_or_empty(Int),
             Zeros = binary:copy(<<0>>, LeadingOnes),
             {ok, <<Zeros/binary, Decoded/binary>>};
         Error ->
             Error
     end.
+
+%% @private
+encode_unsigned_or_empty(0) -> <<>>;
+encode_unsigned_or_empty(N) -> binary:encode_unsigned(N, big).
 
 %% @private Encode integer to base58
 -spec encode_base58_int(non_neg_integer(), binary()) -> binary().

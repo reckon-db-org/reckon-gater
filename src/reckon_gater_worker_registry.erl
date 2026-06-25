@@ -160,22 +160,7 @@ handle_call({get_workers, StoreId}, _From, State) ->
 
     %% Get pids from pg and match with entries
     Pids = pg:get_members(?PG_SCOPE, Group),
-    Workers = lists:filtermap(
-        fun(Pid) ->
-            case maps:find(Pid, Entries) of
-                {ok, Entry} -> {true, Entry};
-                error ->
-                    %% Create entry on the fly if missing
-                    {true, #worker_entry{
-                        store_id = StoreId,
-                        node = node(Pid),
-                        pid = Pid,
-                        registered_at = 0
-                    }}
-            end
-        end,
-        Pids
-    ),
+    Workers = lists:filtermap(fun(Pid) -> worker_entry(Pid, Entries, StoreId) end, Pids),
 
     Duration = erlang:monotonic_time(microsecond) - StartTime,
     telemetry:execute(
@@ -234,6 +219,17 @@ terminate(_Reason, _State) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+%% @private Entry for a worker pid, synthesising one if pg has it but
+%% the entries map does not.
+worker_entry(Pid, Entries, StoreId) ->
+    case maps:find(Pid, Entries) of
+        {ok, Entry} ->
+            {true, Entry};
+        error ->
+            {true, #worker_entry{store_id = StoreId, node = node(Pid),
+                                 pid = Pid, registered_at = 0}}
+    end.
 
 %% @private Get the pg group name for a store's workers
 -spec worker_group(atom()) -> atom().

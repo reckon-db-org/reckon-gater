@@ -197,17 +197,17 @@ parts(<<"$", Rest/binary>> = Id) when is_binary(Id) ->
             {error, malformed}
     end;
 parts(Id) when is_binary(Id) ->
-    case binary:split(Id, <<"-">>) of
-        [Type, Suffix] ->
-            case is_valid(Id) of
-                true  -> {user, Type, Suffix};
-                false -> {error, malformed}
-            end;
-        _ ->
-            {error, malformed}
-    end;
+    parts_of(binary:split(Id, <<"-">>), Id);
 parts(_) ->
     {error, malformed}.
+
+parts_of([Type, Suffix], Id) ->
+    parts_result(is_valid(Id), Type, Suffix);
+parts_of(_, _Id) ->
+    {error, malformed}.
+
+parts_result(true, Type, Suffix) -> {user, Type, Suffix};
+parts_result(false, _Type, _Suffix) -> {error, malformed}.
 
 %% @doc Extract the prefix segment from a well-formed user stream id.
 %% Returns `undefined' for system ids and malformed ids.
@@ -222,17 +222,17 @@ prefix_of(StreamId) ->
 %% Returns `undefined' for system ids and malformed ids.
 -spec suffix_of(binary()) -> binary() | undefined.
 suffix_of(StreamId) when is_binary(StreamId) ->
-    case binary:split(StreamId, <<"-">>) of
-        [_Prefix, Suffix] ->
-            case is_valid(StreamId) of
-                true  -> Suffix;
-                false -> undefined
-            end;
-        _ ->
-            undefined
-    end;
+    suffix_of_split(binary:split(StreamId, <<"-">>), StreamId);
 suffix_of(_) ->
     undefined.
+
+suffix_of_split([_Prefix, Suffix], StreamId) ->
+    suffix_result(is_valid(StreamId), Suffix);
+suffix_of_split(_, _StreamId) ->
+    undefined.
+
+suffix_result(true, Suffix) -> Suffix;
+suffix_result(false, _Suffix) -> undefined.
 
 %%====================================================================
 %% Internal

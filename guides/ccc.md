@@ -14,7 +14,7 @@ version still matches. The aggregate owns the consistency boundary. Every
 command touching the same aggregate competes for the same stream version,
 even when the commands check completely different rules.
 
-**Command Context Consistency (CCC)** inverts this. The *command* selects
+**Command Context Consistency (CCC)** inverts this. The _command_ selects
 the relevant history. Its context query describes exactly the events that could
 invalidate the decision. The store verifies that no matching events appeared
 since the context was read. A command that checks email uniqueness competes
@@ -26,12 +26,12 @@ and how to use both from Erlang.
 
 ## CCC, DCB, and ReckonDB
 
-CCC is a *principle*. It does not prescribe a query language or a store API.
+CCC is a _principle_. It does not prescribe a query language or a store API.
 The command handler selects its context query in whatever form the implementation
 supports. An implementation may add indexes, derived tags, or other access
 structures to execute queries efficiently.
 
-**Dynamic Consistency Boundary (DCB)** is a specific event-store *contract*
+**Dynamic Consistency Boundary (DCB)** is a specific event-store _contract_
 that implements CCC using event types and tags. Events carry tags written by
 the producer. Queries select by tag or event type. Any value needed for a
 consistency query must be encoded as a tag at write time — the event data
@@ -241,6 +241,7 @@ declaration and re-indexing makes it queryable for future appends. The
 event data does not change; only the access structure changes.
 
 The practical guidance:
+
 - Use tags for values that are known query dimensions at event design time.
 - Use payload indexes for fields that become consistency dimensions later, or
   for combinations (`payload_hash_match`) that would otherwise require
@@ -268,20 +269,20 @@ only guarantees that the context was stable at the moment of writing.
 
 ## Literature
 
-- Rico Fritzsche — *Simply Event Sourcing: Aggregates Were Never Required*
+- Rico Fritzsche — _Simply Event Sourcing: Aggregates Were Never Required_
   (2025). Source of the CCC/DCB taxonomy and the "Temporary Decision Data"
   framing used in this guide. Defines Domain Capability (what Hecate calls
   a Desk) as the unit responsible for evaluating one command.
 
-- Ralf Westphal — *Command Context Consistency* (2024). Named the principle
+- Ralf Westphal — _Command Context Consistency_ (2024). Named the principle
   and formalised the read-decide-append loop.
 
-- Sara Pellegrini & Milan Savic — *Kill the Aggregate* / Dynamic Consistency
+- Sara Pellegrini & Milan Savic — _Kill the Aggregate_ / Dynamic Consistency
   Boundary specification (2023). Introduced DCB as a concrete tag-based
   event store contract implementing CCC.
 
-- Mathias Verraes — *Eventsourcing: State from Events / Events as State*
+- Mathias Verraes — _Eventsourcing: State from Events / Events as State_
   (2019). Definition of Event Sourcing used in this guide: the persisted
   history is the single source of truth and participates in decisions.
 
-- Martin Fowler — *Event Sourcing* pattern description.
+- Martin Fowler — _Event Sourcing_ pattern description.
