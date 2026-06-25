@@ -141,86 +141,79 @@ handle_call({subscribe, Topic, Pid}, From, State) ->
 
 %% Capability-aware publish
 handle_call({publish_with_cap, Topic, Message, CapabilityToken}, _From, State) ->
-    #state{
-        module = Module,
-        channel_name = ChannelName,
-        callback_state = CallbackState,
-        requires_signature = RequiresSig,
-        requires_capability = RequiresCap,
-        realm = Realm,
-        max_rate = MaxRate,
-        rate_limiter = RateLimiter
-    } = State,
-
-    %% Build resource URI for capability check
+    #state{channel_name = ChannelName, requires_capability = RequiresCap,
+           realm = Realm} = State,
+    %% Build resource URI for the capability check, then run the
+    %% publish pipeline (cap -> rate -> signature -> callback).
     Resource = build_resource_uri(Realm, ChannelName, Topic),
-
-    %% Verify capability
-    case verify_capability(CapabilityToken, Resource, ?ACTION_CHANNEL_PUBLISH, RequiresCap) of
-        ok ->
-            %% Check rate limit
-            case check_rate_limit(Topic, MaxRate, RateLimiter) of
-                {ok, NewRateLimiter} ->
-                    %% Verify signature if required
-                    case verify_signature(Message, RequiresSig) of
-                        ok ->
-                            %% Delegate to callback module
-                            case Module:handle_publish(Topic, Message, CallbackState) of
-                                {ok, NewCallbackState} ->
-                                    broadcast(Topic, Message, ChannelName),
-                                    {reply, ok, State#state{
-                                        callback_state = NewCallbackState,
-                                        rate_limiter = NewRateLimiter
-                                    }};
-                                {error, Reason} ->
-                                    {reply, {error, Reason}, State#state{rate_limiter = NewRateLimiter}}
-                            end;
-                        {error, Reason} ->
-                            {reply, {error, Reason}, State}
-                    end;
-                {error, rate_limited} ->
-                    {reply, {error, rate_limited}, State}
-            end;
-        {error, Reason} ->
-            {reply, {error, {unauthorized, Reason}}, State}
-    end;
+    publish_authorized(
+        verify_capability(CapabilityToken, Resource, ?ACTION_CHANNEL_PUBLISH, RequiresCap),
+        Topic, Message, State);
 
 %% Capability-aware subscribe
 handle_call({subscribe_with_cap, Topic, Pid, CapabilityToken}, _From, State) ->
-    #state{
-        module = Module,
-        callback_state = CallbackState,
-        channel_name = ChannelName,
-        requires_capability = RequiresCap,
-        realm = Realm
-    } = State,
-
-    %% Build resource URI for capability check
+    #state{channel_name = ChannelName, requires_capability = RequiresCap,
+           realm = Realm} = State,
     Resource = build_resource_uri(Realm, ChannelName, Topic),
-
-    %% Verify capability
-    case verify_capability(CapabilityToken, Resource, ?ACTION_CHANNEL_SUBSCRIBE, RequiresCap) of
-        ok ->
-            %% Join pg group for topic
-            ok = pg:join(?PG_SCOPE, Topic, Pid),
-
-            %% Monitor subscriber
-            erlang:monitor(process, Pid),
-
-            %% Delegate to callback
-            case Module:handle_subscribe(Topic, Pid, CallbackState) of
-                {ok, NewCallbackState} ->
-                    {reply, ok, State#state{callback_state = NewCallbackState}};
-                {error, Reason} ->
-                    pg:leave(?PG_SCOPE, Topic, Pid),
-                    {reply, {error, Reason}, State}
-            end;
-        {error, Reason} ->
-            {reply, {error, {unauthorized, Reason}}, State}
-    end;
+    subscribe_authorized(
+        verify_capability(CapabilityToken, Resource, ?ACTION_CHANNEL_SUBSCRIBE, RequiresCap),
+        Topic, Pid, State);
 
 handle_call(_Request, _From, State) ->
     {reply, {error, unknown_request}, State}.
+
+%%--------------------------------------------------------------------
+%% Publish pipeline: cap -> rate -> signature -> callback. Each stage is
+%% head-dispatched so no single function nests beyond the limit. State
+%% threading preserves the original behaviour exactly: a signature
+%% failure replies with the un-updated State (rate-limiter consumption
+%% discarded); every other terminal path persists the new rate limiter.
+%%--------------------------------------------------------------------
+publish_authorized(ok, Topic, Message, State) ->
+    #state{max_rate = MaxRate, rate_limiter = RateLimiter} = State,
+    publish_rate_checked(check_rate_limit(Topic, MaxRate, RateLimiter),
+                         Topic, Message, State);
+publish_authorized({error, Reason}, _Topic, _Message, State) ->
+    {reply, {error, {unauthorized, Reason}}, State}.
+
+publish_rate_checked({ok, NewRateLimiter}, Topic, Message, State) ->
+    #state{requires_signature = RequiresSig} = State,
+    publish_signed(verify_signature(Message, RequiresSig),
+                   Topic, Message, State, NewRateLimiter);
+publish_rate_checked({error, rate_limited}, _Topic, _Message, State) ->
+    {reply, {error, rate_limited}, State}.
+
+publish_signed(ok, Topic, Message, State, NewRateLimiter) ->
+    #state{module = Module, callback_state = CallbackState} = State,
+    publish_delegated(Module:handle_publish(Topic, Message, CallbackState),
+                      Topic, Message, State, NewRateLimiter);
+publish_signed({error, Reason}, _Topic, _Message, State, _NewRateLimiter) ->
+    {reply, {error, Reason}, State}.
+
+publish_delegated({ok, NewCallbackState}, Topic, Message, State, NewRateLimiter) ->
+    broadcast(Topic, Message, State#state.channel_name),
+    {reply, ok, State#state{callback_state = NewCallbackState,
+                            rate_limiter = NewRateLimiter}};
+publish_delegated({error, Reason}, _Topic, _Message, State, NewRateLimiter) ->
+    {reply, {error, Reason}, State#state{rate_limiter = NewRateLimiter}}.
+
+%%--------------------------------------------------------------------
+%% Subscribe pipeline: cap -> join/monitor -> callback.
+%%--------------------------------------------------------------------
+subscribe_authorized(ok, Topic, Pid, State) ->
+    ok = pg:join(?PG_SCOPE, Topic, Pid),
+    erlang:monitor(process, Pid),
+    #state{module = Module, callback_state = CallbackState} = State,
+    subscribe_delegated(Module:handle_subscribe(Topic, Pid, CallbackState),
+                        Topic, Pid, State);
+subscribe_authorized({error, Reason}, _Topic, _Pid, State) ->
+    {reply, {error, {unauthorized, Reason}}, State}.
+
+subscribe_delegated({ok, NewCallbackState}, _Topic, _Pid, State) ->
+    {reply, ok, State#state{callback_state = NewCallbackState}};
+subscribe_delegated({error, Reason}, Topic, Pid, State) ->
+    pg:leave(?PG_SCOPE, Topic, Pid),
+    {reply, {error, Reason}, State}.
 
 handle_cast({unsubscribe, Topic, Pid}, State) ->
     #state{module = Module, callback_state = CallbackState} = State,
@@ -238,16 +231,7 @@ handle_cast(_Msg, State) ->
 handle_info({'DOWN', _Ref, process, Pid, _Reason}, State) ->
     %% Subscriber died, remove from all groups
     Groups = pg:which_groups(?PG_SCOPE),
-    lists:foreach(
-        fun(Group) ->
-            Members = pg:get_members(?PG_SCOPE, Group),
-            case lists:member(Pid, Members) of
-                true -> pg:leave(?PG_SCOPE, Group, Pid);
-                false -> ok
-            end
-        end,
-        Groups
-    ),
+    lists:foreach(fun(Group) -> leave_if_member(Group, Pid) end, Groups),
     {noreply, State};
 
 handle_info(Message, State) ->
@@ -373,15 +357,19 @@ verify_capability_with_mode(_Token, _Resource, _Action, optional) ->
 %% rather than verifying it.
 -spec do_verify_capability(binary(), binary(), binary()) -> ok | {error, term()}.
 do_verify_capability(Token, Resource, Action) ->
-    case code:ensure_loaded(reckon_db_capability_verifier) of
-        {module, reckon_db_capability_verifier} ->
-            case reckon_db_capability_verifier:authorize(Token, Resource, Action) of
-                {ok, _VerificationResult} -> ok;
-                {error, Reason} -> {error, Reason}
-            end;
-        {error, _} ->
-            case reckon_gater_capability:authorize(Token, Resource, Action) of
-                {ok, _Cap} -> ok;
-                {error, Reason} -> {error, Reason}
-            end
+    verify_via(code:ensure_loaded(reckon_db_capability_verifier), Token, Resource, Action).
+
+verify_via({module, reckon_db_capability_verifier}, Token, Resource, Action) ->
+    authorize_result(reckon_db_capability_verifier:authorize(Token, Resource, Action));
+verify_via({error, _}, Token, Resource, Action) ->
+    authorize_result(reckon_gater_capability:authorize(Token, Resource, Action)).
+
+authorize_result({ok, _}) -> ok;
+authorize_result({error, Reason}) -> {error, Reason}.
+
+%% @private Leave a pg group iff Pid is currently a member.
+leave_if_member(Group, Pid) ->
+    case lists:member(Pid, pg:get_members(?PG_SCOPE, Group)) of
+        true -> pg:leave(?PG_SCOPE, Group, Pid);
+        false -> ok
     end.
