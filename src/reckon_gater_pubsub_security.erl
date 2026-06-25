@@ -59,27 +59,25 @@ verify(Message) when is_map(Message) ->
 %% @doc Verify a signed message using a specific secret
 -spec verify(map(), binary()) -> ok | {error, term()}.
 verify(Message, Secret) when is_map(Message), is_binary(Secret) ->
-    case maps:get(?SIGNATURE_KEY, Message, undefined) of
-        undefined ->
-            {error, missing_signature};
-        ProvidedSignature ->
-            %% Check timestamp
-            case check_timestamp(Message) of
-                ok ->
-                    %% Compute expected signature
-                    MessageWithoutSig = maps:remove(?SIGNATURE_KEY, Message),
-                    Payload = serialize_for_signing(MessageWithoutSig),
-                    ExpectedSignature = compute_hmac(Payload, Secret),
+    verify_provided(maps:get(?SIGNATURE_KEY, Message, undefined), Message, Secret).
 
-                    %% Constant-time comparison
-                    case secure_compare(ProvidedSignature, ExpectedSignature) of
-                        true -> ok;
-                        false -> {error, invalid_signature}
-                    end;
-                {error, _} = Error ->
-                    Error
-            end
-    end.
+verify_provided(undefined, _Message, _Secret) ->
+    {error, missing_signature};
+verify_provided(ProvidedSignature, Message, Secret) ->
+    %% Check timestamp before the (more expensive) signature check.
+    verify_fresh(check_timestamp(Message), ProvidedSignature, Message, Secret).
+
+verify_fresh(ok, ProvidedSignature, Message, Secret) ->
+    MessageWithoutSig = maps:remove(?SIGNATURE_KEY, Message),
+    Payload = serialize_for_signing(MessageWithoutSig),
+    ExpectedSignature = compute_hmac(Payload, Secret),
+    %% Constant-time comparison
+    signature_ok(secure_compare(ProvidedSignature, ExpectedSignature));
+verify_fresh({error, _} = Error, _ProvidedSignature, _Message, _Secret) ->
+    Error.
+
+signature_ok(true) -> ok;
+signature_ok(false) -> {error, invalid_signature}.
 
 %% @doc Get the configured HMAC secret
 -spec get_secret() -> binary().
@@ -91,19 +89,19 @@ get_secret() ->
             list_to_binary(Secret);
         undefined ->
             %% Try environment variable
-            case os:getenv(?DEFAULT_SECRET_ENV) of
-                false ->
-                    %% Generate random secret (not recommended for production)
-                    logger:warning("No HMAC secret configured, using random secret"),
-                    RandomSecret = crypto:strong_rand_bytes(32),
-                    application:set_env(reckon_gater, hmac_secret, RandomSecret),
-                    RandomSecret;
-                EnvSecret ->
-                    Secret = list_to_binary(EnvSecret),
-                    application:set_env(reckon_gater, hmac_secret, Secret),
-                    Secret
-            end
+            secret_from_env(os:getenv(?DEFAULT_SECRET_ENV))
     end.
+
+secret_from_env(false) ->
+    %% Generate random secret (not recommended for production)
+    logger:warning("No HMAC secret configured, using random secret"),
+    RandomSecret = crypto:strong_rand_bytes(32),
+    application:set_env(reckon_gater, hmac_secret, RandomSecret),
+    RandomSecret;
+secret_from_env(EnvSecret) ->
+    Secret = list_to_binary(EnvSecret),
+    application:set_env(reckon_gater, hmac_secret, Secret),
+    Secret.
 
 %% @doc Set the HMAC secret
 -spec set_secret(binary() | string()) -> ok.
@@ -138,13 +136,13 @@ check_timestamp(Message) ->
         Timestamp when is_integer(Timestamp) ->
             Now = erlang:system_time(second),
             Age = Now - Timestamp,
-            case Age >= 0 andalso Age =< ?MAX_MESSAGE_AGE_SEC of
-                true -> ok;
-                false -> {error, message_expired}
-            end;
+            timestamp_fresh(Age >= 0 andalso Age =< ?MAX_MESSAGE_AGE_SEC);
         _ ->
             {error, invalid_timestamp}
     end.
+
+timestamp_fresh(true) -> ok;
+timestamp_fresh(false) -> {error, message_expired}.
 
 %% @private Constant-time binary comparison (prevents timing attacks)
 -spec secure_compare(binary(), binary()) -> boolean().

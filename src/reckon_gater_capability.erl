@@ -162,10 +162,7 @@ delegate(#capability{aud = ParentAudience, att = ParentGrants} = ParentCap,
             NewIssuerDID = ParentAudience,
 
             %% Create new capability
-            NewAudienceDID = case NewAudience of
-                #identity{did = D} -> D;
-                D when is_binary(D) -> D
-            end,
+            NewAudienceDID = audience_did(NewAudience),
 
             Now = erlang:system_time(second),
             TTL = maps:get(ttl, Opts, ?DEFAULT_TOKEN_TTL_SECS),
@@ -321,16 +318,20 @@ check_nbf(#capability{nbf = Nbf}, _Now) ->
 check_signature(#capability{sig = Sig}) when not is_binary(Sig) ->
     {error, not_signed};
 check_signature(#capability{iss = Iss, sig = Sig} = Cap) ->
-    case reckon_gater_identity:public_key_from_did(Iss) of
-        {ok, PubKey} ->
-            Payload = encode_payload_for_signing(Cap),
-            case crypto:verify(eddsa, none, Payload, Sig, [PubKey, ed25519]) of
-                true -> ok;
-                false -> {error, invalid_signature}
-            end;
-        {error, Reason} ->
-            {error, {invalid_issuer_did, Reason}}
-    end.
+    verify_issuer_sig(reckon_gater_identity:public_key_from_did(Iss), Cap, Sig).
+
+verify_issuer_sig({ok, PubKey}, Cap, Sig) ->
+    Payload = encode_payload_for_signing(Cap),
+    eddsa_verify(crypto:verify(eddsa, none, Payload, Sig, [PubKey, ed25519]));
+verify_issuer_sig({error, Reason}, _Cap, _Sig) ->
+    {error, {invalid_issuer_did, Reason}}.
+
+eddsa_verify(true) -> ok;
+eddsa_verify(false) -> {error, invalid_signature}.
+
+%% @private DID of an audience given as an identity record or raw binary.
+audience_did(#identity{did = D}) -> D;
+audience_did(D) when is_binary(D) -> D.
 
 %% @private A verified capability authorizes (Resource, Action) when
 %% any of its grants covers it (same wildcard semantics as
@@ -444,8 +445,9 @@ encode_jwt(#capability{} = Cap) ->
 %% @private Decode JWT to capability
 -spec decode_jwt(binary()) -> {ok, capability()} | {error, term()}.
 decode_jwt(Jwt) ->
-    case binary:split(Jwt, <<".">>, [global]) of
-        [HeaderB64, PayloadB64, SignatureB64] ->
+    decode_jwt_split(binary:split(Jwt, <<".">>, [global])).
+
+decode_jwt_split([HeaderB64, PayloadB64, SignatureB64]) ->
             try
                 Header = jsx_decode(base64url_decode(HeaderB64)),
                 Payload = jsx_decode(base64url_decode(PayloadB64)),
@@ -469,9 +471,8 @@ decode_jwt(Jwt) ->
             catch
                 _:Reason -> {error, {jwt_decode_error, Reason}}
             end;
-        _ ->
-            {error, invalid_jwt_format}
-    end.
+decode_jwt_split(_) ->
+    {error, invalid_jwt_format}.
 
 %% @private Encode grants for JSON
 -spec encode_grants_json([capability_grant()]) -> [map()].
@@ -520,16 +521,16 @@ resource_covers(<<"*">>, _Child) ->
     true;
 resource_covers(Parent, Child) ->
     %% Check prefix matching (e.g., "esdb://app/*" covers "esdb://app/stream/123")
-    case binary:longest_common_prefix([Parent, Child]) of
-        Len when Len =:= byte_size(Parent) - 1 ->
-            %% Parent ends with *, check if it's a wildcard
-            case binary:last(Parent) of
-                $* -> true;
-                _ -> false
-            end;
-        _ ->
-            false
-    end.
+    prefix_wildcard(binary:longest_common_prefix([Parent, Child]), Parent).
+
+prefix_wildcard(Len, Parent) when Len =:= byte_size(Parent) - 1 ->
+    %% Parent ends with *, check if it's a wildcard
+    wildcard_tail(binary:last(Parent));
+prefix_wildcard(_Len, _Parent) ->
+    false.
+
+wildcard_tail($*) -> true;
+wildcard_tail(_) -> false.
 
 %% @private Check if parent action covers child action
 -spec action_covers(binary(), binary()) -> boolean().
