@@ -88,15 +88,15 @@ loop(State) ->
             io:format("~nGoodbye!~n"),
             ok;
         Line ->
-            Input = string:trim(Line),
-            case handle_input(Input, State) of
-                {ok, NewState} ->
-                    loop(NewState);
-                quit ->
-                    io:format("Goodbye!~n"),
-                    ok
-            end
+            continue_loop(handle_input(string:trim(Line), State))
     end.
+
+%% @private
+continue_loop({ok, NewState}) ->
+    loop(NewState);
+continue_loop(quit) ->
+    io:format("Goodbye!~n"),
+    ok.
 
 -spec build_prompt(#state{}) -> string().
 build_prompt(#state{store = undefined}) ->
@@ -182,9 +182,7 @@ handle_stores(State) ->
     case reckon_gater_api:list_stores() of
         {ok, {ok, Stores}} ->
             io:format("~nStores:~n"),
-            lists:foreach(fun(Store) ->
-                io:format("  ~p~n", [Store])
-            end, Stores),
+            lists:foreach(fun print_p_line/1, Stores),
             io:format("~n");
         {ok, []} ->
             io:format("No stores found~n");
@@ -214,9 +212,7 @@ handle_streams(#state{store = Store} = State) ->
     case reckon_gater_api:get_streams(Store) of
         {ok, {ok, Streams}} ->
             io:format("~nStreams in ~p:~n", [Store]),
-            lists:foreach(fun(Stream) ->
-                io:format("  ~s~n", [Stream])
-            end, Streams),
+            lists:foreach(fun print_s_line/1, Streams),
             io:format("~nTotal: ~p streams~n~n", [length(Streams)]);
         {ok, []} ->
             io:format("No streams found~n");
@@ -246,16 +242,8 @@ handle_read(Args, #state{store = Store, stream = CurrentStream} = State) ->
             io:format("~s~n", [Msg]),
             {ok, State};
         {ok, Stream, Count} ->
-            case reckon_gater_api:get_events(Store, Stream, 0, Count, forward) of
-                {ok, {ok, Events}} ->
-                    io:format("~n"),
-                    format_events(Events),
-                    io:format("~nTotal: ~p events~n~n", [length(Events)]);
-                {ok, []} ->
-                    io:format("No events found~n");
-                {error, Reason} ->
-                    io:format("Error: ~p~n", [Reason])
-            end,
+            print_events_result(
+                reckon_gater_api:get_events(Store, Stream, 0, Count, forward), "\n"),
             {ok, State}
     end.
 
@@ -298,22 +286,14 @@ handle_until("", State) ->
     io:format("  Timestamp is Unix epoch in seconds~n"),
     {ok, State};
 handle_until(TsStr, #state{store = Store, stream = Stream} = State) ->
-    case catch list_to_integer(TsStr) of
-        Ts when is_integer(Ts) ->
-            case reckon_gater_api:read_until(Store, Stream, Ts) of
-                {ok, {ok, Events}} ->
-                    io:format("~nEvents until ~p:~n", [Ts]),
-                    format_events(Events),
-                    io:format("~nTotal: ~p events~n~n", [length(Events)]);
-                {ok, []} ->
-                    io:format("No events found~n");
-                {error, Reason} ->
-                    io:format("Error: ~p~n", [Reason])
-            end;
-        _ ->
-            io:format("Error: Invalid timestamp~n")
-    end,
+    print_until(catch list_to_integer(TsStr), Store, Stream),
     {ok, State}.
+
+print_until(Ts, Store, Stream) when is_integer(Ts) ->
+    print_events_result(reckon_gater_api:read_until(Store, Stream, Ts),
+                        io_lib:format("~nEvents until ~p:~n", [Ts]));
+print_until(_Ts, _Store, _Stream) ->
+    io:format("Error: Invalid timestamp~n").
 
 handle_range(_, #state{store = undefined} = State) ->
     io:format("Error: No store selected. Use 'use STORE' first~n"),
@@ -322,28 +302,21 @@ handle_range(_, #state{stream = undefined} = State) ->
     io:format("Error: No stream selected. Use 'stream STREAM' first~n"),
     {ok, State};
 handle_range(Args, #state{store = Store, stream = Stream} = State) ->
-    case string:tokens(Args, " ") of
-        [T1Str, T2Str] ->
-            case {catch list_to_integer(T1Str), catch list_to_integer(T2Str)} of
-                {T1, T2} when is_integer(T1), is_integer(T2) ->
-                    case reckon_gater_api:read_range(Store, Stream, T1, T2) of
-                        {ok, {ok, Events}} ->
-                            io:format("~nEvents from ~p to ~p:~n", [T1, T2]),
-                            format_events(Events),
-                            io:format("~nTotal: ~p events~n~n", [length(Events)]);
-                        {ok, []} ->
-                            io:format("No events found~n");
-                        {error, Reason} ->
-                            io:format("Error: ~p~n", [Reason])
-                    end;
-                _ ->
-                    io:format("Error: Invalid timestamps~n")
-            end;
-        _ ->
-            io:format("Usage: range FROM_TS TO_TS~n"),
-            io:format("  Timestamps are Unix epoch in seconds~n")
-    end,
+    print_range(string:tokens(Args, " "), Store, Stream),
     {ok, State}.
+
+print_range([T1Str, T2Str], Store, Stream) ->
+    print_range_ts({catch list_to_integer(T1Str), catch list_to_integer(T2Str)},
+                   Store, Stream);
+print_range(_Tokens, _Store, _Stream) ->
+    io:format("Usage: range FROM_TS TO_TS~n"),
+    io:format("  Timestamps are Unix epoch in seconds~n").
+
+print_range_ts({T1, T2}, Store, Stream) when is_integer(T1), is_integer(T2) ->
+    print_events_result(reckon_gater_api:read_range(Store, Stream, T1, T2),
+                        io_lib:format("~nEvents from ~p to ~p:~n", [T1, T2]));
+print_range_ts(_Ts, _Store, _Stream) ->
+    io:format("Error: Invalid timestamps~n").
 
 %%====================================================================
 %% Command Handlers - Schema
@@ -356,9 +329,7 @@ handle_schemas(#state{store = Store} = State) ->
     case reckon_gater_api:list_schemas(Store) of
         {ok, {ok, Schemas}} ->
             io:format("~nSchemas in ~p:~n", [Store]),
-            lists:foreach(fun(Schema) ->
-                io:format("  ~p~n", [Schema])
-            end, Schemas),
+            lists:foreach(fun print_p_line/1, Schemas),
             io:format("~n");
         {ok, []} ->
             io:format("No schemas registered~n");
@@ -397,9 +368,7 @@ handle_subscriptions(#state{store = Store} = State) ->
     case reckon_gater_api:get_subscriptions(Store) of
         {ok, {ok, Subs}} ->
             io:format("~nSubscriptions in ~p:~n", [Store]),
-            lists:foreach(fun(Sub) ->
-                io:format("  ~p~n", [Sub])
-            end, Subs),
+            lists:foreach(fun print_p_line/1, Subs),
             io:format("~nTotal: ~p subscriptions~n~n", [length(Subs)]);
         {ok, []} ->
             io:format("No subscriptions found~n");
@@ -544,28 +513,40 @@ parse_read_args(Args, CurrentStream) ->
         [] ->
             {ok, CurrentStream, 10};
         [CountStr] ->
-            case catch list_to_integer(CountStr) of
-                Count when is_integer(Count), Count > 0 ->
-                    case CurrentStream of
-                        undefined ->
-                            %% Assume it's a stream name, not a count
-                            {ok, list_to_binary(CountStr), 10};
-                        _ ->
-                            {ok, CurrentStream, Count}
-                    end;
-                _ when CurrentStream =:= undefined ->
-                    %% It's a stream name
-                    {ok, list_to_binary(CountStr), 10};
-                _ ->
-                    {error, "Error: Invalid count. Usage: read [STREAM] [N]"}
-            end;
+            parse_count_arg(catch list_to_integer(CountStr), CountStr, CurrentStream);
         [StreamStr, CountStr] ->
-            case catch list_to_integer(CountStr) of
-                Count when is_integer(Count), Count > 0 ->
-                    {ok, list_to_binary(StreamStr), Count};
-                _ ->
-                    {error, "Error: Invalid count. Usage: read [STREAM] [N]"}
-            end;
+            parse_stream_count(catch list_to_integer(CountStr), StreamStr);
         _ ->
             {error, "Usage: read [STREAM] [N]"}
     end.
+
+%% @private Single arg: a count (if a current stream is set) or a stream name.
+parse_count_arg(Count, _CountStr, CurrentStream)
+        when is_integer(Count), Count > 0, CurrentStream =/= undefined ->
+    {ok, CurrentStream, Count};
+parse_count_arg(_Count, CountStr, undefined) ->
+    %% No current stream: treat the arg as a stream name, default count 10.
+    {ok, list_to_binary(CountStr), 10};
+parse_count_arg(_Count, _CountStr, _CurrentStream) ->
+    {error, "Error: Invalid count. Usage: read [STREAM] [N]"}.
+
+%% @private Two args: explicit stream name + count.
+parse_stream_count(Count, StreamStr) when is_integer(Count), Count > 0 ->
+    {ok, list_to_binary(StreamStr), Count};
+parse_stream_count(_Count, _StreamStr) ->
+    {error, "Error: Invalid count. Usage: read [STREAM] [N]"}.
+
+%% @private Indented one-per-line printers (~p and ~s).
+print_p_line(X) -> io:format("  ~p~n", [X]).
+print_s_line(X) -> io:format("  ~s~n", [X]).
+
+%% @private Print an events query result. Header is pre-formatted iodata
+%% printed only when events are present.
+print_events_result({ok, {ok, Events}}, Header) ->
+    io:put_chars(Header),
+    format_events(Events),
+    io:format("~nTotal: ~p events~n~n", [length(Events)]);
+print_events_result({ok, []}, _Header) ->
+    io:format("No events found~n");
+print_events_result({error, Reason}, _Header) ->
+    io:format("Error: ~p~n", [Reason]).
