@@ -5,6 +5,24 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.1] - 2026-06-25
+
+### Changed — internal nesting cleanup (no API change)
+
+- Wired `rebar3 lint` (Elvis `no_deep_nesting` level 2 + `no_nested_try_catch` +
+  `no_if_expression`) and flattened all 44 deep-nesting sites across 9 modules
+  (repl, channel_server, api, capability, pubsub_security, identity, stream_id,
+  retry, worker_registry) into head-dispatched helpers. Behaviour-preserving;
+  287 tests green. The channel publish handler's exact state-threading (a
+  signature failure discards the rate-limiter update) is preserved.
+
+### Fixed — CCC guide literature dates + attribution
+
+- `guides/ccc.md`: corrected publication years (Rico Fritzsche, _Simply Event
+  Sourcing_ → 2026; Ralf Westphal, _Command Context Consistency_ → 2025) and
+  added Rico Fritzsche's _Aggregateless Event Sourcing_ (2025) as the
+  originating reference for the aggregate-free approach.
+
 ## [3.7.0] - 2026-06-24
 
 ### Added — store index introspection API

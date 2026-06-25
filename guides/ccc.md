@@ -269,12 +269,16 @@ only guarantees that the context was stable at the moment of writing.
 
 ## Literature
 
+- Rico Fritzsche — _[Aggregateless Event Sourcing](https://ricofritzsche.me/aggregateless-event-sourcing/)_
+  (2025). First description of the idea: drop the aggregate and let each
+  command select its own consistency context directly from the event history.
+
 - Rico Fritzsche — _Simply Event Sourcing: Aggregates Were Never Required_
-  (2025). Source of the CCC/DCB taxonomy and the "Temporary Decision Data"
+  (2026). Source of the CCC/DCB taxonomy and the "Temporary Decision Data"
   framing used in this guide. Defines Domain Capability (what Hecate calls
   a Desk) as the unit responsible for evaluating one command.
 
-- Ralf Westphal — _Command Context Consistency_ (2024). Named the principle
+- Ralf Westphal — _Command Context Consistency_ (2025). Named the principle
   and formalised the read-decide-append loop.
 
 - Sara Pellegrini & Milan Savic — _Kill the Aggregate_ / Dynamic Consistency
