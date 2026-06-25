@@ -517,17 +517,11 @@ list_stores() ->
 health() ->
     case reckon_gater_worker_registry:get_all_workers() of
         {ok, Workers} ->
-            StoreStats = maps:fold(
-                fun(StoreId, Entries, Acc) ->
-                    maps:put(StoreId, length(Entries), Acc)
-                end,
-                #{},
-                Workers
-            ),
+            StoreStats = maps:fold(fun count_store_entries/3, #{}, Workers),
             {ok, #{
                 status => healthy,
                 stores => StoreStats,
-                total_workers => maps:fold(fun(_, C, A) -> A + C end, 0, StoreStats),
+                total_workers => maps:fold(fun sum_worker_counts/3, 0, StoreStats),
                 node => node(),
                 timestamp => erlang:system_time(millisecond)
             }};
@@ -539,6 +533,12 @@ health() ->
                 timestamp => erlang:system_time(millisecond)
             }}
     end.
+
+count_store_entries(StoreId, Entries, Acc) ->
+    maps:put(StoreId, length(Entries), Acc).
+
+sum_worker_counts(_StoreId, Count, Acc) ->
+    Acc + Count.
 
 %% @doc Verify cluster consistency for a store
 -spec verify_cluster_consistency(atom()) -> {ok, map()} | {error, term()}.
@@ -761,30 +761,32 @@ route_call(StoreId, Request, Timeout) ->
 %% @private Execute a single call attempt to a worker
 -spec do_route_call(atom(), term(), timeout()) -> {ok, term()} | {error, term()}.
 do_route_call(StoreId, Request, Timeout) ->
-    case select_worker(StoreId) of
-        {ok, #worker_entry{pid = Pid}} ->
-            try
-                Result = gen_server:call(Pid, Request, Timeout),
-                %% Don't double-wrap if result is already {ok, _} or {error, _}
-                case Result of
-                    {ok, _} -> Result;
-                    {error, _} -> Result;
-                    ok -> {ok, ok};
-                    _ -> {ok, Result}
-                end
-            catch
-                exit:{timeout, _} ->
-                    {error, timeout};
-                exit:{noproc, _} ->
-                    {error, worker_down};
-                exit:{{nodedown, _}, _} ->
-                    {error, node_down};
-                Class:Reason ->
-                    {error, {Class, Reason}}
-            end;
-        {error, no_workers} ->
-            {error, no_workers}
+    route_to_selected(select_worker(StoreId), Request, Timeout).
+
+route_to_selected({ok, #worker_entry{pid = Pid}}, Request, Timeout) ->
+    call_worker(Pid, Request, Timeout);
+route_to_selected({error, no_workers}, _Request, _Timeout) ->
+    {error, no_workers}.
+
+call_worker(Pid, Request, Timeout) ->
+    try
+        %% Don't double-wrap if result is already {ok, _} or {error, _}
+        unwrap_call_result(gen_server:call(Pid, Request, Timeout))
+    catch
+        exit:{timeout, _} ->
+            {error, timeout};
+        exit:{noproc, _} ->
+            {error, worker_down};
+        exit:{{nodedown, _}, _} ->
+            {error, node_down};
+        Class:Reason ->
+            {error, {Class, Reason}}
     end.
+
+unwrap_call_result({ok, _} = Result) -> Result;
+unwrap_call_result({error, _} = Result) -> Result;
+unwrap_call_result(ok) -> {ok, ok};
+unwrap_call_result(Result) -> {ok, Result}.
 
 %% @private Route an asynchronous cast to a random worker
 -spec route_cast(atom(), term()) -> ok.
@@ -834,22 +836,25 @@ pick_worker(Workers, Node, Index) ->
 %% @private Select a worker using round-robin with local-node preference.
 -spec select_worker(atom()) -> {ok, worker_entry()} | {error, no_workers}.
 select_worker(StoreId) ->
-    case reckon_gater_worker_registry:get_workers(StoreId) of
-        {ok, Workers} ->
-            Index = case get({worker_index, StoreId}) of
-                undefined -> 0;
-                N -> N
-            end,
-            case pick_worker(Workers, node(), Index) of
-                {ok, Worker, NextIndex} ->
-                    put({worker_index, StoreId}, NextIndex),
-                    {ok, Worker};
-                {error, no_workers} = Err ->
-                    Err
-            end;
-        {error, _} = Error ->
-            Error
+    selected_worker(reckon_gater_worker_registry:get_workers(StoreId), StoreId).
+
+selected_worker({ok, Workers}, StoreId) ->
+    Index = current_worker_index(StoreId),
+    picked_worker(pick_worker(Workers, node(), Index), StoreId);
+selected_worker({error, _} = Error, _StoreId) ->
+    Error.
+
+current_worker_index(StoreId) ->
+    case get({worker_index, StoreId}) of
+        undefined -> 0;
+        N -> N
     end.
+
+picked_worker({ok, Worker, NextIndex}, StoreId) ->
+    put({worker_index, StoreId}, NextIndex),
+    {ok, Worker};
+picked_worker({error, no_workers} = Err, _StoreId) ->
+    Err.
 
 %% @private Emit telemetry for request start
 -spec emit_request_start(atom(), term()) -> ok.
