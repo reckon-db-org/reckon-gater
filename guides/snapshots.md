@@ -101,7 +101,7 @@ A typical pattern for loading aggregates through the gateway:
 -module(account_client).
 -export([load/2, execute/3]).
 
--include_lib("reckon_gater/include/esdb_gater_types.hrl").
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 
 -record(account, {
     id,

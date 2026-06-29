@@ -160,7 +160,7 @@ ok = reckon_gater_channel_server:unsubscribe(reckon_gater_channel_events, <<"ord
 ```erlang
 -module(order_handler).
 -behaviour(gen_server).
--include_lib("reckon_gater/include/esdb_gater_types.hrl").
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 
 -export([start_link/1, init/1, handle_info/2]).
 

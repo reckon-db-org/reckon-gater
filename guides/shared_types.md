@@ -5,7 +5,7 @@ reckon-gater defines common data structures used across the event sourcing ecosy
 ## Including the Types
 
 ```erlang
--include_lib("reckon_gater/include/esdb_gater_types.hrl").
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 ```
 
 ## Event Record

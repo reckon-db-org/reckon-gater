@@ -21,7 +21,20 @@ reckon-gater is an Erlang gateway service providing:
 - **Tamper-Resistance Primitives** *(new in 2.1.0)*: Canonical encoder and HMAC + hash-chain helpers used by `reckon-db` 2.1.0 to make stored events and snapshots tamper-evident. See `reckon_gater_canonical` and `reckon_gater_integrity` modules.
 - **DCB Wire API** *(new in 2.3.0)*: `reckon_gater_api:append_if_no_tag_matches/4` plus the `tag_filter()` + `seq_cutoff()` types in `include/reckon_gater_types.hrl`. Cross-stream conditional append with atomic consistency check. See [DCB Guide](guides/dcb.md).
 - **CCC Payload Indexes** *(new in 3.5.0)*: `ccc_read_by_payload/4` and `ccc_read_by_payload_hash/4` read from store-side payload indexes, enabling consistency boundaries over JSON payload fields without requiring tags. See [CCC Guide](guides/ccc.md).
+- **CCC Index Introspection** *(new in 3.7.0)*: `get_payload_indexes/1` and `get_payload_hash_indexes/1` report which payload fields a store has declared as indexed, so callers can tell whether a `ccc_read_by_payload/4` will be an indexed lookup or a full-store scan. See [CCC Guide](guides/ccc.md).
 - **Telemetry**: BEAM telemetry with optional OpenTelemetry exporters
+
+### Versions
+
+| Component | Version |
+|---|---|
+| `reckon_gater` (this repo) | 3.7.1 |
+| `telemetry` (dep) | 1.3.0 |
+| Erlang/OTP | 27+ |
+
+reckon-gater has **no** Reckon dependencies: it defines the shared types and
+protocols every other library in the [Reckon stack](#reckon-stack) consumes.
+Pure Erlang, no native dependencies.
 
 ## Installation
 
@@ -29,7 +42,7 @@ Add to your `rebar.config`:
 
 ```erlang
 {deps, [
-    {reckon_gater, "~> 3.6"}
+    {reckon_gater, "~> 3.7"}
 ]}.
 ```
 
@@ -42,7 +55,7 @@ Pure Erlang implementation - works everywhere, no native dependencies.
 application:ensure_all_started(reckon_gater).
 
 %% Append events to a stream
-Events = [#{type => <<"user_created">>, data => #{name => <<"Alice">>}}],
+Events = [#{type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
 {ok, Version} = reckon_gater_api:append_events(my_store, <<"users-123">>, Events).
 
 %% Read events from a stream
@@ -195,13 +208,21 @@ reckon_gater_api:ccc_read_by_payload(StoreId, Key, Value, Limit) ->
 %% Read events from the composite payload-hash index
 reckon_gater_api:ccc_read_by_payload_hash(StoreId, Keys, Values, Limit) ->
     {ok, [Event]} | {error, term()}.
+
+%% Introspect which payload fields the store has declared as indexed.
+%% Check before a payload read to know whether it is an indexed lookup
+%% (O(matches)) or a full-store scan.
+reckon_gater_api:get_payload_indexes(StoreId) ->
+    {ok, [binary()]} | {error, term()}.
+reckon_gater_api:get_payload_hash_indexes(StoreId) ->
+    {ok, [[binary()]]} | {error, term()}.
 ```
 
 ### Causation Metadata
 
 Events carry `causation_id` and `correlation_id` metadata fields (see the
 event record in `include/reckon_gater_types.hrl`). There is no dedicated
-query API for causation — lineage queries are a read-model concern. See
+query API for causation: lineage queries are a read-model concern. See
 [Causation Guide](guides/causation.md).
 
 ### Schema Operations
@@ -324,7 +345,7 @@ Config = reckon_gater_retry:new_config(
 reckon_gater_api:execute(my_store, Fun, Config).
 ```
 
-## Channels
+## PubSub Channels
 
 ![PubSub Channels](assets/channels.svg)
 
@@ -454,7 +475,7 @@ Test counts:
 
 ```bash
 rebar3 eunit                                    # All unit tests
-rebar3 ct --suite=esdb_channel_SUITE            # Channel tests
+rebar3 ct --suite=reckon_gater_channel_SUITE    # Channel tests
 ```
 
 Run e2e tests from reckon-db:
@@ -532,7 +553,7 @@ In a multi-node cluster, each node runs reckon-db with its gateway worker. The p
 reckon-gater provides shared type definitions used across the ecosystem. Include them in your modules:
 
 ```erlang
--include_lib("reckon_gater/include/esdb_gater_types.hrl").
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 ```
 
 ### Records
@@ -554,15 +575,21 @@ reckon-gater provides shared type definitions used across the ecosystem. Include
 
 See the [Shared Types Guide](guides/shared_types.md) for detailed usage.
 
-## Related Projects
+## Reckon stack
 
 ![Ecosystem](assets/ecosystem.svg)
 
-| Project | Description |
-|---------|-------------|
-| [reckon-db](https://codeberg.org/reckon-db-org/reckon-db) | Core event store built on Khepri/Ra |
-| [evoq](https://codeberg.org/reckon-db-org/evoq) | CQRS/Event Sourcing framework |
-| [reckon-evoq](https://codeberg.org/reckon-db-org/reckon-evoq) | Adapter connecting evoq to reckon-db |
+reckon-gater is one library in the Reckon event-sourcing ecosystem. In dependency order (a library only knows about the ones above it):
+
+- **[reckon-proto](https://codeberg.org/reckon-db-org/reckon-proto)**: the wire-contract protobufs; source of truth for the gateway surface.
+- **reckon-gater (this repo)**: shared types and protocols (event, snapshot, subscription, DCB/CCC tag_filter) plus the store-worker registry API. No Reckon dependencies.
+- **[reckon-db](https://codeberg.org/reckon-db-org/reckon-db)**: BEAM-native event store. Depends on reckon_gater, khepri, ra.
+- **[reckon-nifs](https://codeberg.org/reckon-db-org/reckon-nifs)**: standalone Rust NIF helpers with pure-Erlang fallbacks.
+- **[evoq](https://codeberg.org/reckon-db-org/evoq)**: standalone CQRS/event-sourcing framework; no Reckon dependencies.
+- **[reckon-evoq](https://codeberg.org/reckon-db-org/reckon-evoq)**: adapter wiring evoq to a Reckon store. Depends on evoq and reckon_gater; not on reckon_db (reaches the store through the gater API).
+- **[reckon-gateway](https://codeberg.org/reckon-db-org/reckon-gateway)**: gRPC + HTTP/JSON ingress. Consumes reckon_gater; can embed reckon_db or federate remote clusters.
+- **[reckon-go](https://codeberg.org/reckon-db-org/reckon-go)**: the Go client; talks to reckon-gateway.
+- **reckon-portal**: docs and landing site ([reckon-internal/reckon-portal](https://codeberg.org/reckon-internal/reckon-portal)).
 
 ## License
 
