@@ -5,6 +5,19 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.2] - 2026-07-01
+
+### Fixed — DCB conflict was retried as a transient error, timing out the call
+
+`reckon_gater_retry:is_retriable_error/1` defaulted every unrecognised error to
+retriable, so a DCB `append_if_no_tag_matches` conflict (`{context_changed,
+MaxSeq}`) — a deterministic consistency-boundary outcome — was retried with
+exponential backoff for the full budget (~11 attempts) and then surfaced as
+`{retries_exhausted, ...}`, blowing past the gRPC call timeout. The gateway
+never saw the conflict, so `AppendIfNoTagMatches` returned `Internal` instead of
+a `Conflict` response. `{context_changed, _}` is now non-retriable and returns
+immediately. Found via the reckon-dotnet DCB E2E.
+
 ## [3.7.1] - 2026-06-25
 
 ### Changed — internal nesting cleanup (no API change)

@@ -28,7 +28,7 @@ reckon-gater is an Erlang gateway service providing:
 
 | Component | Version |
 |---|---|
-| `reckon_gater` (this repo) | 3.7.1 |
+| `reckon_gater` (this repo) | 3.7.2 |
 | `telemetry` (dep) | 1.3.0 |
 | Erlang/OTP | 27+ |
 
