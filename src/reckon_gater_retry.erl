@@ -124,6 +124,13 @@ is_retriable_error({subscription_not_found, _}) -> false;
 %% Scavenge on a stream without a snapshot rejects at the worker;
 %% retrying can't conjure a snapshot, so back off to gRPC fast.
 is_retriable_error({no_snapshot, _}) -> false;
+%% DCB tag-filter conflict (append_if_no_tag_matches): an event matching the
+%% filter exists above the caller's seq cutoff. This is a deterministic
+%% consistency-boundary outcome, not a transient failure — retrying with the
+%% same cutoff yields the same conflict. Surface it immediately so the gateway
+%% maps it to a DCB Conflict response instead of exhausting 11 backoff attempts
+%% and timing out the gRPC call.
+is_retriable_error({context_changed, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 
