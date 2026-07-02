@@ -5,6 +5,27 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2026-07-02
+
+### Added — Telemetry guide and documented event catalogue
+
+- New `guides/telemetry.md`: the full gater telemetry event catalogue (worker
+  registry, request, retry, cluster, and channel events) with each event's
+  Measurements/Metadata contract, plus how to attach the built-in logger
+  handler, custom handlers, and metrics exporters (Prometheus / OpenTelemetry).
+  Wired into the hexdocs sidebar.
+- `?GATER_CHANNEL_BROADCAST` macro in `reckon_gater_telemetry.hrl` for the
+  previously-undeclared `[reckon_gater, channel, broadcast]` event, so every
+  emitted event now has a named macro.
+
+### Changed
+
+- `reckon_gater_telemetry.hrl` now documents every event inline with its
+  Measurements and Metadata contract (previously event names only).
+- `reckon_gater_channel_server` emits the broadcast event via the
+  `?GATER_CHANNEL_BROADCAST` macro instead of an inline literal — no
+  behavioural change; identical event name and payload.
+
 ## [3.7.2] - 2026-07-01
 
 ### Fixed — DCB conflict was retried as a transient error, timing out the call

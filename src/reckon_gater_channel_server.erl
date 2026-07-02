@@ -300,7 +300,7 @@ broadcast(Topic, Message, ChannelName) ->
         Subscribers
     ),
     telemetry:execute(
-        [reckon_gater, channel, broadcast],
+        ?GATER_CHANNEL_BROADCAST,
         #{recipient_count => length(Subscribers)},
         #{channel => ChannelName, topic => Topic}
     ).

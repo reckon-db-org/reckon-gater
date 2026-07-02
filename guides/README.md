@@ -36,6 +36,7 @@ suggested orders below.
 | [Schema Evolution](schema_evolution.md) | Evolving event shapes over time via the schema registry and automatic upcasting on read. |
 | [Stream Links](stream_links.md) | Deriving streams from source streams using filters and transformations. |
 | [Memory Pressure](memory_pressure.md) | Monitoring system memory pressure and adapting behaviour to prevent out-of-memory conditions. |
+| [Telemetry](telemetry.md) | The gater telemetry event catalogue (requests, retries, worker registry, cluster, channels) and how to attach handlers/exporters. |
 
 ## Suggested reading orders
 
