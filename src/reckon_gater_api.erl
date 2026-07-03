@@ -71,6 +71,7 @@
     get_version/2,
     has_events/1,
     get_streams/1,
+    global_event_count/1,
     delete_stream/2,
     read_by_event_types/3,
     read_by_tags/2,
@@ -338,6 +339,12 @@ has_events(StoreId) ->
 -spec get_streams(atom()) -> {ok, list()} | {error, term()}.
 get_streams(StoreId) ->
     route_call(StoreId, {get_streams, StoreId}).
+
+%% @doc The store's monotonic total event count — an O(1) read of the
+%% counter maintained on every append, for ingest-rate dashboards.
+-spec global_event_count(atom()) -> {ok, non_neg_integer()} | {error, term()}.
+global_event_count(StoreId) ->
+    route_call(StoreId, {global_event_count, StoreId}).
 
 %% @doc Delete a stream and all its events
 -spec delete_stream(atom(), binary()) -> ok | {error, term()}.

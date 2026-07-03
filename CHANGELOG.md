@@ -5,6 +5,14 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.0] - 2026-07-04
+
+### Added
+
+- `reckon_gater_api:global_event_count/1` — routes to a store's O(1) total
+  event counter (reckon-db 5.6.0+, `{global_event_count, StoreId}`). Cheap
+  source for ingest-rate/activity dashboards, replacing a full-store scan.
+
 ## [3.8.0] - 2026-07-02
 
 ### Added — Telemetry guide and documented event catalogue
