@@ -72,6 +72,7 @@
     has_events/1,
     get_streams/1,
     global_event_count/1,
+    integrity_status/1,
     delete_stream/2,
     read_by_event_types/3,
     read_by_tags/2,
@@ -345,6 +346,13 @@ get_streams(StoreId) ->
 -spec global_event_count(atom()) -> {ok, non_neg_integer()} | {error, term()}.
 global_event_count(StoreId) ->
     route_call(StoreId, {global_event_count, StoreId}).
+
+%% @doc The store's public event-integrity status (enabled + algo + key id;
+%% never the key bytes). A store-owned property, so a catalogue gateway that
+%% does not host the store dispatches for it rather than reading local state.
+-spec integrity_status(atom()) -> {ok, map()} | {error, term()}.
+integrity_status(StoreId) ->
+    route_call(StoreId, {integrity_status, StoreId}).
 
 %% @doc Delete a stream and all its events
 -spec delete_stream(atom(), binary()) -> ok | {error, term()}.

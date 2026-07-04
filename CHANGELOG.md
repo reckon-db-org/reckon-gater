@@ -5,6 +5,15 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.10.0] - 2026-07-04
+
+### Added
+
+- `reckon_gater_api:integrity_status/1` — routes to a store's public event-
+  integrity status (`#{enabled, algo, key_id}`, never key bytes). Lets a
+  catalogue gateway that doesn't host the store dispatch for its integrity
+  status instead of reading its own (empty) local state.
+
 ## [3.9.0] - 2026-07-04
 
 ### Added
