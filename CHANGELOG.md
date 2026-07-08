@@ -5,6 +5,17 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.0] - 2026-07-08
+
+### Added
+
+- `reckon_gater_api:get_resource_stats/1` — facade for the node-wide CPU + disk
+  resource stats introduced in reckon_db 5.10.0. Mirrors `get_memory_stats/1`:
+  routes `{get_resource_stats, StoreId}` to the store's registered gateway
+  worker, which returns `reckon_db_resource_monitor:get_stats/0` for the node
+  hosting that store. This is the dispatch entry point reckon-gateway uses to
+  surface CPU/disk in the admin UI. Requires the store node on reckon_db >= 5.10.
+
 ## [3.10.0] - 2026-07-04
 
 ### Added

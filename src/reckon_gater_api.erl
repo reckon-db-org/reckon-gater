@@ -141,7 +141,8 @@
 %% Memory pressure operations
 -export([
     get_memory_level/1,
-    get_memory_stats/1
+    get_memory_stats/1,
+    get_resource_stats/1
 ]).
 
 %% Link operations
@@ -672,6 +673,12 @@ get_memory_level(StoreId) ->
 -spec get_memory_stats(atom()) -> {ok, map()} | {error, term()}.
 get_memory_stats(StoreId) ->
     route_call(StoreId, {get_memory_stats, StoreId}).
+
+%% @doc Get node-wide CPU + disk resource stats for the node hosting this store
+%% (see reckon_db_resource_monitor). Requires the store node on reckon_db >= 5.10.
+-spec get_resource_stats(atom()) -> {ok, map()} | {error, term()}.
+get_resource_stats(StoreId) ->
+    route_call(StoreId, {get_resource_stats, StoreId}).
 
 %%====================================================================
 %% Link Operations
