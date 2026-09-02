@@ -22,5 +22,5 @@
     ]},
     {modules, []},
     {licenses, ["Apache-2.0"]},
-    {links, [{"Codeberg", "https://codeberg.org/reckon-db-org/reckon-gater"}]}
+    {links, [{"GitHub", "https://github.com/reckon-db-org/reckon-gater"}]}
 ]}.

@@ -250,4 +250,4 @@ declarations in the store config.
 
 - [CCC Guide](ccc.md) — payload-indexed filters and the broader CCC framing
 - [Event Sourcing Guide](event_sourcing.md) — core concepts
-- [reckon-db DCB Guide](https://codeberg.org/reckon-db-org/reckon-db/src/branch/main/guides/dcb.md) — Raft design, Horus constraints, integrity chains
+- [reckon-db DCB Guide](https://github.com/reckon-db-org/reckon-db/blob/main/guides/dcb.md) — Raft design, Horus constraints, integrity chains

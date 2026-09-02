@@ -4,7 +4,7 @@
 [![Hexdocs.pm](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/reckon_gater)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg)](https://buymeacoffee.com/rlefever)
 
-Gateway for distributed access to [reckon-db](https://codeberg.org/reckon-db-org/reckon-db) event stores.
+Gateway for distributed access to [reckon-db](https://github.com/reckon-db-org/reckon-db) event stores.
 
 ![Gateway Architecture](assets/gateway_architecture.svg)
 
@@ -183,7 +183,7 @@ reckon_gater_api:scavenge_dry_run(StoreId, StreamId, Opts) ->
 ### DCB / CCC Operations
 
 Conditional append with atomic consistency check. See [CCC Guide](guides/ccc.md)
-and [DCB Guide](https://codeberg.org/reckon-db-org/reckon-db/src/branch/main/guides/dcb.md).
+and [DCB Guide](https://github.com/reckon-db-org/reckon-db/blob/main/guides/dcb.md).
 
 ```erlang
 %% Conditional append: write events only if no matching events appeared
@@ -486,7 +486,7 @@ rebar3 ct --suite=test/e2e/reckon_gater_e2e_SUITE
 
 ## Integration with reckon-db
 
-reckon-gater is designed to work with [reckon-db](https://codeberg.org/reckon-db-org/reckon-db) to provide load-balanced, distributed access to event stores.
+reckon-gater is designed to work with [reckon-db](https://github.com/reckon-db-org/reckon-db) to provide load-balanced, distributed access to event stores.
 
 ### Automatic Worker Registration
 
@@ -581,15 +581,15 @@ See the [Shared Types Guide](guides/shared_types.md) for detailed usage.
 
 reckon-gater is one library in the Reckon event-sourcing ecosystem. In dependency order (a library only knows about the ones above it):
 
-- **[reckon-proto](https://codeberg.org/reckon-db-org/reckon-proto)**: the wire-contract protobufs; source of truth for the gateway surface.
+- **[reckon-proto](https://github.com/reckon-db-org/reckon-proto)**: the wire-contract protobufs; source of truth for the gateway surface.
 - **reckon-gater (this repo)**: shared types and protocols (event, snapshot, subscription, DCB/CCC tag_filter) plus the store-worker registry API. No Reckon dependencies.
-- **[reckon-db](https://codeberg.org/reckon-db-org/reckon-db)**: BEAM-native event store. Depends on reckon_gater, khepri, ra.
-- **[reckon-nifs](https://codeberg.org/reckon-db-org/reckon-nifs)**: standalone Rust NIF helpers with pure-Erlang fallbacks.
-- **[evoq](https://codeberg.org/reckon-db-org/evoq)**: standalone CQRS/event-sourcing framework; no Reckon dependencies.
-- **[reckon-evoq](https://codeberg.org/reckon-db-org/reckon-evoq)**: adapter wiring evoq to a Reckon store. Depends on evoq and reckon_gater; not on reckon_db (reaches the store through the gater API).
-- **[reckon-gateway](https://codeberg.org/reckon-db-org/reckon-gateway)**: gRPC + HTTP/JSON ingress. Consumes reckon_gater; can embed reckon_db or federate remote clusters.
-- **[reckon-go](https://codeberg.org/reckon-db-org/reckon-go)**: the Go client; talks to reckon-gateway.
-- **reckon-portal**: docs and landing site ([reckon-internal/reckon-portal](https://codeberg.org/reckon-internal/reckon-portal)).
+- **[reckon-db](https://github.com/reckon-db-org/reckon-db)**: BEAM-native event store. Depends on reckon_gater, khepri, ra.
+- **[reckon-nifs](https://github.com/reckon-db-org/reckon-nifs)**: standalone Rust NIF helpers with pure-Erlang fallbacks.
+- **[evoq](https://github.com/reckon-db-org/evoq)**: standalone CQRS/event-sourcing framework; no Reckon dependencies.
+- **[reckon-evoq](https://github.com/reckon-db-org/reckon-evoq)**: adapter wiring evoq to a Reckon store. Depends on evoq and reckon_gater; not on reckon_db (reaches the store through the gater API).
+- **[reckon-gateway](https://github.com/reckon-db-org/reckon-gateway)**: gRPC + HTTP/JSON ingress. Consumes reckon_gater; can embed reckon_db or federate remote clusters.
+- **[reckon-go](https://github.com/reckon-db-org/reckon-go)**: the Go client; talks to reckon-gateway.
+- **reckon-portal**: docs and landing site ([reckon-internal/reckon-portal](https://github.com/reckon-db-org/reckon-portal)).
 
 ## License
 

@@ -2,7 +2,7 @@
 
 Developer reference for [reckon-gater](../README.md), the gateway library that
 defines the shared types and protocols for the Reckon event-sourcing stack and
-provides distributed, load-balanced access to [reckon-db](https://codeberg.org/reckon-db-org/reckon-db)
+provides distributed, load-balanced access to [reckon-db](https://github.com/reckon-db-org/reckon-db)
 event stores. Each page is self-contained; read by topic or follow one of the
 suggested orders below.
 
