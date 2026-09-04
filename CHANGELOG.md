@@ -5,6 +5,20 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.1] - 2026-09-05
+
+### Fixed
+
+- **Deprecated bare `catch Expr` syntax in `reckon_gater_repl.erl`** — OTP's
+  compiler now warns on the value-returning `catch` form, and this
+  project's `warnings_as_errors` turned that into a build failure on a
+  current OTP release, blocking a clean local build. All four call sites
+  parsed an optional integer argument (`catch list_to_integer(Str)`,
+  relying on every caller only ever guarding with `is_integer/1`); replaced
+  with a `parse_int/1` helper (`try list_to_integer(Str) catch _:_ ->
+  invalid end`). No functional change — `invalid` satisfies every existing
+  `is_integer/1` guard exactly the way the old `{'EXIT', _}` shape did.
+
 ## [3.11.0] - 2026-07-08
 
 ### Added

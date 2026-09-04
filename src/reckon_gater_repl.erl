@@ -286,7 +286,7 @@ handle_until("", State) ->
     io:format("  Timestamp is Unix epoch in seconds~n"),
     {ok, State};
 handle_until(TsStr, #state{store = Store, stream = Stream} = State) ->
-    print_until(catch list_to_integer(TsStr), Store, Stream),
+    print_until(parse_int(TsStr), Store, Stream),
     {ok, State}.
 
 print_until(Ts, Store, Stream) when is_integer(Ts) ->
@@ -306,7 +306,7 @@ handle_range(Args, #state{store = Store, stream = Stream} = State) ->
     {ok, State}.
 
 print_range([T1Str, T2Str], Store, Stream) ->
-    print_range_ts({catch list_to_integer(T1Str), catch list_to_integer(T2Str)},
+    print_range_ts({parse_int(T1Str), parse_int(T2Str)},
                    Store, Stream);
 print_range(_Tokens, _Store, _Stream) ->
     io:format("Usage: range FROM_TS TO_TS~n"),
@@ -506,6 +506,18 @@ format_map(Other, _) ->
 %% Argument Parsing
 %%====================================================================
 
+%% @private Parses a decimal integer, `invalid' on anything else. Every
+%% caller here only ever guards on `is_integer/1', so `invalid' -- not the
+%% bare `catch' expression's `{'EXIT', _}' shape -- is all downstream code
+%% has ever needed. `catch Expr' as a value form is deprecated (OTP 29
+%% treats it as a warning that this app's own warnings_as_errors turns into
+%% a build failure); `try ... catch ... end' is the current idiom.
+-spec parse_int(string()) -> integer() | invalid.
+parse_int(Str) ->
+    try list_to_integer(Str)
+    catch _:_ -> invalid
+    end.
+
 parse_read_args(Args, CurrentStream) ->
     case string:tokens(Args, " ") of
         [] when CurrentStream =:= undefined ->
@@ -513,9 +525,9 @@ parse_read_args(Args, CurrentStream) ->
         [] ->
             {ok, CurrentStream, 10};
         [CountStr] ->
-            parse_count_arg(catch list_to_integer(CountStr), CountStr, CurrentStream);
+            parse_count_arg(parse_int(CountStr), CountStr, CurrentStream);
         [StreamStr, CountStr] ->
-            parse_stream_count(catch list_to_integer(CountStr), StreamStr);
+            parse_stream_count(parse_int(CountStr), StreamStr);
         _ ->
             {error, "Usage: read [STREAM] [N]"}
     end.
