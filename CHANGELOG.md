@@ -5,6 +5,27 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.2] - 2026-09-05
+
+### Fixed
+
+- **`prod` profile leaking `deterministic` into every consumer's build** —
+  rebar3 merges a fetched dependency's `erl_opts` across every profile that
+  dependency defines, not just whichever one the consumer actually
+  activated. This repo's `prod` profile kept `debug_info` explicitly (so
+  `dialyzer` was never broken here, unlike the sibling repos below), but its
+  `deterministic` flag still leaked into every consumer's compile of
+  reckon_gater regardless of their own profile choice. Removed the profile
+  entirely — nothing here invoked `rebar3 as prod` or a relx release build,
+  so there was no local use to preserve. Pass `--erl_opts +deterministic` on
+  the command line directly if a reproducible local build is ever needed
+  again. Same root cause, found the same day on `macula-io/macula` (10.19.2)
+  and `reckon-db` (5.11.4), confirmed there via a controlled A/B
+  dependency-fetch rebuild; this repo's variant is milder but shares the
+  defect. Verified via `git stash`: `rebar3 dialyzer`'s 58 warnings and
+  `rebar3 ex_doc`'s 16 warnings are byte-identical before and after this
+  change.
+
 ## [3.11.1] - 2026-09-05
 
 ### Fixed
