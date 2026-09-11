@@ -67,19 +67,28 @@ jobs:
           key: ${{ runner.os }}-otp-${{ steps.beam.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
 
       - name: Compile
+        id: compile
         run: rebar3 compile
 
+      # Once the code compiles, every check runs even when an earlier one
+      # failed, so one run reports all failures. The job still fails if any
+      # check fails.
       - name: Xref
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: rebar3 xref
 
       - name: Lint
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: rebar3 lint
 
       - name: EUnit
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: rebar3 eunit
 
       - name: Common Test
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: rebar3 ct
 
       - name: Dialyzer
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: rebar3 dialyzer
