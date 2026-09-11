@@ -1,0 +1,85 @@
+# Runs reckon-gater's checks on the pinned OTP 28 on every push and pull
+# request, so a change that breaks the gateway shows here before a service
+# rebuild pulls it in.
+#
+# Nothing in this workflow publishes. Hex releases stay manual.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same branch supersedes a running check, except on main,
+# where every commit keeps its own result.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: Compile, xref, lint, eunit, ct, dialyzer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Erlang version comes from .tool-versions, the same pin local
+      # builds use, so CI and a developer machine run the same OTP.
+      - name: Install Erlang/OTP
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+
+      # rebar3 from its GitHub release at the version the team runs locally,
+      # checked against the sha256 GitHub publishes for that release asset,
+      # so a tampered or truncated download fails the job. setup-beam's own
+      # rebar3 lookup has failed on the releases pagination cap (see
+      # macula-station's ci.yml).
+      - name: Install rebar3
+        env:
+          REBAR3_VERSION: '3.27.0'
+          REBAR3_SHA256: 'af85aab41f9fd74bdd6341ebdf6fe9c88077aab9f8eac82371583fa02f2b0bdf'
+        run: |
+          curl -fsSL -o rebar3 "https://github.com/erlang/rebar3/releases/download/${REBAR3_VERSION}/rebar3"
+          echo "${REBAR3_SHA256}  rebar3" | sha256sum --check --strict -
+          chmod +x rebar3
+          sudo mv rebar3 /usr/local/bin/rebar3
+          rebar3 version
+
+      # Only the hex package cache and dialyzer's PLTs are cached, never
+      # _build: rebar.lock is not tracked, so a cached _build could serve
+      # stale dependencies or beams and hide a real failure. Every run
+      # resolves and compiles its dependencies fresh.
+      - name: Cache hex packages and PLTs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/rebar3
+            _build/default/*_plt
+          key: ${{ runner.os }}-otp-${{ steps.beam.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+
+      - name: Compile
+        run: rebar3 compile
+
+      - name: Xref
+        run: rebar3 xref
+
+      - name: Lint
+        run: rebar3 lint
+
+      - name: EUnit
+        run: rebar3 eunit
+
+      - name: Common Test
+        run: rebar3 ct
+
+      - name: Dialyzer
+        run: rebar3 dialyzer
