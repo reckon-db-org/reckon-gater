@@ -1,0 +1,61 @@
+# Known dialyzer findings, recorded as a ratchet. See scripts/dialyzer_ratchet.sh.
+# Dialyzer reported 58 warnings when this was written.
+# A new finding fails CI. A fixed finding should have its line deleted here.
+src/reckon_gater_api.erl	5abc21d1d9a6	Type specification reckon_gater_api:do_route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()}
+src/reckon_gater_api.erl	696766bb6382	The specification for reckon_gater_api:remove_subscription/4 states that the function might also return 'ok' b
+src/reckon_gater_api.erl	6fd9012c8bf2	Type specification reckon_gater_api:route_call(atom(),term()) -> {'ok',term()} | {'error',term()} is a superty
+src/reckon_gater_api.erl	77d1dc20bb07	Type specification reckon_gater_api:health() -> {'ok',map()} is a supertype of the success typing: reckon_gate
+src/reckon_gater_api.erl	7a57f48f5b48	The specification for reckon_gater_api:delete_stream/2 states that the function might also return 'ok' but the
+src/reckon_gater_api.erl	80457bd27b35	Type specification reckon_gater_api:route_cast(atom(),term()) -> 'ok' is a supertype of the success typing: re
+src/reckon_gater_api.erl	c87b208b7f96	The specification for reckon_gater_api:ack_event/4 states that the function might also return 'ok' but the inf
+src/reckon_gater_api.erl	fce4c0786fd7	Type specification reckon_gater_api:route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()} is
+src/reckon_gater_canonical.erl	2179ffa0055a	Type specification reckon_gater_canonical:encode_for_mac('event' | 'snapshot',term()) -> iolist() is a superty
+src/reckon_gater_canonical.erl	67f4b1bef4d1	Type specification reckon_gater_canonical:encode_for_chain(term(),binary()) -> iolist() is a supertype of the 
+src/reckon_gater_capability.erl	4b60bfba2193	Type specification reckon_gater_capability:jsx_decode(binary()) -> map() is a supertype of the success typing:
+src/reckon_gater_capability.erl	5f21ff9aa55b	Type specification reckon_gater_capability:compute_cid(capability()) -> binary() is a supertype of the success
+src/reckon_gater_capability.erl	675388067202	Type specification reckon_gater_capability:encode_grants_json([capability_grant()]) -> [map()] is a supertype 
+src/reckon_gater_capability.erl	7911fe7c7f49	Type specification reckon_gater_capability:jsx_encode(map()) -> binary() is a supertype of the success typing:
+src/reckon_gater_capability.erl	a8a24a2d5286	Type specification reckon_gater_capability:attenuate([capability_grant()],[capability_grant()]) -> {'ok',[capa
+src/reckon_gater_capability.erl	f78967778790	Type specification reckon_gater_capability:encode_jwt(capability()) -> binary() is a supertype of the success 
+src/reckon_gater_channel_alerts.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_audit.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_diagnostics.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_events.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_health.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_lifecycle.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_logging.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_metrics.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_security.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_channel_server.erl	11704a8ba2a2	Unknown function reckon_db_capability_verifier:authorize/3
+src/reckon_gater_channel_server.erl	6c1391239264	Type specification reckon_gater_channel_server:verify_capability(binary(),binary(),binary(),boolean()) -> 'ok'
+src/reckon_gater_channel_server.erl	7ae7a2a5e8da	Type specification reckon_gater_channel_server:get_optional_callback(module(),atom(),term()) -> term() is a su
+src/reckon_gater_channel_server.erl	c275173c8c8a	Type specification reckon_gater_channel_server:do_verify_capability(binary(),binary(),binary()) -> 'ok' | {'er
+src/reckon_gater_channel_server.erl	cbb110dd8ce0	Type specification reckon_gater_channel_server:build_resource_uri(binary(),atom(),binary()) -> binary() is a s
+src/reckon_gater_channel_server.erl	dd97e08bbfab	Type specification reckon_gater_channel_server:verify_signature(term(),boolean()) -> 'ok' | {'error',term()} i
+src/reckon_gater_channel_system.erl	9d53a7f17b5e	Callback info about the reckon_gater_channel behaviour is not available
+src/reckon_gater_identity.erl	538abcee85ec	Type specification reckon_gater_identity:public_key_from_did(binary()) -> {'ok',binary()} | {'error',term()} i
+src/reckon_gater_identity.erl	80b1314bc63b	Type specification reckon_gater_identity:decode_base58_int(binary(),non_neg_integer()) -> {'ok',non_neg_intege
+src/reckon_gater_identity.erl	8f19ffd90215	Type specification reckon_gater_identity:encode_did(binary()) -> binary() is a supertype of the success typing
+src/reckon_gater_identity.erl	ef68778a798b	Type specification reckon_gater_identity:base58_decode_erlang(binary()) -> {'ok',binary()} | {'error',term()} 
+src/reckon_gater_integrity.erl	360e0ce4b5f7	Type specification reckon_gater_integrity:compute_snapshot_mac(#snapshot{},key()) -> mac_tuple() is a supertyp
+src/reckon_gater_integrity.erl	95399c10958f	Type specification reckon_gater_integrity:compute_event_mac(#event{},key()) -> mac_tuple() is a supertype of t
+src/reckon_gater_integrity.erl	a1271bcafa66	Type specification reckon_gater_integrity:genesis_prev_hash() -> binary() is a supertype of the success typing
+src/reckon_gater_pubsub_security.erl	5d108afef085	Type specification reckon_gater_pubsub_security:sign(map()) -> map() is a supertype of the success typing: rec
+src/reckon_gater_pubsub_security.erl	669e4ac538cd	Type specification reckon_gater_pubsub_security:verify(map(),binary()) -> 'ok' | {'error',term()} is a superty
+src/reckon_gater_pubsub_security.erl	9fdd81c6dcfe	Type specification reckon_gater_pubsub_security:verify(map()) -> 'ok' | {'error',term()} is a supertype of the
+src/reckon_gater_pubsub_security.erl	ab383f744b31	Type specification reckon_gater_pubsub_security:check_timestamp(map()) -> 'ok' | {'error',term()} is a superty
+src/reckon_gater_pubsub_security.erl	ada813cf4911	Type specification reckon_gater_pubsub_security:sign(map(),binary()) -> map() is a supertype of the success ty
+src/reckon_gater_repl.erl	190e6153490d	The pattern <{'ok', {'ok', Events}}, Header> can never match the type <{'error',_} | {'ok',[any()]},[[any()] |
+src/reckon_gater_repl.erl	1eae0188dabf	The pattern {'ok', {'ok', Subs}} can never match the type {'error',_} | {'ok',[any()]}
+src/reckon_gater_repl.erl	1eb669f8425e	The pattern {'ok', {'ok', Stats}} can never match the type {'error',_} | {'ok',map()}
+src/reckon_gater_repl.erl	2a8eb77541a6	The pattern {'ok', {'ok', Schemas}} can never match the type {'error',_} | {'ok',[any()]}
+src/reckon_gater_repl.erl	516047171d76	The pattern {'ok', {'ok', Stores}} can never match the type {'error',_} | {'ok',[any()]}
+src/reckon_gater_repl.erl	553eed0d3dc0	The pattern {'ok', {'error', 'not_found'}} can never match the type {'error',_} | {'ok',map()}
+src/reckon_gater_repl.erl	553eed0d3dc0	The pattern {'ok', {'error', 'not_found'}} can never match the type {'error',_} | {'ok',map()}
+src/reckon_gater_repl.erl	622f6ac90e99	Function format_events/1 will never be called
+src/reckon_gater_repl.erl	628219f54555	The pattern {'ok', {'ok', Sub}} can never match the type {'error',_} | {'ok',map()}
+src/reckon_gater_repl.erl	85e452db5d70	The pattern {'ok', {'ok', Streams}} can never match the type {'error',_} | {'ok',[any()]}
+src/reckon_gater_repl.erl	b4d096fe242c	The pattern {'ok', {'ok', Version}} can never match the type {'error',_} | {'ok',integer()}
+src/reckon_gater_repl.erl	b841b4284a1a	The pattern {'error', Reason} can never match the type {'ok',#{'node':=atom(), 'status':='degraded' | 'healthy
+src/reckon_gater_repl.erl	c86e726c3000	The pattern <Other, _> can never match since previous clauses completely covered the type <#{'node':=atom(), '
+src/reckon_gater_repl.erl	f42e4a59a94a	The pattern {'ok', {'ok', Schema}} can never match the type {'error',_} | {'ok',map()}

@@ -5,6 +5,21 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Notes
+
+- **The `v5.5.0` tag was deleted on 2026-09-22.** It never named a 5.x release:
+  it pointed at the commit whose own subject reads "(v3.7.0)" and whose
+  `src/reckon_gater.app.src` says `{vsn, "3.7.0"}`. It was a mistag, and while
+  it existed the tag list looked two major versions ahead of what hex serves,
+  which is 3.11.2. Anyone who fetched that tag before the deletion still has it
+  locally; `git fetch --prune --prune-tags` removes it. The release it should
+  have been, 3.7.0, is tagged and published as normal.
+- This repository's first CI also lands here: checks on every push, and a
+  publish workflow that refuses a tag disagreeing with `{vsn, ...}`, which is
+  what would have caught `v5.5.0` at the time.
+
 ## [3.11.2] - 2026-09-05
 
 ### Fixed
