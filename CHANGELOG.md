@@ -5,7 +5,52 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [3.12.0] - 2026-09-26
+
+### Added: paged DCB reads by type, tag and payload, in sequence order (evoq #6, part two)
+
+`read_by_event_types/3`, `read_by_tags/3` and the two `ccc_read_by_payload`
+reads return the first Limit matching events and cannot go further, so a
+reader of more than one page could not see the rest: an evoq decision over
+a large context read only its oldest 1000 events (evoq 1.25.1 now refuses
+such a context instead). Four additive reads page through every matching
+DCB event (the `_dcb` pseudo-stream):
+
+- `dcb_read_by_event_types_page(StoreId, EventTypes, After, Limit)`
+- `dcb_read_by_tags_page(StoreId, Tags, Match, After, Limit)`
+- `dcb_read_by_payload_page(StoreId, Key, Value, After, Limit)`
+- `dcb_read_by_payload_hash_page(StoreId, Keys, Values, After, Limit)`
+
+Each takes `start` or the cursor the previous page of the same read returned,
+and returns `{ok, Events, Next}`: up to Limit matching DCB events with a
+sequence number above After's, ascending, and the cursor for the next page or
+`done`. The full contract is at the paged reads in `reckon_gater_api`; in
+short: `done` is exact, an empty page comes only with `done`, the cursor is a
+stateless position valid on any worker and node, bound to its read and
+arguments, and the Limit may change per page.
+
+**Sequence order, not epoch order, and DCB events only.** The store assigns a
+DCB sequence number inside the append's transaction, so every event committed
+after a page was read sorts after that page. Paging in that order misses
+nothing, and the highest sequence number over the pages is a sound cutoff for
+`append_if_no_tag_matches/4`. Epoch order would not be: reckon-db stamps
+`epoch_us` before the transaction, so an append in flight while a page is read
+can commit behind that page's cursor, be returned by no page, and sit below
+the cutoff, letting a decision through on history that missed it. **Stream
+(non-DCB) events are not paged**: they have no such sequence, and paging them
+by epoch would have the same hole. Read them with the limit-only reads.
+
+Errors, none of them retried: `{invalid_cursor, Cursor}` (a cursor the store
+cannot decode or that belongs to another read), `{invalid_page_request,
+Reason}` (arguments the store rejects), and `unknown_request`, which is what a
+store older than the paged reads answers (reckon-db before 5.12.0; request
+shapes at the paged reads in `reckon_gater_api`). `unknown_request` is no
+longer retried for any request: a store that does not implement one answers
+the same on every attempt, and the retry loop only delayed that answer by its
+whole budget. Upgrade store nodes before callers that use a newer gater
+surface. A reply outside the contract comes back as
+`{error, {bad_page_reply, Reply}}`, never a crash in the caller. The
+limit-only reads are unchanged.
 
 ### Notes
 

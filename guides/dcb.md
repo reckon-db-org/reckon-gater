@@ -50,6 +50,24 @@ and commit.
 {ok, Events} = reckon_gater_api:read_by_event_types(StoreId, Types, BatchSize).
 ```
 
+These return at most their limit, oldest first. A context that can be larger
+than one page is read with the paged DCB reads (3.12.0+, reckon-db 5.12.0+),
+in DCB sequence order, taking the cutoff over every page:
+
+```erlang
+read_context(StoreId, Tags) -> read_context(StoreId, Tags, start, []).
+
+read_context(StoreId, Tags, After, Acc) ->
+    case reckon_gater_api:dcb_read_by_tags_page(StoreId, Tags, any, After, 500) of
+        {ok, Events, done} -> {ok, Acc ++ Events};
+        {ok, Events, Next} -> read_context(StoreId, Tags, Next, Acc ++ Events);
+        {error, _} = Error -> Error
+    end.
+```
+
+See the CCC guide for why sequence order makes reading pages at different
+moments safe, and why stream events are not paged.
+
 ### Conditional append
 
 ```erlang

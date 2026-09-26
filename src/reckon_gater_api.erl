@@ -54,6 +54,14 @@
     ccc_read_by_payload_hash/4
 ]).
 
+%% Paged DCB reads by type, tag and payload, in sequence order (3.12.0+)
+-export([
+    dcb_read_by_event_types_page/4,
+    dcb_read_by_tags_page/5,
+    dcb_read_by_payload_page/5,
+    dcb_read_by_payload_hash_page/5
+]).
+
 %% Store index introspection (reckon-gater 3.7.0+)
 -export([
     get_payload_indexes/1,
@@ -394,6 +402,97 @@ read_by_tags(StoreId, Tags, Opts) ->
     Match = maps:get(match, Opts, any),
     BatchSize = maps:get(batch_size, Opts, 1000),
     route_call(StoreId, {read_by_tags, StoreId, Tags, Match, BatchSize}).
+
+%%====================================================================
+%% Paged DCB reads (3.12.0)
+%%====================================================================
+%%
+%% The limit-only reads return the first Limit matching events and cannot
+%% go on, so a reader of more than one page (an evoq decision over a large
+%% context) could not see the rest. These page through the DCB events (the
+%% `_dcb' pseudo-stream written by append_if_no_tag_matches/4) matching a
+%% filter, in SEQUENCE order: the order of #event.version on a DCB event,
+%% the number append_if_no_tag_matches/4 compares its cutoff with.
+%%
+%% == Why sequence order, and only DCB events ==
+%%
+%% The store assigns a DCB sequence number inside the append's transaction,
+%% so every event committed after a page was read has a higher sequence
+%% number than every event that page could see. Paging in that order is
+%% complete (nothing lands behind a cursor), and the highest sequence number
+%% over all pages is a sound cutoff: an event appended while the pages were
+%% read is above it, so the append reports a conflict. Epoch order has
+%% neither property: reckon-db stamps epoch_us before the transaction, so an
+%% append in flight while a page is read can commit behind that page's
+%% cursor, never be returned by a later page, and sit below the cutoff.
+%% Stream (non-DCB) events have no such sequence; page them with the
+%% limit-only reads.
+%%
+%% == The contract ==
+%%
+%% - After is `start' or a cursor a previous page of the SAME read (same
+%%   function, same filter arguments) returned. Limit may differ per page.
+%% - A page is up to Limit matching DCB events with a sequence number
+%%   strictly above After's, ascending.
+%% - Next is `done' exactly when no matching event follows the page at the
+%%   moment it was read (the store looks one past the page). Otherwise Next
+%%   is a cursor that sorts strictly after every event of the page. A page
+%%   may hold fewer than Limit events and still return a cursor; `done' is
+%%   the only end signal. An empty page comes only with `done'.
+%% - A cursor is a serialised position, not a handle: the store keeps no
+%%   state for it, and it is valid on any gateway worker of the store, on
+%%   any node, across worker restarts and leader changes. The store binds it
+%%   to its read and arguments and rejects any other use, and any cursor it
+%%   cannot decode, with {error, {invalid_cursor, Cursor}}. A request it
+%%   rejects on its arguments (a Limit below 1, a bad Match) is
+%%   {error, {invalid_page_request, Reason}}. Neither is retried.
+%%
+%% The request each one sends, which a store's gateway worker answers with
+%% {ok, {Events, Next}}:
+%%   {dcb_read_by_event_types_page, StoreId, EventTypes, After, Limit}
+%%   {dcb_read_by_tags_page, StoreId, Tags, Match, After, Limit}
+%%   {dcb_read_by_payload_page, StoreId, Key, Value, After, Limit}
+%%   {dcb_read_by_payload_hash_page, StoreId, Keys, Values, After, Limit}
+%% A store older than these answers {error, unknown_request} (reckon-db
+%% before 5.12.0), also not retried.
+
+%% @doc One page of DCB events of any of EventTypes, after After.
+-spec dcb_read_by_event_types_page(atom(), [binary()], page_after(), pos_integer()) ->
+    page_result().
+dcb_read_by_event_types_page(StoreId, EventTypes, After, Limit) ->
+    page(route_call(StoreId, {dcb_read_by_event_types_page, StoreId, EventTypes, After, Limit})).
+
+%% @doc One page of DCB events carrying any (Match = any) or all
+%% (Match = all) of Tags, after After.
+-spec dcb_read_by_tags_page(atom(), [binary()], any | all, page_after(), pos_integer()) ->
+    page_result().
+dcb_read_by_tags_page(StoreId, Tags, Match, After, Limit) ->
+    page(route_call(StoreId, {dcb_read_by_tags_page, StoreId, Tags, Match, After, Limit})).
+
+%% @doc One page of DCB events whose payload field Key equals Value, after
+%% After. Needs the store's {payload, Key} index, as ccc_read_by_payload/4.
+-spec dcb_read_by_payload_page(atom(), binary(), binary(), page_after(), pos_integer()) ->
+    page_result().
+dcb_read_by_payload_page(StoreId, Key, Value, After, Limit) ->
+    page(route_call(StoreId, {dcb_read_by_payload_page, StoreId, Key, Value, After, Limit})).
+
+%% @doc One page of DCB events matching a composite payload field set,
+%% after After. Needs the store's {payload_hash, Keys} index.
+-spec dcb_read_by_payload_hash_page(atom(), [binary()], [binary()], page_after(),
+                                    pos_integer()) -> page_result().
+dcb_read_by_payload_hash_page(StoreId, Keys, Values, After, Limit) ->
+    page(route_call(StoreId,
+                    {dcb_read_by_payload_hash_page, StoreId, Keys, Values, After, Limit})).
+
+%% A reply of any other shape is the store breaking the contract; it comes
+%% back as an error, like every other failure of route_call, never a crash
+%% in the caller.
+page({ok, {Events, Next}}) when is_list(Events), (Next =:= done orelse is_binary(Next)) ->
+    {ok, Events, Next};
+page({error, _} = Error) ->
+    Error;
+page(Other) ->
+    {error, {bad_page_reply, Other}}.
 
 %% @doc Read events whose metadata key = value.
 %%

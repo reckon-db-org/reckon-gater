@@ -196,6 +196,16 @@
     | {and_, [tag_filter()]}
     | {or_,  [tag_filter()]}.
 
+%% Paged DCB reads (reckon-gater 3.12.0), in DCB sequence order; the full
+%% contract is at the paged reads in reckon_gater_api. A cursor is a
+%% serialised position owned by the store, bound to its read and arguments:
+%% pass back what the previous page of the same read returned. `start'
+%% reads from the first matching event; `done' means none followed the page.
+-type read_cursor() :: binary().
+-type page_after() :: start | read_cursor().
+-type page_next() :: read_cursor() | done.
+-type page_result() :: {ok, [event()], page_next()} | {error, term()}.
+
 %% Cutoff semantics:
 %%   N >= 0 - "I saw events through seq N"; seqs > N are conflicts
 %%   -1     - "I saw nothing yet"; ANY matching event is a conflict

@@ -131,6 +131,15 @@ is_retriable_error({no_snapshot, _}) -> false;
 %% maps it to a DCB Conflict response instead of exhausting 11 backoff attempts
 %% and timing out the gRPC call.
 is_retriable_error({context_changed, _}) -> false;
+%% A paged read's cursor the store cannot decode or that belongs to another
+%% read, and a paged request the store rejects on its arguments: the caller's
+%% mistake, the same on every attempt.
+is_retriable_error({invalid_cursor, _}) -> false;
+is_retriable_error({invalid_page_request, _}) -> false;
+%% A store that does not implement the request (older than the caller,
+%% e.g. a paged read against reckon-db < 5.12.0) answers the same on every
+%% attempt; retrying only delays the answer by the whole retry budget.
+is_retriable_error(unknown_request) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 

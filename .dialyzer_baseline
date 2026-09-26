@@ -1,14 +1,14 @@
 # Known dialyzer findings, recorded as a ratchet. See scripts/dialyzer_ratchet.sh.
-# Dialyzer reported 58 warnings when this was written.
+# dialyzer reported 58 when this was written (files for lint, warnings for dialyzer).
 # A new finding fails CI. A fixed finding should have its line deleted here.
-src/reckon_gater_api.erl	5abc21d1d9a6	Type specification reckon_gater_api:do_route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()}
+src/reckon_gater_api.erl	127909748f23	Type specification reckon_gater_api:route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()} is
+src/reckon_gater_api.erl	34927faa4b83	Type specification reckon_gater_api:route_call(atom(),term()) -> {'ok',term()} | {'error',term()} is a superty
+src/reckon_gater_api.erl	42b09b11a196	Type specification reckon_gater_api:do_route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()}
 src/reckon_gater_api.erl	696766bb6382	The specification for reckon_gater_api:remove_subscription/4 states that the function might also return 'ok' b
-src/reckon_gater_api.erl	6fd9012c8bf2	Type specification reckon_gater_api:route_call(atom(),term()) -> {'ok',term()} | {'error',term()} is a superty
 src/reckon_gater_api.erl	77d1dc20bb07	Type specification reckon_gater_api:health() -> {'ok',map()} is a supertype of the success typing: reckon_gate
 src/reckon_gater_api.erl	7a57f48f5b48	The specification for reckon_gater_api:delete_stream/2 states that the function might also return 'ok' but the
 src/reckon_gater_api.erl	80457bd27b35	Type specification reckon_gater_api:route_cast(atom(),term()) -> 'ok' is a supertype of the success typing: re
 src/reckon_gater_api.erl	c87b208b7f96	The specification for reckon_gater_api:ack_event/4 states that the function might also return 'ok' but the inf
-src/reckon_gater_api.erl	fce4c0786fd7	Type specification reckon_gater_api:route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()} is
 src/reckon_gater_canonical.erl	2179ffa0055a	Type specification reckon_gater_canonical:encode_for_mac('event' | 'snapshot',term()) -> iolist() is a superty
 src/reckon_gater_canonical.erl	67f4b1bef4d1	Type specification reckon_gater_canonical:encode_for_chain(term(),binary()) -> iolist() is a supertype of the 
 src/reckon_gater_capability.erl	4b60bfba2193	Type specification reckon_gater_capability:jsx_decode(binary()) -> map() is a supertype of the success typing:

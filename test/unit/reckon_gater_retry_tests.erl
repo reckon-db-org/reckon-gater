@@ -30,7 +30,9 @@ retry_test_() ->
         {"invalid_stream_id is non-retriable (fails fast)",
          fun retry_skips_invalid_stream_id_test/0},
         {"invalid_filter is non-retriable (fails fast)",
-         fun retry_skips_invalid_filter_test/0}
+         fun retry_skips_invalid_filter_test/0},
+        {"the paged-read errors and unknown_request are non-retriable (fail fast)",
+         fun retry_skips_paged_read_errors_and_unknown_request_test/0}
      ]}.
 
 setup() ->
@@ -143,3 +145,17 @@ retry_skips_invalid_filter_test() ->
     Result = reckon_gater_retry:with_retry(test_store, Fun, Config),
     ?assertEqual({error, Err}, Result),
     ?assertEqual(1, counters:get(CallCount, 1)).
+
+%% A bad cursor, a paged request rejected on its arguments, and a request the
+%% store does not implement at all (reckon-db older than the caller) answer
+%% the same on every attempt: each comes back after one call.
+retry_skips_paged_read_errors_and_unknown_request_test() ->
+    Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
+    lists:foreach(
+      fun(Err) ->
+          CallCount = counters:new(1, []),
+          Fun = fun() -> counters:add(CallCount, 1, 1), {error, Err} end,
+          ?assertEqual({error, Err}, reckon_gater_retry:with_retry(test_store, Fun, Config)),
+          ?assertEqual({Err, 1}, {Err, counters:get(CallCount, 1)})
+      end,
+      [{invalid_cursor, <<"junk">>}, {invalid_page_request, {limit, 0}}, unknown_request]).

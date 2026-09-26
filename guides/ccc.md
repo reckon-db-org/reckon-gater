@@ -73,6 +73,22 @@ decision. Use the API call that matches your filter type:
 Take `max(event.version)` across the returned events — or `-1` if the result
 is empty — as the `seq_cutoff` for step 3.
 
+Those reads return at most their limit, the oldest matching events first, and
+cannot go further. When the history can exceed one page, read it with the
+paged DCB reads (3.12.0+, against reckon-db 5.12.0+):
+`dcb_read_by_tags_page/5`, `dcb_read_by_event_types_page/4`,
+`dcb_read_by_payload_page/5` and `dcb_read_by_payload_hash_page/5`. Start with
+`start`, pass each page's cursor to the next call of the same read, stop at
+`done`, and take the cutoff over every page.
+
+Reading the pages at different moments is safe **because they are in DCB
+sequence order**: every append takes a sequence number above every one that
+existed when the previous page was read, so an event appended while you read
+lands after your cursor (a later page returns it) or above your cutoff (the
+append reports a conflict). It could not slip in behind the cursor and below
+the cutoff unseen. That holds for DCB events only: stream events have no such
+sequence and are not paged; the DCB context of a decision is DCB events.
+
 **2. Build temporary decision data.** Project from the returned events into
 whatever data structure the rule needs. This is ephemeral — built once per
 command, discarded after the write. The store does not hold this; it belongs

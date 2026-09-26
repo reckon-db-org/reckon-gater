@@ -42,7 +42,7 @@ Add to your `rebar.config`:
 
 ```erlang
 {deps, [
-    {reckon_gater, "~> 3.7"}
+    {reckon_gater, "~> 3.12"}
 ]}.
 ```
 
@@ -208,6 +208,19 @@ reckon_gater_api:ccc_read_by_payload(StoreId, Key, Value, Limit) ->
 %% Read events from the composite payload-hash index
 reckon_gater_api:ccc_read_by_payload_hash(StoreId, Keys, Values, Limit) ->
     {ok, [Event]} | {error, term()}.
+
+%% Page through every matching DCB event, in DCB sequence order (3.12.0+,
+%% reckon-db 5.12.0+). After is `start` or the previous page's cursor; Next
+%% is the next cursor or `done`. Contract at the paged reads in
+%% reckon_gater_api.
+reckon_gater_api:dcb_read_by_tags_page(StoreId, Tags, Match, After, Limit) ->
+    {ok, [Event], Next} | {error, term()}.
+reckon_gater_api:dcb_read_by_event_types_page(StoreId, EventTypes, After, Limit) ->
+    {ok, [Event], Next} | {error, term()}.
+reckon_gater_api:dcb_read_by_payload_page(StoreId, Key, Value, After, Limit) ->
+    {ok, [Event], Next} | {error, term()}.
+reckon_gater_api:dcb_read_by_payload_hash_page(StoreId, Keys, Values, After, Limit) ->
+    {ok, [Event], Next} | {error, term()}.
 
 %% Introspect which payload fields the store has declared as indexed.
 %% Check before a payload read to know whether it is an indexed lookup
