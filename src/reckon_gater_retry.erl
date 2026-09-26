@@ -142,6 +142,15 @@ is_retriable_error({context_changed, _}) -> false;
 %% it was told. Both reach the caller unchanged.
 is_retriable_error({version_conflict, _, _}) -> false;
 is_retriable_error({version_unverifiable, _, _}) -> false;
+%% A paged read's cursor the store cannot decode or that belongs to another
+%% read, and a paged request the store rejects on its arguments: the caller's
+%% mistake, the same on every attempt.
+is_retriable_error({invalid_cursor, _}) -> false;
+is_retriable_error({invalid_page_request, _}) -> false;
+%% A store that does not implement the request (older than the caller,
+%% e.g. a paged read against reckon-db < 5.11.14) answers the same on every
+%% attempt; retrying only delays the answer by the whole retry budget.
+is_retriable_error(unknown_request) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 
