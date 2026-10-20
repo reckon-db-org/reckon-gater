@@ -16,7 +16,7 @@ Slices here measure **what applications actually experience** through `reckon_ga
 
 ## Methodology
 
-Shared: see [reckon-bench-harness/METHODOLOGY.md](https://github.com/reckon-db-org/reckon-bench-harness/blob/main/METHODOLOGY.md).
+Shared: reckon-bench-harness's METHODOLOGY.md, which is not published yet.
 
 ## License
 
