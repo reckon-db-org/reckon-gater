@@ -19,7 +19,7 @@ The gateway provides two ways to receive events:
 {ok, _} = reckon_gater_api:save_subscription(
     my_store,                    %% Store ID
     stream,                      %% Type: stream | event_type | event_pattern
-                                 %%       | event_payload | tags
+                                 %%       | event_payload | by_tags
     <<"order-123">>,             %% Selector
     <<"order_handler">>,         %% Subscription name
     0,                           %% Start position: an integer offset in the
@@ -40,7 +40,7 @@ that order. There is no options map: `start_from` is the integer itself, and
 | `event_type` | Event type name | Cross-cutting concerns |
 | `event_pattern` | Wildcard pattern | Category projections |
 | `event_payload` | Match map | Conditional processing |
-| `tags` | Tag list | Events sharing a tag |
+| `by_tags` | Tag list | Events sharing a tag (the store's name for it; `tags` is not a subscription type and reaches no clause) |
 
 #### Stream Subscription
 
@@ -93,7 +93,7 @@ that order. There is no options map: `start_from` is the integer itself, and
 
 ```erlang
 %% Remove a subscription
-ok = reckon_gater_api:remove_subscription(
+{ok, _} = reckon_gater_api:remove_subscription(
     my_store, event_pattern, <<"order-*">>, <<"order_projection">>
 ).
 ```
@@ -208,9 +208,9 @@ handle_info({channel_message, _, Topic, Event}, State) ->
     handle_event(Event),
     {noreply, State};
 
-handle_info({event, Event}, State) ->
-    %% Direct subscription delivery
-    handle_event(Event),
+handle_info({events, Events}, State) ->
+    %% Direct subscription delivery is {events, [#event{}]}, a batch.
+    lists:foreach(fun handle_event/1, Events),
     {noreply, State}.
 
 handle_event(#event{event_type = <<"OrderPlaced">>, data = Data}) ->
@@ -229,15 +229,17 @@ handle_event(_Event) ->
 
 init([StoreId]) ->
     %% Load last processed position
-    LastPosition = load_checkpoint(StoreId),
+    NextPosition = load_checkpoint(StoreId),
 
-    %% Subscribe starting from checkpoint
+    %% Subscribe from the position AFTER the one we last consumed. The start
+    %% position is a position in the store's global order, and it is
+    %% exclusive: consumed up to C, ask for C + 1.
     {ok, _} = reckon_gater_api:save_subscription(
         StoreId, event_pattern, <<"order-*">>, <<"checkpointed_handler">>,
-        LastPosition, self()
+        NextPosition, self()
     ),
 
-    {ok, #{store_id => StoreId, last_position => LastPosition}}.
+    {ok, #{store_id => StoreId, last_position => NextPosition - 1}}.
 
 %% Delivery is {events, [Event]}.
 handle_info({events, [#event{} = Event | _]}, #{store_id := StoreId} = State) ->
@@ -246,12 +248,25 @@ handle_info({events, [#event{} = Event | _]}, #{store_id := StoreId} = State) ->
     %% Process the event
     handle_event(Event),
 
-    %% Acknowledge and checkpoint. The ack takes a map, not the record.
+    %% Acknowledge and checkpoint. Two things to know:
+    %%
+    %% - the ack takes a map, not the record;
+    %% - the Position it carries is a position in the store's GLOBAL order,
+    %%   which is what save_subscription/6's StartFrom is compared against.
+    %%   #event.version is the event's version IN ITS STREAM - a different
+    %%   number in a different space - and handing it back as a start
+    %%   position resumes the wrong subscription at the wrong place.
+    %%
+    %% A #event{} record does not carry the global position today, so a
+    %% direct subscriber that checkpoints per event has to take it from its
+    %% own delivery order (count the events it has consumed, exactly as the
+    %% gateway's own subscriptions do). The gateway-side subscription acks
+    %% for you; a raw pubsub consumer does not get that for free.
     {ok, _} = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, self(),
-                                         #{stream_id => StreamId, version => Version}),
-    save_checkpoint(StoreId, Version),
+                                         #{stream_id => StreamId, version => Position}),
+    save_checkpoint(StoreId, Position + 1),
 
-    {noreply, State#{last_position => Version}}.
+    {noreply, State#{last_position => Position}}.
 ```
 
 ### Pool of Handlers

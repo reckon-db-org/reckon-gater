@@ -48,9 +48,9 @@ handle_command(Command, _State) ->
 ```
 
 That binary-key rule is the whole contract: a writer that stamps atom keys
-has written metadata nothing can query. (Before reckon-evoq 2.8.1 the evoq
+has written metadata nothing can query. (Before reckon-evoq 2.9.0 the evoq
 adapter did exactly that, so events appended through it before that release
-are not findable by `read_by_metadata/3`; new ones are.)
+are not findable by `read_by_metadata/3`; new ones are, from reckon-evoq 2.9.0.)
 
 ## Propagating Causation in Event Handlers
 
@@ -108,10 +108,13 @@ history per conversation - the read-model pattern is still the right tool:
    given correlation group.
 
 ```erlang
-%% Projection example — insert into your read-model as events flow in
+%% Projection example — insert into your read-model as events flow in.
+%% The stored metadata is the map the writer appended, so a writer that used
+%% binary keys reads binary keys here. `maps:get' on the atom spelling would
+%% miss it silently: that is the whole reason to pick one spelling.
 project_event(#{id := Id, metadata := Meta, event_type := Type}) ->
-    CausationId   = maps:get(causation_id,   Meta, undefined),
-    CorrelationId = maps:get(correlation_id, Meta, undefined),
+    CausationId   = maps:get(<<"causation_id">>,   Meta, undefined),
+    CorrelationId = maps:get(<<"correlation_id">>, Meta, undefined),
     db:exec("INSERT INTO event_lineage(id, type, causation_id, correlation_id)
              VALUES (?, ?, ?, ?)", [Id, Type, CausationId, CorrelationId]).
 
@@ -132,12 +135,16 @@ Recommended metadata structure for events that participate in causation chains:
 ```erlang
 create_event_metadata(CausingId, CorrelationId, ActorId) ->
     #{
-        causation_id   => CausingId,
-        correlation_id => CorrelationId,
-        actor_id       => ActorId,
-        timestamp      => erlang:system_time(microsecond),
-        source         => atom_to_binary(node())
+        <<"causation_id">>   => CausingId,
+        <<"correlation_id">> => CorrelationId,
+        actor_id             => ActorId,
+        timestamp            => erlang:system_time(microsecond),
+        source               => atom_to_binary(node())
     }.
+
+%% The two lineage keys are binaries because the {meta, Key} index and the
+%% read_by_metadata scan match the binary spelling. Every other key is yours
+%% and is stored exactly as you write it.
 ```
 
 ## Common Pitfalls
@@ -156,8 +163,8 @@ handle_event(#{id := EventId, metadata := Meta}, _State) ->
         event_type => <<"payment_requested_v1">>,
         data       => ...,
         metadata   => #{
-            causation_id   => EventId,
-            correlation_id => maps:get(correlation_id, Meta)
+            <<"causation_id">>   => EventId,
+            <<"correlation_id">> => maps:get(<<"correlation_id">>, Meta)
         }
     },
     reckon_gater_api:append_events(Store, Stream, [NewEvent]).
@@ -167,10 +174,10 @@ handle_event(#{id := EventId, metadata := Meta}, _State) ->
 
 ```erlang
 %% BAD: correlation changes with each event
-metadata => #{causation_id => EventId, correlation_id => EventId}
+metadata => #{<<"causation_id">> => EventId, <<"correlation_id">> => EventId}
 
 %% GOOD: correlation is a stable business-process ID
-metadata => #{causation_id => EventId, correlation_id => OrderId}
+metadata => #{<<"causation_id">> => EventId, <<"correlation_id">> => OrderId}
 ```
 
 ## Best Practices

@@ -179,7 +179,7 @@ Links create streams prefixed with `$link:`:
 %%--------------------------------------------------------------------
 
 %% Subscribe to the derived stream via gateway (just like any other stream)
-ok = reckon_gater_api:save_subscription(
+{ok, _} = reckon_gater_api:save_subscription(
     my_store,
     stream,
     <<"$link:high-value-orders">>,

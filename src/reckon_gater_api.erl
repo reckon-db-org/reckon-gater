@@ -356,7 +356,7 @@ integrity_status(StoreId) ->
     route_call(StoreId, {integrity_status, StoreId}).
 
 %% @doc Delete a stream and all its events
--spec delete_stream(atom(), binary()) -> ok | {error, term()}.
+-spec delete_stream(atom(), binary()) -> {ok, term()} | {error, term()}.
 delete_stream(StoreId, StreamId) ->
     route_call(StoreId, {delete_stream, StoreId, StreamId}).
 
@@ -464,7 +464,7 @@ save_subscription(StoreId, Type, Selector, SubscriptionName, StartFrom, Subscrib
 %% failure. Removing a non-existent subscription is NOT an error;
 %% removal is the desired terminal state regardless of starting state.
 -spec remove_subscription(atom(), atom(), binary() | map(), binary()) ->
-    ok | {error, term()}.
+    {ok, term()} | {error, term()}.
 remove_subscription(StoreId, Type, Selector, SubscriptionName) ->
     route_call(StoreId, {remove_subscription, StoreId, Type, Selector, SubscriptionName}).
 

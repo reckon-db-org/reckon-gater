@@ -109,7 +109,7 @@ The `#subscription{}` record tracks subscription state for event delivery.
 
 ```erlang
 %% Create a subscription via gateway
-ok = reckon_gater_api:save_subscription(
+{ok, _} = reckon_gater_api:save_subscription(
     my_store,
     stream,                    %% Type
     <<"orders-*">>,            %% Selector (pattern)
@@ -122,7 +122,7 @@ ok = reckon_gater_api:save_subscription(
 {ok, Subscriptions} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Remove a subscription
-ok = reckon_gater_api:remove_subscription(my_store, stream, <<"orders-*">>, <<"order_projection">>).
+{ok, _} = reckon_gater_api:remove_subscription(my_store, stream, <<"orders-*">>, <<"order_projection">>).
 ```
 
 ## Version Constants

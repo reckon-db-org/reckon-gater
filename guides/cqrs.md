@@ -156,7 +156,7 @@ init(StoreId) ->
     ets:new(?TABLE, [named_table, public, {read_concurrency, true}]),
 
     %% Subscribe to order events via gateway
-    ok = reckon_gater_api:save_subscription(
+    {ok, _} = reckon_gater_api:save_subscription(
         StoreId,
         event_pattern,
         <<"order-*">>,

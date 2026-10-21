@@ -107,9 +107,10 @@ reckon_gater_api:save_subscription(StoreId, Type, Selector, Name, StartFrom, Sub
 reckon_gater_api:remove_subscription(StoreId, Type, Selector, Name) ->
     ok | {error, term()}.
 
-%% Acknowledge event processing (the event itself, not a version number)
-reckon_gater_api:ack_event(StoreId, SubscriptionName, SubscriberPid, Event) ->
-    ok | {error, term()}.
+%% Acknowledge event processing. The fourth argument is a map, not the
+%% #event{} record: #{stream_id => S, version => V}.
+reckon_gater_api:ack_event(StoreId, SubscriptionName, SubscriberPid, EventMap) ->
+    {ok, term()} | {error, term()}.
 
 %% List subscriptions
 reckon_gater_api:get_subscriptions(StoreId) -> {ok, [Subscription]} | {error, term()}.
@@ -512,9 +513,10 @@ Use the gateway API to access reckon-db with automatic load balancing and retry:
 true = reckon_gater_api:stream_exists(my_store, StreamId).
 
 %% Subscription operations
-ok = reckon_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).
-ok = reckon_gater_api:remove_subscription(my_store, stream, StreamId, <<"my_sub">>).
-ok = reckon_gater_api:ack_event(my_store, <<"my_sub">>, self(), Event).
+{ok, _} = reckon_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).
+{ok, _} = reckon_gater_api:remove_subscription(my_store, stream, StreamId, <<"my_sub">>).
+{ok, _} = reckon_gater_api:ack_event(my_store, <<"my_sub">>, self(),
+                                     #{stream_id => StreamId, version => Version}).
 {ok, Subs} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Snapshot operations
