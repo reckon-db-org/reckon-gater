@@ -49,17 +49,28 @@
 %% @end
 -module(reckon_gater_integrity).
 
+%% The MAC shape is read back from stored data, which is not typed: a shape
+%% this version does not recognise is answered as a violation rather than
+%% crashing the caller. Dialyzer cannot see that, because it only knows the
+%% declared record type, so it reports the clause as unreachable.
+-dialyzer({nowarn_function, verify_event_mac/3}).
+-dialyzer({nowarn_function, verify_snapshot_mac/3}).
+
 -include("reckon_gater_types.hrl").
 
 -export([
     %% Computation (for the write path)
     compute_chain_hash/2,
     compute_event_mac/2,
+    compute_event_mac/3,
     compute_snapshot_mac/2,
+    compute_snapshot_mac/3,
 
     %% Verification (for the read path)
     verify_event/3,
+    verify_event/4,
     verify_snapshot/3,
+    verify_snapshot/4,
 
     %% Predicates
     is_legacy_event/1,
@@ -69,7 +80,7 @@
     genesis_prev_hash/0
 ]).
 
--export_type([key/0, key_id/0, mac_tuple/0]).
+-export_type([key/0, key_id/0, mac_tuple/0, mac_context/0, bind_context/0]).
 
 %% The HMAC key. 32 random bytes recommended.
 -type key() :: binary().
@@ -78,7 +89,25 @@
 -type key_id() :: pos_integer().
 
 %% The stored MAC tuple shape.
--type mac_tuple() :: {key_id(), MacBytes :: binary()}.
+%% Scheme 1 is the original two-tuple, and it keeps that meaning forever:
+%% a MAC over the value and nothing else. Scheme 2 is a tagged three-tuple
+%% that additionally binds the store (and, for an event, the stream's life
+%% token). The key id keeps its own meaning (the writer key), which the
+%% gateway publishes for rotation; it is never used as a scheme number.
+-type mac_tuple() :: {key_id(), MacBytes :: binary()} |
+                     {v2, key_id(), MacBytes :: binary()}.
+
+%% What a scheme-2 verification needs, plus the version from which scheme 1
+%% stops being acceptable in this stream. A caller that does not pass
+%% v2_from lets scheme 1 through everywhere, which is the shape for stores
+%% with no watermark at hand; reckon-db always passes it.
+-type mac_context() :: #{store_id => atom() | binary(),
+                         life => binary(),
+                         v2_from => non_neg_integer()}.
+
+%% What computing a scheme-2 MAC needs: both, not optional.
+-type bind_context() :: #{store_id := atom() | binary(),
+                          life := binary()}.
 
 %% The chain hash used for event version 0 -- a stable "genesis" value
 %% so the cryptographic path has no nil/undefined branches. 32 zero
@@ -126,23 +155,45 @@ compute_chain_hash(#event{} = Event, PrevHash) when is_binary(PrevHash) ->
 %%
 %% Returns the canonical {KeyId, MacBytes} tuple suitable for storing
 %% in the #event.mac field.
--spec compute_event_mac(#event{}, key()) -> mac_tuple().
+-spec compute_event_mac(#event{}, key()) -> {key_id(), binary()}.
 compute_event_mac(#event{} = Event, Key) when is_binary(Key) ->
     Stripped = Event#event{mac = undefined, signature = undefined},
     Bytes = reckon_gater_canonical:encode_for_mac(event, Stripped),
     MacBytes = crypto:mac(hmac, sha256, Key, Bytes),
     {?CURRENT_KEY_ID, MacBytes}.
 
+%% @doc Compute the store-bound (scheme 2) HMAC for an event.
+%%
+%% Binds the store the event belongs to and the life token of the stream it
+%% is written under, so a MAC'd event copied into another store, or into a
+%% later life of the same stream id, does not verify there.
+-spec compute_event_mac(#event{}, key(), bind_context()) ->
+    {v2, key_id(), binary()}.
+compute_event_mac(#event{} = Event, Key, #{store_id := StoreId, life := Life})
+        when is_binary(Key), is_binary(Life) ->
+    Stripped = Event#event{mac = undefined, signature = undefined},
+    Bytes = reckon_gater_canonical:encode_for_mac_v2(event, StoreId, Life, Stripped),
+    {v2, ?CURRENT_KEY_ID, crypto:mac(hmac, sha256, Key, Bytes)}.
+
 %% @doc Compute the HMAC for a snapshot.
 %%
 %% The snapshot should already have anchor_hash set. The MAC is
 %% computed over the snapshot with mac blanked.
--spec compute_snapshot_mac(#snapshot{}, key()) -> mac_tuple().
+-spec compute_snapshot_mac(#snapshot{}, key()) -> {key_id(), binary()}.
 compute_snapshot_mac(#snapshot{} = Snapshot, Key) when is_binary(Key) ->
     Stripped = Snapshot#snapshot{mac = undefined},
     Bytes = reckon_gater_canonical:encode_for_mac(snapshot, Stripped),
     MacBytes = crypto:mac(hmac, sha256, Key, Bytes),
     {?CURRENT_KEY_ID, MacBytes}.
+
+%% @doc Compute the store-bound (scheme 2) HMAC for a snapshot.
+-spec compute_snapshot_mac(#snapshot{}, key(), bind_context()) ->
+    {v2, key_id(), binary()}.
+compute_snapshot_mac(#snapshot{} = Snapshot, Key, #{store_id := StoreId, life := Life})
+        when is_binary(Key), is_binary(Life) ->
+    Stripped = Snapshot#snapshot{mac = undefined},
+    Bytes = reckon_gater_canonical:encode_for_mac_v2(snapshot, StoreId, Life, Stripped),
+    {v2, ?CURRENT_KEY_ID, crypto:mac(hmac, sha256, Key, Bytes)}.
 
 %%====================================================================
 %% Public API -- verification (read path)
@@ -162,18 +213,30 @@ compute_snapshot_mac(#snapshot{} = Snapshot, Key) when is_binary(Key) ->
 %% needed.
 -spec verify_event(#event{}, binary(), key()) ->
     ok | integrity_violation().
-verify_event(#event{prev_event_hash = undefined} = Event, _PrevHash, _Key) ->
+verify_event(Event, PrevHash, Key) ->
+    verify_event(Event, PrevHash, Key, #{}).
+
+%% @doc Verify an event against a MAC context.
+%%
+%% With `store_id' and `life', a scheme-2 MAC is verified (a scheme-2 MAC
+%% with no context is a violation: absence of the context is not evidence
+%% of anything). With `v2_from', a scheme-1 MAC at or above that version is
+%% refused, so an old-scheme writer on the same key cannot put a store-blind
+%% MAC above the point where the stream began writing scheme 2.
+-spec verify_event(#event{}, binary(), key(), mac_context()) ->
+    ok | integrity_violation().
+verify_event(#event{prev_event_hash = undefined} = Event, _PrevHash, _Key, _Ctx) ->
     %% Legacy event (pre-2.1.0). Caller decides whether this is
     %% acceptable based on verify mode (skip_legacy returns it
     %% untouched; strict treats this as a violation upstream). At this
     %% layer we report it as missing_integrity so strict callers can
     %% pattern-match without re-checking.
     violation(storage, Event, missing_integrity, #{});
-verify_event(#event{} = Event, ExpectedPrevHash, Key)
+verify_event(#event{} = Event, ExpectedPrevHash, Key, Ctx)
         when is_binary(ExpectedPrevHash), is_binary(Key) ->
     case verify_event_chain(Event, ExpectedPrevHash) of
         ok ->
-            verify_event_mac(Event, Key);
+            verify_event_mac(Event, Key, Ctx);
         Violation ->
             Violation
     end.
@@ -188,18 +251,24 @@ verify_event(#event{} = Event, ExpectedPrevHash, Key)
 %% failure.
 -spec verify_snapshot(#snapshot{}, binary(), key()) ->
     ok | integrity_violation().
-verify_snapshot(#snapshot{mac = undefined} = Snapshot, _ActualChainHash, _Key) ->
+verify_snapshot(Snapshot, ActualChainHash, Key) ->
+    verify_snapshot(Snapshot, ActualChainHash, Key, #{}).
+
+%% @doc Verify a snapshot against a MAC context. See verify_event/4.
+-spec verify_snapshot(#snapshot{}, binary(), key(), mac_context()) ->
+    ok | integrity_violation().
+verify_snapshot(#snapshot{mac = undefined} = Snapshot, _ActualChainHash, _Key, _Ctx) ->
     %% Legacy snapshot.
     violation(snapshot, Snapshot, missing_integrity, #{});
-verify_snapshot(#snapshot{anchor_hash = undefined} = Snapshot, _ActualChainHash, _Key) ->
+verify_snapshot(#snapshot{anchor_hash = undefined} = Snapshot, _ActualChainHash, _Key, _Ctx) ->
     %% Partially populated -- anchor missing but mac set. Either a bug
     %% or tampering; refuse.
     violation(snapshot, Snapshot, missing_integrity, #{detail => anchor_hash_absent});
-verify_snapshot(#snapshot{} = Snapshot, ActualChainHashAtVersion, Key)
+verify_snapshot(#snapshot{} = Snapshot, ActualChainHashAtVersion, Key, Ctx)
         when is_binary(ActualChainHashAtVersion), is_binary(Key) ->
     case verify_snapshot_anchor(Snapshot, ActualChainHashAtVersion) of
         ok ->
-            verify_snapshot_mac(Snapshot, Key);
+            verify_snapshot_mac(Snapshot, Key, Ctx);
         Violation ->
             Violation
     end.
@@ -245,15 +314,40 @@ verify_event_chain(#event{prev_event_hash = StoredPrev} = Event, ExpectedPrev) -
                              expected => bin_summary(ExpectedPrev)})
     end.
 
-verify_event_mac(#event{mac = undefined} = Event, _Key) ->
+verify_event_mac(#event{mac = undefined} = Event, _Key, _Ctx) ->
     violation(storage, Event, missing_integrity, #{detail => mac_absent});
-verify_event_mac(#event{mac = {_KeyId, StoredMac}} = Event, Key) ->
-    Stripped = Event#event{mac = undefined, signature = undefined},
-    Bytes = reckon_gater_canonical:encode_for_mac(event, Stripped),
-    Expected = crypto:mac(hmac, sha256, Key, Bytes),
-    case crypto:hash_equals(StoredMac, Expected) of
-        true  -> ok;
-        false -> violation(storage, Event, mac_mismatch, #{})
+verify_event_mac(#event{mac = {v2, _KeyId, StoredMac}} = Event, Key, Ctx) ->
+    verify_event_mac_v2(Event, StoredMac, Key, Ctx);
+verify_event_mac(#event{mac = {_KeyId, StoredMac}, version = Version} = Event, Key, Ctx) ->
+    verify_event_mac_v1(Event, StoredMac, Version, Key, Ctx);
+verify_event_mac(#event{} = Event, _Key, _Ctx) ->
+    violation(storage, Event, mac_mismatch, #{detail => unknown_mac_shape}).
+
+%% @private Scheme 1 is refused at or above the stream's v2_from: a value
+%% written under the old scheme after the stream began writing scheme 2 is
+%% either a copy or a forgery, and neither is store-bound.
+verify_event_mac_v1(Event, StoredMac, Version, Key, Ctx) ->
+    case scheme1_allowed(Version, Ctx) of
+        false ->
+            violation(storage, Event, mac_mismatch,
+                      #{detail => scheme_1_at_or_above_v2_from});
+        true ->
+            Stripped = Event#event{mac = undefined, signature = undefined},
+            Bytes = reckon_gater_canonical:encode_for_mac(event, Stripped),
+            compare_mac(StoredMac, Bytes, Key, storage, Event, mac_mismatch)
+    end.
+
+%% @private
+verify_event_mac_v2(Event, StoredMac, Key, Ctx) ->
+    case mac_context(Ctx) of
+        {ok, StoreId, Life} ->
+            Stripped = Event#event{mac = undefined, signature = undefined},
+            Bytes = reckon_gater_canonical:encode_for_mac_v2(
+                      event, StoreId, Life, Stripped),
+            compare_mac(StoredMac, Bytes, Key, storage, Event, mac_mismatch);
+        error ->
+            violation(storage, Event, mac_mismatch,
+                      #{detail => mac_context_absent})
     end.
 
 verify_snapshot_anchor(#snapshot{anchor_hash = Stored} = Snap, Actual) ->
@@ -264,13 +358,57 @@ verify_snapshot_anchor(#snapshot{anchor_hash = Stored} = Snap, Actual) ->
                              actual => bin_summary(Actual)})
     end.
 
-verify_snapshot_mac(#snapshot{mac = {_KeyId, StoredMac}} = Snap, Key) ->
-    Stripped = Snap#snapshot{mac = undefined},
-    Bytes = reckon_gater_canonical:encode_for_mac(snapshot, Stripped),
+verify_snapshot_mac(#snapshot{mac = {v2, _KeyId, StoredMac}} = Snap, Key, Ctx) ->
+    verify_snapshot_mac_v2(Snap, StoredMac, Key, Ctx);
+verify_snapshot_mac(#snapshot{mac = {_KeyId, StoredMac}, version = Version} = Snap, Key, Ctx) ->
+    verify_snapshot_mac_v1(Snap, StoredMac, Version, Key, Ctx);
+verify_snapshot_mac(#snapshot{} = Snap, _Key, _Ctx) ->
+    violation(snapshot, Snap, snapshot_mac_mismatch, #{detail => unknown_mac_shape}).
+
+%% @private
+verify_snapshot_mac_v1(Snap, StoredMac, Version, Key, Ctx) ->
+    case scheme1_allowed(Version, Ctx) of
+        false ->
+            violation(snapshot, Snap, snapshot_mac_mismatch,
+                      #{detail => scheme_1_at_or_above_v2_from});
+        true ->
+            Stripped = Snap#snapshot{mac = undefined},
+            Bytes = reckon_gater_canonical:encode_for_mac(snapshot, Stripped),
+            compare_mac(StoredMac, Bytes, Key, snapshot, Snap, snapshot_mac_mismatch)
+    end.
+
+%% @private
+verify_snapshot_mac_v2(Snap, StoredMac, Key, Ctx) ->
+    case mac_context(Ctx) of
+        {ok, StoreId, Life} ->
+            Stripped = Snap#snapshot{mac = undefined},
+            Bytes = reckon_gater_canonical:encode_for_mac_v2(
+                      snapshot, StoreId, Life, Stripped),
+            compare_mac(StoredMac, Bytes, Key, snapshot, Snap,
+                        snapshot_mac_mismatch);
+        error ->
+            violation(snapshot, Snap, snapshot_mac_mismatch,
+                      #{detail => mac_context_absent})
+    end.
+
+%% @private Whether a scheme-1 MAC may appear at this version.
+scheme1_allowed(Version, #{v2_from := V2From}) when is_integer(V2From) ->
+    Version < V2From;
+scheme1_allowed(_Version, _Ctx) ->
+    true.
+
+%% @private The store and life a scheme-2 MAC needs, or error.
+mac_context(#{store_id := StoreId, life := Life}) when is_binary(Life) ->
+    {ok, StoreId, Life};
+mac_context(_Ctx) ->
+    error.
+
+%% @private
+compare_mac(StoredMac, Bytes, Key, Layer, Value, Kind) ->
     Expected = crypto:mac(hmac, sha256, Key, Bytes),
     case crypto:hash_equals(StoredMac, Expected) of
         true  -> ok;
-        false -> violation(snapshot, Snap, snapshot_mac_mismatch, #{})
+        false -> violation(Layer, Value, Kind, #{})
     end.
 
 %%====================================================================

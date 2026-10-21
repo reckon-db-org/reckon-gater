@@ -1,5 +1,5 @@
 # Known dialyzer findings, recorded as a ratchet. See scripts/dialyzer_ratchet.sh.
-# Dialyzer reported 55 warnings when this was written.
+# dialyzer reported 57 when this was written (files for lint, warnings for dialyzer).
 # A new finding fails CI. A fixed finding should have its line deleted here.
 src/reckon_gater_api.erl	5abc21d1d9a6	Type specification reckon_gater_api:do_route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()}
 src/reckon_gater_api.erl	6fd9012c8bf2	Type specification reckon_gater_api:route_call(atom(),term()) -> {'ok',term()} | {'error',term()} is a superty
@@ -34,9 +34,11 @@ src/reckon_gater_identity.erl	538abcee85ec	Type specification reckon_gater_ident
 src/reckon_gater_identity.erl	80b1314bc63b	Type specification reckon_gater_identity:decode_base58_int(binary(),non_neg_integer()) -> {'ok',non_neg_intege
 src/reckon_gater_identity.erl	8f19ffd90215	Type specification reckon_gater_identity:encode_did(binary()) -> binary() is a supertype of the success typing
 src/reckon_gater_identity.erl	ef68778a798b	Type specification reckon_gater_identity:base58_decode_erlang(binary()) -> {'ok',binary()} | {'error',term()} 
-src/reckon_gater_integrity.erl	360e0ce4b5f7	Type specification reckon_gater_integrity:compute_snapshot_mac(#snapshot{},key()) -> mac_tuple() is a supertyp
-src/reckon_gater_integrity.erl	95399c10958f	Type specification reckon_gater_integrity:compute_event_mac(#event{},key()) -> mac_tuple() is a supertype of t
+src/reckon_gater_integrity.erl	87845085c0cb	Type specification reckon_gater_integrity:verify_event(#event{},binary(),key()) -> 'ok' | integrity_violation(
+src/reckon_gater_integrity.erl	8f3167b3cbb2	Type specification reckon_gater_integrity:compute_snapshot_mac(#snapshot{},key()) -> {key_id(),binary()} is a 
+src/reckon_gater_integrity.erl	9c37c6f80e21	Type specification reckon_gater_integrity:verify_snapshot(#snapshot{},binary(),key()) -> 'ok' | integrity_viol
 src/reckon_gater_integrity.erl	a1271bcafa66	Type specification reckon_gater_integrity:genesis_prev_hash() -> binary() is a supertype of the success typing
+src/reckon_gater_integrity.erl	f04779029dc1	Type specification reckon_gater_integrity:compute_event_mac(#event{},key()) -> {key_id(),binary()} is a supert
 src/reckon_gater_pubsub_security.erl	5d108afef085	Type specification reckon_gater_pubsub_security:sign(map()) -> map() is a supertype of the success typing: rec
 src/reckon_gater_pubsub_security.erl	669e4ac538cd	Type specification reckon_gater_pubsub_security:verify(map(),binary()) -> 'ok' | {'error',term()} is a superty
 src/reckon_gater_pubsub_security.erl	9fdd81c6dcfe	Type specification reckon_gater_pubsub_security:verify(map()) -> 'ok' | {'error',term()} is a supertype of the

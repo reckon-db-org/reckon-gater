@@ -309,3 +309,85 @@ make_signed_event() ->
     E1 = E0#event{prev_event_hash = Genesis},
     Mac = reckon_gater_integrity:compute_event_mac(E1, K),
     {E1#event{mac = Mac}, K}.
+
+%%====================================================================
+%% Schema 2: MACs bound to the store (and the stream's life)
+%%====================================================================
+
+%% @private A fully-signed scheme-2 event, as the write path produces it.
+make_signed_v2_event(StoreId, Life) ->
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    K = key(),
+    E1 = (base_event())#event{prev_event_hash = Genesis},
+    Mac = reckon_gater_integrity:compute_event_mac(
+            E1, K, #{store_id => StoreId, life => Life}),
+    {E1#event{mac = Mac}, K}.
+
+v2_mac_is_a_tagged_three_tuple_test() ->
+    {#event{mac = Mac}, _K} = make_signed_v2_event(store_a, <<"life-1">>),
+    ?assertMatch({v2, 1, Bytes} when is_binary(Bytes), Mac).
+
+v2_event_is_not_a_v1_mac_test() ->
+    {Signed, K} = make_signed_v2_event(store_a, <<"life-1">>),
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    %% The v1 verifier has no store or life to recompute with.
+    ?assertMatch({integrity_violation, #{kind := mac_mismatch,
+                                         context := #{detail := mac_context_absent}}},
+                 reckon_gater_integrity:verify_event(Signed, Genesis, K)).
+
+v2_event_verifies_with_its_context_test() ->
+    {Signed, K} = make_signed_v2_event(store_a, <<"life-1">>),
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    ?assertEqual(ok, reckon_gater_integrity:verify_event(
+                       Signed, Genesis, K,
+                       #{store_id => store_a, life => <<"life-1">>})).
+
+v2_event_does_not_verify_in_another_store_test() ->
+    {Signed, K} = make_signed_v2_event(store_a, <<"life-1">>),
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    ?assertMatch({integrity_violation, #{kind := mac_mismatch}},
+                 reckon_gater_integrity:verify_event(
+                   Signed, Genesis, K,
+                   #{store_id => store_b, life => <<"life-1">>})).
+
+v2_event_does_not_verify_under_another_life_test() ->
+    {Signed, K} = make_signed_v2_event(store_a, <<"life-1">>),
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    ?assertMatch({integrity_violation, #{kind := mac_mismatch}},
+                 reckon_gater_integrity:verify_event(
+                   Signed, Genesis, K,
+                   #{store_id => store_a, life => <<"life-2">>})).
+
+scheme_1_mac_is_refused_at_or_above_v2_from_test() ->
+    {Signed, K} = make_signed_event(),
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    %% base_event is version 0: allowed while v2_from is above it...
+    ?assertEqual(ok, reckon_gater_integrity:verify_event(
+                       Signed, Genesis, K, #{v2_from => 1})),
+    %% ...and refused once the stream says scheme 2 begins at 0.
+    ?assertMatch({integrity_violation, #{kind := mac_mismatch,
+                                         context := #{detail := scheme_1_at_or_above_v2_from}}},
+                 reckon_gater_integrity:verify_event(
+                   Signed, Genesis, K, #{v2_from => 0})).
+
+unknown_mac_shape_is_a_violation_test() ->
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    K = key(),
+    E = (base_event())#event{prev_event_hash = Genesis, mac = {a, b, c, d}},
+    ?assertMatch({integrity_violation, #{kind := mac_mismatch,
+                                         context := #{detail := unknown_mac_shape}}},
+                 reckon_gater_integrity:verify_event(E, Genesis, K)).
+
+v2_snapshot_verifies_with_its_context_test() ->
+    Snap0 = (base_snapshot())#snapshot{anchor_hash = <<7:256>>},
+    K = key(),
+    Mac = reckon_gater_integrity:compute_snapshot_mac(
+            Snap0, K, #{store_id => store_a, life => <<"life-1">>}),
+    Snap = Snap0#snapshot{mac = Mac},
+    ?assertEqual(ok, reckon_gater_integrity:verify_snapshot(
+                       Snap, <<7:256>>, K,
+                       #{store_id => store_a, life => <<"life-1">>})),
+    ?assertMatch({integrity_violation, #{kind := snapshot_mac_mismatch}},
+                 reckon_gater_integrity:verify_snapshot(
+                   Snap, <<7:256>>, K,
+                   #{store_id => store_b, life => <<"life-1">>})).

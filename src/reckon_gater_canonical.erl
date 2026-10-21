@@ -56,6 +56,7 @@
 -export([
     encode/1,
     encode_for_mac/2,
+    encode_for_mac_v2/4,
     encode_for_chain/2
 ]).
 
@@ -65,6 +66,12 @@
 -define(EVT_TAG,   <<"evt|">>).
 -define(SNAP_TAG,  <<"snap|">>).
 -define(CHAIN_TAG, <<"chain|">>).
+
+%% The v2 tags bind a MAC to the store (and, for events, the stream's life
+%% token). They are additive: nothing written under the 2.x tags is
+%% affected, and a v2 input is never equal to a v1 input.
+-define(EVT2_TAG,  <<"evt2|">>).
+-define(SNAP2_TAG, <<"snap2|">>).
 
 %%====================================================================
 %% Public API
@@ -97,6 +104,29 @@ encode_for_mac(event, EventMinusMac) ->
     [?EVT_TAG, encode(EventMinusMac)];
 encode_for_mac(snapshot, SnapMinusMac) ->
     [?SNAP_TAG, encode(SnapMinusMac)].
+
+%% @doc Canonical bytes for a store-bound (v2) MAC input.
+%%
+%% The input binds the store the value belongs to and, for an event, the
+%% life token of the stream it was written under. A value copied into
+%% another store, or into a later life of the same stream id, therefore
+%% does not verify: the bytes the MAC was computed over are not there.
+%%
+%% The store may be given as an atom or a binary; it is encoded
+%% unambiguously (a length-prefixed atom-vs-binary distinction is not
+%% needed because both sides derive it the same way from the same stored
+%% value).
+-spec encode_for_mac_v2(event | snapshot, atom() | binary(), binary(), term()) -> iolist().
+encode_for_mac_v2(event, StoreId, Life, EventMinusMac) ->
+    [?EVT2_TAG, store_bytes(StoreId), <<"|">>, Life, <<"|">>,
+     encode(EventMinusMac)];
+encode_for_mac_v2(snapshot, StoreId, Life, SnapMinusMac) ->
+    [?SNAP2_TAG, store_bytes(StoreId), <<"|">>, Life, <<"|">>,
+     encode(SnapMinusMac)].
+
+%% @private
+store_bytes(StoreId) when is_atom(StoreId) -> atom_to_binary(StoreId, utf8);
+store_bytes(StoreId) when is_binary(StoreId) -> StoreId.
 
 %% @doc Canonical bytes to feed into the chain hash computation.
 %%

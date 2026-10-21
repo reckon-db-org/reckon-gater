@@ -5,6 +5,35 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.13.0] - 2026-10-21
+
+### Added: a MAC that binds the store, and the stream it was written in
+
+`compute_event_mac/2` and `compute_snapshot_mac/2` cover the value and nothing
+else, so with one key shared by two stores an event copied from one verifies as
+genuine in the other. That is a real forgery path for anyone who can write a
+store's tree, and it is what drives this addition.
+
+`compute_event_mac/3` and `compute_snapshot_mac/3` take a context
+(`#{store_id, life}`) and return a **tagged three-tuple** `{v2, KeyId, Bytes}`:
+the MAC then covers the store id and, for an event, the life token of the
+stream it was written under. The old two-tuple `{KeyId, Bytes}` keeps its
+meaning forever — a MAC over the value alone — so every value already stored
+verifies exactly as before. The key id is untouched: it keeps meaning the
+writer's key (which the gateway publishes for rotation), and the scheme lives
+in the tuple's shape instead.
+
+`verify_event/4` and `verify_snapshot/4` take a context
+(`#{store_id, life, v2_from}`). A scheme-2 MAC is verified against the store
+and life; with no context it is a violation, never a crash. A scheme-1 MAC at
+or above `v2_from` is refused, so a caller still writing the old scheme cannot
+put a store-blind MAC above the point where a stream began writing scheme 2.
+An unrecognised MAC shape is a violation. `verify_event/3` and
+`verify_snapshot/3` are unchanged and mean "scheme 1, no version bound".
+
+The MAC never goes on the wire (`reckon_shared.proto`), so the shape is
+internal to gater and its consumers.
+
 ## [3.12.0] - 2026-10-21
 
 ### Added: the docs' code blocks are checked, and the wrong ones are fixed

@@ -35,6 +35,16 @@
 %% Event Record
 %%====================================================================
 
+%% The stored HMAC shape.
+%%
+%% Scheme 1, {KeyId, MacBytes}, is a MAC over the value alone and keeps that
+%% meaning forever. Scheme 2, {v2, KeyId, MacBytes}, additionally binds the
+%% store the value belongs to and, for an event, the life token of the
+%% stream it was written under. The key id keeps meaning the writer's key.
+-type mac_value() :: {KeyId :: non_neg_integer(), MacBytes :: binary()} |
+                     {v2, KeyId :: non_neg_integer(), MacBytes :: binary()} |
+                     undefined.
+
 -record(event, {
     %% Unique identifier for this event
     event_id :: binary(),
@@ -113,7 +123,7 @@
     %% design. Requires the per-store HMAC key to verify; therefore
     %% verified at the storage boundary, NOT propagated to external
     %% consumers via the gateway.
-    mac :: {KeyId :: non_neg_integer(), MacBytes :: binary()} | undefined,
+    mac :: mac_value(),
 
     %% Ed25519 signature over canonical_encode(event_minus_signature).
     %%
@@ -298,7 +308,7 @@
     %% Same key as event MACs; the domain-separation tag prevents an
     %% attacker from substituting a snapshot MAC for an event MAC or
     %% vice versa, even if they happen to have access to one.
-    mac :: {KeyId :: non_neg_integer(), MacBytes :: binary()} | undefined
+    mac :: mac_value()
 }).
 
 -type snapshot() :: #snapshot{}.
