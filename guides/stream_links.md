@@ -162,7 +162,7 @@ reckon_gater_api:delete_link(my_store, <<"high-value-orders">>).
 %%     events_filtered => 45678,       %% Events that didn't match
 %%     last_processed_at => 1703001600000000,
 %%     lag => 0,                       %% Events behind real-time
-%%     source_streams => [<<"orders-001">>, <<"orders-002">>, ...]
+%%     source_streams => [<<"orders-019d7a4f3c2a7d8c9e0f123456789001">>, <<"orders-019d7a4f3c2a7d8c9e0f123456789002">>, ...]
 %% }
 ```
 

@@ -57,10 +57,10 @@ application:ensure_all_started(reckon_gater).
 %% Append events to a stream. An event is a map with event_type and data;
 %% the store's own reader names the field event_type, not type.
 Events = [#{event_type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
-{ok, Version} = reckon_gater_api:append_events(my_store, <<"users-123">>, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"users-019d7a4f3c2a7d8c9e0f1234567890ab">>, Events).
 
 %% Read events from a stream
-{ok, EventList} = reckon_gater_api:stream_forward(my_store, <<"users-123">>, 0, 100).
+{ok, EventList} = reckon_gater_api:stream_forward(my_store, <<"users-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0, 100).
 
 %% The channel server is the APPLICATION's own pubsub: subscribe and
 %% publish to it yourself. Store events do not flow through it - a store

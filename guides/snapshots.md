@@ -17,6 +17,15 @@ Snapshots reduce the number of events needed to reconstruct aggregate state:
 
 ## Gateway Snapshot API
 
+### Stream identifiers
+
+Every stream id below is `type-id`: a lowercase type of 1 to 32 characters, a
+hyphen, and 32 lowercase hex characters (`reckon_gater_stream_id:validate/1`).
+`reckon_gater_stream_id:new(<<"account">>)` mints one. An id that does not
+match that shape is refused with
+`{error, {invalid_stream_id, malformed_user_id, Id}}` before it reaches the
+store, so the examples use a literal one.
+
 ### Recording Snapshots
 
 Save aggregate state at a specific version:
@@ -27,7 +36,7 @@ State = #{balance => 1000, status => active},
 ok = reckon_gater_api:record_snapshot(
     my_store,                    %% Store ID
     my_source,                   %% Source ID (your application)
-    <<"account-123">>,           %% Stream ID
+    <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>,           %% Stream ID
     150,                         %% Version (event number)
     State                        %% State to snapshot
 ).
@@ -38,27 +47,28 @@ ok = reckon_gater_api:record_snapshot(
 Load the latest or a specific snapshot:
 
 ```erlang
-%% Load the latest snapshot
-case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-123">>, latest) of
+%% Load the latest snapshot. The version argument is an integer: 0 means
+%% "the most recent one" (no event has version 0, so 0 is unambiguous).
+case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0) of
     {ok, Snapshot} ->
         Version = Snapshot#snapshot.version,
         State = Snapshot#snapshot.data,
         %% Replay events after the snapshot
         {ok, Events} = reckon_gater_api:stream_forward(
-            my_store, <<"account-123">>, Version + 1, 10000
+            my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, Version + 1, 10000
         ),
         FinalState = lists:foldl(fun apply_event/2, State, Events);
     {error, not_found} ->
         %% No snapshot, replay from beginning
         {ok, AllEvents} = reckon_gater_api:stream_forward(
-            my_store, <<"account-123">>, 0, 10000
+            my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0, 10000
         ),
         lists:foldl(fun apply_event/2, initial_state(), AllEvents)
 end.
 
 %% Load snapshot at a specific version
 {ok, Snapshot} = reckon_gater_api:read_snapshot(
-    my_store, my_source, <<"account-123">>, 100
+    my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 100
 ).
 ```
 
@@ -68,13 +78,13 @@ Get all snapshots for a stream:
 
 ```erlang
 %% List all snapshots for a stream
-{ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-123">>).
+{ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>).
 
 %% Returns list sorted by version (newest first)
 [
-    #snapshot{stream_id = <<"account-123">>, version = 150, ...},
-    #snapshot{stream_id = <<"account-123">>, version = 100, ...},
-    #snapshot{stream_id = <<"account-123">>, version = 50, ...}
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 150, ...},
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 100, ...},
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 50, ...}
 ]
 ```
 
@@ -84,10 +94,10 @@ Remove old snapshots to save storage:
 
 ```erlang
 %% Delete a specific snapshot
-ok = reckon_gater_api:delete_snapshot(my_store, my_source, <<"account-123">>, 50).
+ok = reckon_gater_api:delete_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 50).
 
 %% Delete old snapshots (keep only recent ones)
-{ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-123">>),
+{ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>),
 OldSnapshots = lists:nthtail(3, Snapshots),  %% Keep 3 most recent
 [reckon_gater_api:delete_snapshot(my_store, my_source, S#snapshot.stream_id, S#snapshot.version)
  || S <- OldSnapshots].
@@ -107,18 +117,21 @@ A typical pattern for loading aggregates through the gateway:
     id,
     balance = 0,
     status = active,
-    version = 0
+    %% The version of the last event this aggregate holds, so that execute/3
+    %% can pass it as the expected version. -1 means "no stream yet".
+    version = ?NO_STREAM
 }).
 
 -define(SNAPSHOT_THRESHOLD, 100).
 
-%% Load aggregate via gateway
+%% Load aggregate via gateway. AccountId is the account's own id as 32
+%% lowercase hex characters: a stream id is <type>-<32 hex>.
 load(StoreId, AccountId) ->
     StreamId = <<"account-", AccountId/binary>>,
 
-    %% Try to load from snapshot first
+    %% Try to load from snapshot first. 0 asks for the latest one.
     {InitialState, StartVersion} = case reckon_gater_api:read_snapshot(
-        StoreId, account_client, StreamId, latest
+        StoreId, account_client, StreamId, 0
     ) of
         {ok, Snapshot} ->
             {Snapshot#snapshot.data, Snapshot#snapshot.version + 1};
@@ -141,7 +154,9 @@ load(StoreId, AccountId) ->
                 _ -> (lists:last(Events))#event.version
             end,
             {ok, FinalState#account{version = NewVersion}};
-        {error, stream_not_found} when StartVersion =:= 0 ->
+        {error, {stream_not_found, _}} when StartVersion =:= 0 ->
+            %% Nothing has been appended yet: InitialState carries ?NO_STREAM
+            %% as its version, which is what the first append expects.
             {ok, InitialState};
         {error, Reason} ->
             {error, Reason}
@@ -157,10 +172,10 @@ execute(StoreId, AccountId, Command) ->
     %% Execute command
     case handle_command(Command, Account) of
         {ok, Events} ->
-            %% Append events via gateway
+            %% Append events via gateway. append_events/4 takes the expected
+            %% version as its third argument, before the events.
             {ok, NewVersion} = reckon_gater_api:append_events(
-                StoreId, StreamId, Events,
-                #{expected_version => Account#account.version}
+                StoreId, StreamId, Account#account.version, Events
             ),
 
             %% Apply events to get new state
@@ -194,7 +209,11 @@ handle_command({deposit, Amount}, #account{status = active} = Account)
 handle_command({deposit, _Amount}, #account{status = frozen}) ->
     {error, account_frozen}.
 
-%% Event application
+%% Event application. Two shapes reach it: the maps this module builds to
+%% append, and the #event{} records the store replays back. The map clause
+%% is only the record clause in the other coat.
+apply_event(#{event_type := EventType, data := Data}, Account) ->
+    apply_event(#event{event_type = EventType, data = Data}, Account);
 apply_event(#event{event_type = <<"money_deposited_v1">>, data = Data}, Account) ->
     Amount = maps:get(amount, Data),
     Account#account{balance = Account#account.balance + Amount};
@@ -248,7 +267,7 @@ handle_info(check_snapshots, #{store_id := StoreId, aggregates := Aggs} = State)
     {noreply, State}.
 
 needs_snapshot(StoreId, StreamId, CurrentVersion) ->
-    case reckon_gater_api:read_snapshot(StoreId, snapshot_scheduler, StreamId, latest) of
+    case reckon_gater_api:read_snapshot(StoreId, snapshot_scheduler, StreamId, 0) of
         {ok, #snapshot{version = V}} -> CurrentVersion - V > 100;
         {error, not_found} -> CurrentVersion > 50
     end.
@@ -262,7 +281,7 @@ Store only essential state. The state above is `#account{}`, so the snapshot
 is a trimmed copy of it:
 
 ```erlang
--record(account, {id, balance = 0, status = active, version = 0}).
+-record(account, {id, balance = 0, status = active, version = -1}).
 
 %% Good: minimal state
 snapshot_of(#account{id = Id, balance = Balance, status = Status}) ->
@@ -270,7 +289,7 @@ snapshot_of(#account{id = Id, balance = Balance, status = Status}) ->
 ```
 
 ```erlang
--record(account, {id, balance = 0, status = active, version = 0}).
+-record(account, {id, balance = 0, status = active, version = -1}).
 
 %% Bad: the whole record, version included. The version is derived - load/2
 %% reads it back out of the snapshot and seeks from it - so a snapshot that

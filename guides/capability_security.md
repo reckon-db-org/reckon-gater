@@ -278,7 +278,7 @@ When making requests, include the token. The gater routes it to reckon-db for ve
 %% Currently, tokens are used primarily for PubSub channels
 
 Events = [#{event_type => <<"order_placed_v1">>, data => #{...}}],
-{ok, Version} = reckon_gater_api:append_events(my_store, <<"orders-123">>, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890123">>, Events).
 ```
 
 ### PubSub Channel Operations

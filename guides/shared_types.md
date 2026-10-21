@@ -34,10 +34,10 @@ Event = #{
     data => #{user_id => <<"usr-123">>, email => <<"alice@example.com">>},
     metadata => #{correlation_id => <<"req-456">>}
 },
-{ok, Version} = reckon_gater_api:append_events(my_store, <<"user-usr-123">>, [Event]).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"user-019d7a4f3c2a7d8c9e0f1234567890aa">>, [Event]).
 
 %% Reading events returns #event{} records
-{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"user-usr-123">>, 0, 100),
+{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"user-019d7a4f3c2a7d8c9e0f1234567890aa">>, 0, 100),
 lists:foreach(fun(#event{event_type = Type, data = Data}) ->
     io:format("Event: ~s, Data: ~p~n", [Type, Data])
 end, Events).
@@ -62,17 +62,17 @@ The `#snapshot{}` record stores aggregate state at a specific version for fast r
 ```erlang
 %% Save a snapshot via gateway
 State = #{balance => 1000, status => active},
-ok = reckon_gater_api:record_snapshot(my_store, my_source, <<"account-123">>, 50, State).
+ok = reckon_gater_api:record_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 50, State).
 
-%% Load latest snapshot
-case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-123">>, latest) of
+%% Load latest snapshot (0 means "the most recent one")
+case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0) of
     {ok, #snapshot{version = V, data = State}} ->
         %% Replay events from version V onwards
-        {ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-123">>, V, 1000),
+        {ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, V, 1000),
         FinalState = lists:foldl(fun apply_event/2, State, Events);
     {error, not_found} ->
         %% No snapshot, replay all events
-        rebuild_from_scratch(my_store, <<"account-123">>)
+        rebuild_from_scratch(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>)
 end.
 ```
 
@@ -141,12 +141,13 @@ These constants control optimistic concurrency behavior:
 Usage with the gateway API:
 
 ```erlang
-%% Append with version check via options
+%% Append with version check. append_events/4 takes the expected version as
+%% its third argument; it fails if the stream's current version is not 4.
 {ok, Version} = reckon_gater_api:append_events(
     my_store,
-    <<"order-123">>,
-    [Event],
-    #{expected_version => 4}  %% Fails if current version != 4
+    <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>,
+    4,
+    [Event]
 ).
 ```
 

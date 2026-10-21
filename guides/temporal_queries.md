@@ -37,7 +37,7 @@ Temporal queries filter events by their `epoch_us` timestamp (microseconds since
 %%--------------------------------------------------------------------
 
 %% Read all events up to a specific moment
-{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-123">>, Timestamp).
+{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, Timestamp).
 ```
 
 ### How It Works
@@ -79,10 +79,10 @@ Read all events up to (and including) a timestamp:
 
 %% Basic usage - timestamp in microseconds since Unix epoch
 Timestamp = 1703001600000000,  %% Dec 19, 2025 12:00:00 UTC
-{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-123">>, Timestamp).
+{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, Timestamp).
 
 %% With options
-{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-123">>, Timestamp, #{
+{ok, Events} = reckon_gater_api:read_until(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, Timestamp, #{
     max_count => 1000       %% Limit number of events returned
 }).
 ```
@@ -102,7 +102,7 @@ ToTimestamp = 1703005200000000,    %% Dec 19, 2025 13:00:00 UTC
 
 {ok, Events} = reckon_gater_api:read_range(
     my_store,
-    <<"account-123">>,
+    <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>,
     FromTimestamp,
     ToTimestamp
 ).
@@ -118,7 +118,7 @@ Get the stream version at a specific point in time (without fetching events):
 %% Purpose: Find what version the stream was at a given time
 %%--------------------------------------------------------------------
 
-{ok, Version} = reckon_gater_api:version_at(my_store, <<"account-123">>, Timestamp).
+{ok, Version} = reckon_gater_api:version_at(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, Timestamp).
 %% => {ok, 42}
 
 %% Useful for:
@@ -156,7 +156,7 @@ reconstruct_at(StoreId, StreamId, Timestamp) ->
 
 %% Example usage:
 %% EndOfQ3 = timestamp_for({{2025, 9, 30}, {23, 59, 59}}),
-%% State = my_aggregate:reconstruct_at(my_store, <<"account-123">>, EndOfQ3),
+%% State = my_aggregate:reconstruct_at(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, EndOfQ3),
 %% Balance = maps:get(balance, State).
 ```
 

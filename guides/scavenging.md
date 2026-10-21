@@ -72,7 +72,7 @@ After scavenging (before=v500):
 ThirtyDaysAgo = erlang:system_time(microsecond) - (30 * 24 * 60 * 60 * 1000000),
 
 %% Scavenge the stream
-{ok, Result} = reckon_gater_api:scavenge(my_store, <<"orders-123">>, #{
+{ok, Result} = reckon_gater_api:scavenge(my_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890123">>, #{
     before => ThirtyDaysAgo,
     require_snapshot => true  %% Safety: only scavenge if snapshot exists
 }).
@@ -103,8 +103,8 @@ NinetyDaysAgo = erlang:system_time(microsecond) - (90 * 24 * 60 * 60 * 1000000),
 
 %% Results is a list of per-stream results
 [
-    #{stream => <<"orders-001">>, deleted_count => 500},
-    #{stream => <<"orders-002">>, deleted_count => 823},
+    #{stream => <<"orders-019d7a4f3c2a7d8c9e0f123456789001">>, deleted_count => 500},
+    #{stream => <<"orders-019d7a4f3c2a7d8c9e0f123456789002">>, deleted_count => 823},
     ...
 ]
 ```
@@ -118,7 +118,7 @@ NinetyDaysAgo = erlang:system_time(microsecond) - (90 * 24 * 60 * 60 * 1000000),
 %%--------------------------------------------------------------------
 
 %% ALWAYS preview before executing
-{ok, Preview} = reckon_gater_api:scavenge_dry_run(my_store, <<"orders-123">>, #{
+{ok, Preview} = reckon_gater_api:scavenge_dry_run(my_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890123">>, #{
     before => ThirtyDaysAgo
 }).
 

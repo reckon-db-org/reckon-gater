@@ -33,7 +33,7 @@ You can reconstruct the state at any point in time:
 
 ```erlang
 %% Get account balance as of last month
-{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-123">>, 0, 1000),
+{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0, 1000),
 PastEvents = [E || E <- Events, E#event.timestamp < LastMonthTimestamp],
 Balance = lists:foldl(fun apply_event/2, 0, PastEvents).
 ```
@@ -77,7 +77,7 @@ Events = [
         metadata => #{user_id => <<"user-456">>, correlation_id => <<"req-789">>}
     }
 ],
-{ok, Version} = reckon_gater_api:append_events(my_store, <<"order-ord-123">>, Events).
+{ok, Version} = reckon_gater_api:append_events(my_store, <<"order-019d7a4f3c2a7d8c9e0f1234567890aa">>, Events).
 ```
 
 ### Events
@@ -113,18 +113,17 @@ Events are immutable facts that have happened. They should:
 reckon-db uses optimistic concurrency control to prevent conflicting writes:
 
 ```erlang
-%% Expected version semantics (via options):
-%% expected_version => -1 (NO_STREAM): Stream must not exist (first write)
-%% expected_version => -2 (ANY_VERSION): No version check, always append
-%% expected_version => N >= 0: Stream version must equal N
+%% Expected version semantics. append_events/4 takes the expected version as
+%% its third argument, before the events:
+%%   -1 (NO_STREAM):   Stream must not exist (first write)
+%%   -2 (ANY_VERSION): No version check, always append
+%%   N >= 0:           Stream version must equal N
 
 %% First write to a new stream
-{ok, 0} = reckon_gater_api:append_events(my_store, <<"order-123">>, [Event1],
-    #{expected_version => -1}).
+{ok, 0} = reckon_gater_api:append_events(my_store, <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>, -1, [Event1]).
 
 %% Subsequent writes must specify expected version
-{ok, 1} = reckon_gater_api:append_events(my_store, <<"order-123">>, [Event2],
-    #{expected_version => 0}).
+{ok, 1} = reckon_gater_api:append_events(my_store, <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0, [Event2]).
 
 %% Concurrent writes will fail with version mismatch
 %% Process A reads version 1

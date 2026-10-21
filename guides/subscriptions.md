@@ -22,7 +22,7 @@ nothing (see PubSub Channels below).
     my_store,                    %% Store ID
     stream,                      %% Type: stream | event_type | by_tags
                                  %%       | event_pattern | event_payload
-    <<"order-123">>,             %% Selector
+    <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>,             %% Selector
     <<"order_handler">>,         %% Subscription name
     0,                           %% Start position: a position in the
                                  %%   store's global order; 0 = the beginning
@@ -49,7 +49,7 @@ that order. There is no options map: `start_from` is the integer itself, and
 ```erlang
 %% Subscribe to a single order's events
 {ok, _} = reckon_gater_api:save_subscription(
-    my_store, stream, <<"order-123">>, <<"order_handler">>, 0, self()
+    my_store, stream, <<"order-019d7a4f3c2a7d8c9e0f1234567890ab">>, <<"order_handler">>, 0, self()
 ).
 ```
 

@@ -127,6 +127,30 @@ What was wrong, and is not any more:
   whose checkpoint is a global position; the quick start appended an event
   with `type =>` where the store reads `event_type`; the delivery label in
   `assets/subscription_flow.svg` said `{event, E}`.
+- **The snapshot pattern compiles AND runs.** It was checked against a live
+  store this time, not only through the compiler, and three things it had
+  been doing wrong since it was written are fixed: `append_events/4` takes
+  the expected version **third**, before the events, not as an
+  `#{expected_version => N}` option; `read_snapshot/4` takes an **integer**,
+  and `0` - not the atom `latest` - asks for the newest one (`latest` is
+  `integer_to_list/1`'d in the gateway worker, which badargs and takes the
+  worker down); and a stream that does not exist answers
+  `{error, {stream_not_found, StreamId}}`, which the old
+  `{error, stream_not_found}` clause never matched.
+- The aggregate example's record defaults `version` to `?NO_STREAM` (-1)
+  rather than 0: 0 is a real version, so an aggregate that had never been
+  written could never have produced the -1 a first append expects.
+- `apply_event/2` reads **two** shapes, and says so: the maps the module
+  builds to append, and the `#event{}` records the store replays.
+- **Stream ids in the examples are ids the store accepts.** A stream id is
+  `<type>-<32 lowercase hex>`, `type` matching `[a-z]{1,32}`
+  (`reckon_gater_stream_id:validate/1`). `<<"account-123">>`, used
+  throughout the guides, is refused with
+  `{error, {invalid_stream_id, malformed_user_id, Id}}` - there is no such
+  stream, so no example that used one could have worked. Every stream id in
+  the README and guides is now a valid one, and `snapshots.md` states the
+  grammar in one place. Payload ids (`#{order_id => ...}`) are left alone;
+  they are data, not stream names.
 
 ### Notes
 
