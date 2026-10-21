@@ -30,7 +30,13 @@ retry_test_() ->
         {"invalid_stream_id is non-retriable (fails fast)",
          fun retry_skips_invalid_stream_id_test/0},
         {"invalid_filter is non-retriable (fails fast)",
-         fun retry_skips_invalid_filter_test/0}
+         fun retry_skips_invalid_filter_test/0},
+        {"version_conflict is non-retriable (fails fast)",
+         fun retry_skips_version_conflict_test/0},
+        {"version_unverifiable is non-retriable (fails fast)",
+         fun retry_skips_version_unverifiable_test/0},
+        {"invalid_metadata_key is non-retriable (fails fast)",
+         fun retry_skips_invalid_metadata_key_test/0}
      ]}.
 
 setup() ->
@@ -136,6 +142,34 @@ retry_skips_invalid_filter_test() ->
     Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
     CallCount = counters:new(1, []),
     Err = {invalid_filter, invalid_stream},
+    Fun = fun() ->
+        counters:add(CallCount, 1, 1),
+        {error, Err}
+    end,
+    Result = reckon_gater_retry:with_retry(test_store, Fun, Config),
+    ?assertEqual({error, Err}, Result),
+    ?assertEqual(1, counters:get(CallCount, 1)).
+
+%% reckon-db 5.11.13 answers an append that was not written. Retrying inside
+%% the gateway cannot win a version race the store already gave up on after
+%% sixty attempts, and cannot bring back scavenged events - a caller that got
+%% one of these waited the whole 81-second ladder to be told so.
+retry_skips_version_conflict_test() ->
+    assert_fails_fast({version_conflict, -2, 418}).
+
+retry_skips_version_unverifiable_test() ->
+    assert_fails_fast({version_unverifiable, 418,
+                       {khepri, node_not_found, [streams, <<"orders-1">>, 0]}}).
+
+%% reckon-evoq 2.9.0 refuses a non-binary metadata query itself; the store's
+%% query takes binaries, so the answer never changes.
+retry_skips_invalid_metadata_key_test() ->
+    assert_fails_fast({invalid_metadata_key, causation_id}).
+
+%% The error goes back as it came, unwrapped, after exactly one call.
+assert_fails_fast(Err) ->
+    Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
+    CallCount = counters:new(1, []),
     Fun = fun() ->
         counters:add(CallCount, 1, 1),
         {error, Err}

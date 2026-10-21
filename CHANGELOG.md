@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed: a refused append is no longer retried for 81 seconds
+
+`is_retriable_error/1` classified every error it did not recognise as
+transient, so the store's newest refusals went through the full ladder - ten
+retries, 100 ms doubling to 30 s, about 81 seconds - before the caller was
+told, and then as `{error, {retries_exhausted, Reason}}` rather than as the
+error itself. Four clauses now answer `false`:
+
+- `{version_conflict, _, _}` - the append lost its version race on every one
+  of the store's sixty attempts (reckon-db 5.11.13);
+- `{version_unverifiable, _, _}` - the store refused because the stream's
+  older versions were scavenged, or the stream was deleted under the append;
+- `{invalid_metadata_key, _}` and `{invalid_metadata_value, _}` - a metadata
+  query that is not binary-keyed, refused by reckon-evoq 2.9.0 before it
+  reaches the store.
+
+None of them gets better by trying again. Each reaches the caller on the
+first call, unchanged.
+
 ### Fixed: three specs said ok, the functions have always answered {ok, _}
 
 `-spec ack_event/4`, `-spec remove_subscription/4` and `-spec delete_stream/2`
@@ -74,6 +93,26 @@ What was wrong, and is not any more:
   compute a correct value.
 - `quick_health_check/1` returns `{ok, map()}`; the README showed
   `ok = ...`, which badmatches.
+- `event_pattern`'s selector is a **map**, not a glob: the store's filter is
+  `by_event_pattern/1` and takes a map only, so every guide example passing
+  `<<"order-*">>` crashed the gateway worker and left a subscription behind
+  whose creation the caller never saw succeed. The examples pass
+  `#{event_type => <<"order_placed_v1">>}` now.
+- **That map does not match anything yet.** The store compiles it into its
+  trigger's data-match condition, and the payload the store holds is an
+  `#event{}` record, which no map pattern matches; the catch-up path
+  meanwhile delivers every event regardless of the selector
+  (reckon-db-org/reckon-db#8). The guide says so and points readers at
+  `event_type` until it is fixed. Recorded here because the guides used to
+  present `event_pattern` as a working wildcard.
+- Event names are the house form throughout the guides (`order_placed_v1`,
+  not `OrderPlaced`), so a projection's match clause and the event the same
+  guide appends agree; the projection examples match `#event{}` records, not
+  maps, and no longer call `E#event.version` on a map.
+- The README's ack example acked a stream version against a subscription
+  whose checkpoint is a global position; the quick start appended an event
+  with `type =>` where the store reads `event_type`; the delivery label in
+  `assets/subscription_flow.svg` said `{event, E}`.
 
 ### Notes
 

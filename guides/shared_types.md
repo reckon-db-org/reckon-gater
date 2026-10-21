@@ -15,7 +15,7 @@ The `#event{}` record represents an immutable fact stored in an event stream.
 ```erlang
 -record(event, {
     event_id          :: binary(),           %% Unique identifier (UUID)
-    event_type        :: binary(),           %% Type name (e.g., <<"OrderPlaced">>)
+    event_type        :: binary(),           %% Type name (e.g., <<"order_placed_v1">>)
     stream_id         :: binary(),           %% Stream this event belongs to
     version           :: non_neg_integer(),  %% Position within stream (0-based)
     data              :: map() | binary(),   %% Event payload (Erlang term)

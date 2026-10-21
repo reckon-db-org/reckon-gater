@@ -44,9 +44,9 @@ Different consumers can have different views of the same data:
 
 %% Order Events Stream
 [
-    #{event_type => <<"OrderPlaced">>, data => #{...}},
-    #{event_type => <<"PaymentReceived">>, data => #{...}},
-    #{event_type => <<"OrderShipped">>, data => #{...}}
+    #{event_type => <<"order_placed_v1">>, data => #{...}},
+    #{event_type => <<"payment_received_v1">>, data => #{...}},
+    #{event_type => <<"order_shipped_v1">>, data => #{...}}
 ]
 
 %% Read Model 1: Customer Dashboard (optimized for display)
@@ -85,7 +85,7 @@ Commands represent intentions to change state. They are validated and may produc
 -module(order_commands).
 -export([handle/2]).
 
-%% Handle PlaceOrder command
+%% Handle the place_order command
 handle({place_order, OrderId, CustomerId, Items}, State) ->
     %% Validate business rules
     case validate_items(Items) of
@@ -100,7 +100,7 @@ handle({place_order, OrderId, CustomerId, Items}, State) ->
                     %% Generate events
                     Total = calculate_total(Items),
                     Event = #{
-                        event_type => <<"OrderPlaced">>,
+                        event_type => <<"order_placed_v1">>,
                         data => #{
                             order_id => OrderId,
                             customer_id => CustomerId,
@@ -127,7 +127,7 @@ handle({cancel_order, OrderId, Reason}, State) ->
             {error, already_cancelled};
         _ ->
             Event = #{
-                event_type => <<"OrderCancelled">>,
+                event_type => <<"order_cancelled_v1">>,
                 data => #{order_id => OrderId, reason => Reason}
             },
             {ok, [Event]}
@@ -166,7 +166,7 @@ init(StoreId) ->
     {ok, _} = reckon_gater_api:save_subscription(
         StoreId,
         event_pattern,
-        <<"order-*">>,
+        #{event_type => <<"order_placed_v1">>},
         <<"order_dashboard_projection">>,
         0,
         self()
@@ -239,7 +239,7 @@ project_event(#event{event_type = <<"order_shipped_v1">>,
             ets:insert(?TABLE, {{customer_order, CustomerId, OrderId}, Updated});
         [] ->
             %% Event for unknown order - log warning
-            logger:warning("OrderShipped for unknown order: ~p", [OrderId])
+            logger:warning("order_shipped_v1 for unknown order: ~p", [OrderId])
     end;
 
 project_event(_Event) ->
@@ -302,10 +302,12 @@ There's a delay between steps 1 and 4. This is usually milliseconds, but can be 
 %% After successful command, show optimistic update
 case order_commands:handle(PlaceOrderCmd, State) of
     {ok, Events} ->
-        %% Write events via gateway
+        %% Write events via gateway. The argument order is
+        %% (StoreId, StreamId, ExpectedVersion, Events): the version first,
+        %% and it is an integer the store compares (reckon_db_streams
+        %% semantics: -1 stream must not exist, -2 no check).
         {ok, Version} = reckon_gater_api:append_events(
-            my_store, StreamId, Events,
-            #{expected_version => ExpectedVer}
+            my_store, StreamId, ExpectedVer, Events
         ),
 
         %% Return success with the data the client needs
@@ -329,10 +331,10 @@ get_order_status(StoreId, OrderId) ->
 
     %% Derive status from events
     Status = lists:foldl(fun
-        (#event{event_type = <<"OrderPlaced">>}, _) -> placed;
-        (#event{event_type = <<"OrderShipped">>}, _) -> shipped;
-        (#event{event_type = <<"OrderDelivered">>}, _) -> delivered;
-        (#event{event_type = <<"OrderCancelled">>}, _) -> cancelled;
+        (#event{event_type = <<"order_placed_v1">>}, _) -> placed;
+        (#event{event_type = <<"order_shipped_v1">>}, _) -> shipped;
+        (#event{event_type = <<"order_delivered_v1">>}, _) -> delivered;
+        (#event{event_type = <<"order_cancelled_v1">>}, _) -> cancelled;
         (_, Acc) -> Acc
     end, unknown, Events),
 
@@ -346,16 +348,18 @@ get_order_status(StoreId, OrderId) ->
 Projections may receive the same event multiple times (redelivery, replay). Make them idempotent:
 
 ```erlang
-%% Bad: Not idempotent
-project_event(#{event_type := <<"ItemAdded">>} = E) ->
-    OrderId = maps:get(order_id, maps:get(data, E)),
-    ets:update_counter(?TABLE, {item_count, OrderId}, 1).  %% Will double-count on replay
+%% Bad: not idempotent
+project_event(#event{event_type = <<"item_added_v1">>, data = Data}) ->
+    OrderId = maps:get(order_id, Data),
+    ets:update_counter(?TABLE, {item_count, OrderId}, 1).  %% double-counts on replay
 
-%% Good: Idempotent using event version
-project_event(#{event_type := <<"ItemAdded">>} = E) ->
-    OrderId = maps:get(order_id, maps:get(data, E)),
-    EventVersion = E#event.version,
-
+%% Good: idempotent on the event's version. Delivery hands you #event{}
+%% records, not the bare event maps you appended, and version is the event's
+%% version within its stream - monotone per stream, which is what this
+%% projection needs (one stream per order).
+project_event(#event{event_type = <<"item_added_v1">>, data = Data,
+                     version = EventVersion}) ->
+    OrderId = maps:get(order_id, Data),
     case ets:lookup(?TABLE, {last_version, OrderId}) of
         [{_, LastVersion}] when EventVersion =< LastVersion ->
             %% Already processed this event

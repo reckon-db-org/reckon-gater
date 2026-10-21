@@ -49,7 +49,7 @@
 
   <rect x="425" y="150" width="150" height="40" rx="5" fill="#ea580c"/>
   <text x="500" y="168" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="11" font-weight="bold">events</text>
-  <text x="500" y="183" text-anchor="middle" fill="#fdba74" font-family="Arial, sans-serif" font-size="8">stream, store, type</text>
+  <text x="500" y="183" text-anchor="middle" fill="#fdba74" font-family="Arial, sans-serif" font-size="8">app messages, not store events</text>
 
   <rect x="585" y="150" width="150" height="40" rx="5" fill="#ea580c"/>
   <text x="660" y="168" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="11" font-weight="bold">health</text>

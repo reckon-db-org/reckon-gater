@@ -116,7 +116,7 @@ reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 {ok, Schemas} = reckon_gater_api:list_schemas(my_store).
 %% => [
 %%     #{event_type => <<"UserCreated">>, version => 2},
-%%     #{event_type => <<"OrderPlaced">>, version => 3},
+%%     #{event_type => <<"order_placed_v1">>, version => 3},
 %%     ...
 %% ]
 ```
@@ -167,7 +167,7 @@ Example with 3 versions:
 %% Purpose: Register schema with full upcast chain
 %%--------------------------------------------------------------------
 
-reckon_gater_api:register_schema(my_store, <<"OrderPlaced">>, #{
+reckon_gater_api:register_schema(my_store, <<"order_placed_v1">>, #{
     version => 3,
     fields => [
         #{name => <<"order_id">>, type => string},

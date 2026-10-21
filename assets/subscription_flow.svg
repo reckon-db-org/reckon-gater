@@ -63,9 +63,9 @@
   <line x1="175" y1="220" x2="65" y2="220" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="120" y="213" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2e7d32">{ok, version}</text>
 
-  <!-- Step 7: {event, E} to subscribers -->
+  <!-- Step 7: {events, [#event{}]} to subscribers -->
   <rect x="445" y="200" width="70" height="25" rx="4" fill="url(#subGrad)" stroke="#2196f3" stroke-width="1"/>
-  <text x="480" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">{event, E}</text>
+  <text x="480" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#1565c0">{events, [#event{}]}</text>
 
   <!-- Note -->
   <text x="275" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-style="italic" fill="#666">Triggers only fire AFTER events are committed via Raft consensus</text>

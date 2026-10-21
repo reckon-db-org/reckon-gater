@@ -131,6 +131,20 @@ is_retriable_error({no_snapshot, _}) -> false;
 %% maps it to a DCB Conflict response instead of exhausting 11 backoff attempts
 %% and timing out the gRPC call.
 is_retriable_error({context_changed, _}) -> false;
+%% reckon-db 5.11.13 answers an append that was not written. version_conflict
+%% is the append losing its version race on every attempt (the cap is 60, far
+%% longer than any backoff here), and version_unverifiable is the store
+%% refusing because the stream's older versions were scavenged or the stream
+%% was deleted under the append: neither gets better by trying again, and
+%% retrying the second cost a gateway caller the full 81-second ladder before
+%% it was told. Both reach the caller unchanged.
+is_retriable_error({version_conflict, _, _}) -> false;
+is_retriable_error({version_unverifiable, _, _}) -> false;
+%% reckon-evoq 2.9.0 refuses a metadata query whose key or value is not a
+%% binary before it reaches the store; the store's query takes binaries, so
+%% the same argument answers the same error however often it is sent.
+is_retriable_error({invalid_metadata_key, _}) -> false;
+is_retriable_error({invalid_metadata_value, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 

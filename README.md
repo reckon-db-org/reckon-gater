@@ -16,7 +16,7 @@ reckon-gater is an Erlang gateway service providing:
 - **Load Balancing**: Round-robin with exponential backoff retry
 - **Shared Type Definitions**: Common records for events, snapshots, and subscriptions
 - **Capability-Based Security**: UCAN-inspired tokens for decentralized authorization
-- **PubSub Channels**: 10 dedicated channels with priority-based delivery
+- **PubSub Channels**: 10 dedicated channels for the application's own messages, with priority-based delivery; store events do not flow through them
 - **HMAC Security**: Message signing for critical channels
 - **Tamper-Resistance Primitives** *(new in 2.1.0)*: Canonical encoder and HMAC + hash-chain helpers used by `reckon-db` 2.1.0 to make stored events and snapshots tamper-evident. See `reckon_gater_canonical` and `reckon_gater_integrity` modules.
 - **DCB Wire API** *(new in 2.3.0)*: `reckon_gater_api:append_if_no_tag_matches/4` plus the `tag_filter()` + `seq_cutoff()` types in `include/reckon_gater_types.hrl`. Cross-stream conditional append with atomic consistency check. See [DCB Guide](guides/dcb.md).
@@ -54,8 +54,9 @@ Pure Erlang implementation - works everywhere, no native dependencies.
 %% Start the application (typically started by reckon-db)
 application:ensure_all_started(reckon_gater).
 
-%% Append events to a stream
-Events = [#{type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
+%% Append events to a stream. An event is a map with event_type and data;
+%% the store's own reader names the field event_type, not type.
+Events = [#{event_type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
 {ok, Version} = reckon_gater_api:append_events(my_store, <<"users-123">>, Events).
 
 %% Read events from a stream
@@ -64,8 +65,10 @@ Events = [#{type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
 %% The channel server is the APPLICATION's own pubsub: subscribe and
 %% publish to it yourself. Store events do not flow through it - a store
 %% subscription delivers to the pid it was given, as {events, Events}.
+%% The selector is a map, not a glob: a binary selector is refused by the
+%% store's filter (see "Subscription operations" below).
 {ok, _} = reckon_gater_api:save_subscription(
-    my_store, event_pattern, <<"user-*">>, <<"user_notifier">>, 0, self()).
+    my_store, event_type, <<"user_registered_v1">>, <<"user_notifier">>, 0, self()).
 
 %% Receive store events (a batch of #event{} records)
 receive
@@ -114,7 +117,10 @@ reckon_gater_api:remove_subscription(StoreId, Type, Selector, Name) ->
     {ok, term()} | {error, term()}.
 
 %% Acknowledge event processing. The fourth argument is a map, not the
-%% #event{} record: #{stream_id => S, version => V}.
+%% #event{} record: #{stream_id => S, version => V}, where version is the
+%% event's GLOBAL position in the store's log, not its version within the
+%% stream. That global position is what the subscription's checkpoint holds,
+%% so acking a stream version moves the checkpoint to the wrong place.
 reckon_gater_api:ack_event(StoreId, SubscriptionName, SubscriberPid, EventMap) ->
     {ok, term()} | {error, term()}.
 
@@ -362,7 +368,7 @@ The gateway provides 10 dedicated PubSub channels:
 |---------|----------|------------|------|---------|
 | `reckon_gater_channel_alerts` | critical | unlimited | required | Critical system alerts |
 | `reckon_gater_channel_security` | critical | unlimited | required | Security events |
-| `reckon_gater_channel_events` | high | unlimited | optional | Business events |
+| `reckon_gater_channel_events` | high | unlimited | optional | The application's own messages; store events never flow here |
 | `reckon_gater_channel_health` | high | 100/sec | optional | Health checks |
 | `reckon_gater_channel_system` | normal | unlimited | optional | System notifications |
 | `reckon_gater_channel_metrics` | normal | 10000/sec | optional | Performance metrics |
@@ -521,8 +527,11 @@ true = reckon_gater_api:stream_exists(my_store, StreamId).
 %% Subscription operations
 {ok, _} = reckon_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).
 {ok, _} = reckon_gater_api:remove_subscription(my_store, stream, StreamId, <<"my_sub">>).
+%% The ack names the event's GLOBAL position, not its version in the stream:
+%% that is what the checkpoint holds.
 {ok, _} = reckon_gater_api:ack_event(my_store, <<"my_sub">>, self(),
-                                     #{stream_id => StreamId, version => Version}).
+                                     #{stream_id => StreamId,
+                                       version => GlobalPosition}).
 {ok, Subs} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Snapshot operations

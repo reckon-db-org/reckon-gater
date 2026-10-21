@@ -72,7 +72,7 @@ A **stream** is an ordered sequence of events sharing a common identifier (the s
 %% Append events to a stream via gateway
 Events = [
     #{
-        event_type => <<"OrderPlaced">>,
+        event_type => <<"order_placed_v1">>,
         data => #{order_id => <<"ord-123">>, items => [...], total => 9999},
         metadata => #{user_id => <<"user-456">>, correlation_id => <<"req-789">>}
     }
@@ -83,14 +83,14 @@ Events = [
 ### Events
 
 Events are immutable facts that have happened. They should:
-- Be named in past tense (e.g., `OrderPlaced`, not `PlaceOrder`)
+- Be named in past tense (e.g., `order_placed_v1`, not `place_order`)
 - Contain all information needed to understand what happened
 - Be business-meaningful (e.g., `AccountOverdrawn`, not `BalanceUpdated`)
 
 ```erlang
 %% Event structure
 #{
-    event_type => <<"OrderPlaced">>,      %% What happened
+    event_type => <<"order_placed_v1">>,      %% What happened
     data => #{                             %% The event payload
         order_id => <<"ord-123">>,
         customer_id => <<"cust-456">>,
@@ -141,8 +141,8 @@ Use past tense verbs that describe business facts:
 
 | Good | Bad |
 |------|-----|
-| `OrderPlaced` | `CreateOrder` |
-| `PaymentReceived` | `ProcessPayment` |
+| `order_placed_v1` | `CreateOrder` |
+| `payment_received_v1` | `process_payment` |
 | `ItemShipped` | `ShipItem` |
 | `AccountOverdrawn` | `UpdateBalance` |
 
@@ -174,13 +174,13 @@ Events are immutable, but schemas evolve. Use explicit versions:
 
 ```erlang
 %% Version 1
-#{event_type => <<"OrderPlaced.v1">>, data => #{
+#{event_type => <<"order_placed_v1">>, data => #{
     order_id => ...,
     items => [...]
 }}
 
 %% Version 2 (added shipping_address)
-#{event_type => <<"OrderPlaced.v2">>, data => #{
+#{event_type => <<"order_placed_v2">>, data => #{
     order_id => ...,
     items => [...],
     shipping_address => #{}
@@ -190,10 +190,10 @@ Events are immutable, but schemas evolve. Use explicit versions:
 Handle schema evolution in your projections:
 
 ```erlang
-handle_event(#{event_type := <<"OrderPlaced.v1">>} = Event) ->
+handle_event(#{event_type := <<"order_placed_v1">>} = Event) ->
     %% Default shipping address for v1 events
     upgrade_to_v2(Event);
-handle_event(#{event_type := <<"OrderPlaced.v2">>} = Event) ->
+handle_event(#{event_type := <<"order_placed_v2">>} = Event) ->
     process_order(Event).
 ```
 
@@ -219,7 +219,7 @@ An **aggregate** is a domain object that encapsulates state and enforces invaria
 new() -> #order{}.
 
 %% Apply events to rebuild state
-apply_event(#{event_type := <<"OrderPlaced">>} = E, _Order) ->
+apply_event(#{event_type := <<"order_placed_v1">>} = E, _Order) ->
     Data = maps:get(data, E),
     #order{
         id = maps:get(order_id, Data),
@@ -247,7 +247,7 @@ apply_event(#{event_type := <<"OrderShipped">>}, Order) ->
 place_order(OrderId, Items) ->
     Total = lists:sum([Q * P || #{quantity := Q, price := P} <- Items]),
     {ok, [#{
-        event_type => <<"OrderPlaced">>,
+        event_type => <<"order_placed_v1">>,
         data => #{order_id => OrderId, items => Items, total => Total}
     }]}.
 
