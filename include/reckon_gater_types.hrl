@@ -206,12 +206,18 @@
 %%====================================================================
 
 %% Subscription types come in two forms:
-%% - evoq-style: stream, event_type, event_pattern, event_payload, tags
+%% - evoq-style: stream, event_type, event_pattern, event_payload
 %% - gater-style: by_stream, by_event_type, by_event_pattern, by_event_payload, by_tags
 %%
-%% The reckon_evoq_adapter translates from evoq-style to gater-style,
-%% and reckon_db accepts both for backward compatibility.
--type subscription_type() :: stream | event_type | event_pattern | event_payload | tags
+%% The reckon_evoq_adapter translates from evoq-style to gater-style, and
+%% reckon_db accepts both spellings for backward compatibility.
+%%
+%% `tags` is NOT among the evoq-style spellings even though evoq's own
+%% subscription type is called that: it reaches the store as `by_tags' (the
+%% adapter translates it), and a bare `tags' has no filter clause in
+%% reckon-db, so offering it here would type-check a call that fails with
+%% `function_clause'.
+-type subscription_type() :: stream | event_type | event_pattern | event_payload
                            | by_stream | by_event_type | by_event_pattern | by_event_payload | by_tags.
 
 %%====================================================================

@@ -1,5 +1,5 @@
 # Known dialyzer findings, recorded as a ratchet. See scripts/dialyzer_ratchet.sh.
-# Dialyzer reported 58 warnings when this was written.
+# Dialyzer reported 55 warnings when this was written.
 # A new finding fails CI. A fixed finding should have its line deleted here.
 src/reckon_gater_api.erl	5abc21d1d9a6	Type specification reckon_gater_api:do_route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()}
 src/reckon_gater_api.erl	6fd9012c8bf2	Type specification reckon_gater_api:route_call(atom(),term()) -> {'ok',term()} | {'error',term()} is a superty

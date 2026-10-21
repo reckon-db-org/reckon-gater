@@ -194,22 +194,15 @@ start_link(StoreId) ->
     gen_server:start_link(?MODULE, [StoreId], []).
 
 init([StoreId]) ->
-    %% Create subscription via gateway
+    %% Create subscription via gateway. The subscriber is this process: that
+    %% is what makes deliveries arrive as {events, Events}.
     {ok, _} = reckon_gater_api:save_subscription(
         StoreId, event_pattern, <<"order-*">>, <<"order_handler">>, 0, self()
     ),
-
-    %% Also subscribe to PubSub for real-time delivery
-    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"order.*">>, self()),
-
     {ok, #{store_id => StoreId}}.
 
-handle_info({channel_message, _, Topic, Event}, State) ->
-    handle_event(Event),
-    {noreply, State};
-
 handle_info({events, Events}, State) ->
-    %% Direct subscription delivery is {events, [#event{}]}, a batch.
+    %% Subscription delivery is {events, [#event{}]}: a BATCH.
     lists:foreach(fun handle_event/1, Events),
     {noreply, State}.
 
@@ -228,46 +221,51 @@ handle_event(_Event) ->
 -behaviour(gen_server).
 
 init([StoreId]) ->
-    %% Load last processed position
-    NextPosition = load_checkpoint(StoreId),
-
-    %% Subscribe from the position AFTER the one we last consumed. The start
-    %% position is a position in the store's global order, and it is
-    %% exclusive: consumed up to C, ask for C + 1.
+    %% The subscription's start position is a position in the store's GLOBAL
+    %% order, and it is INCLUSIVE: the first event the store replays is the
+    %% one at that position. 0 reads from the beginning; after consuming up
+    %% to and including C, ask for C + 1.
+    StartFrom = 0,
     {ok, _} = reckon_gater_api:save_subscription(
         StoreId, event_pattern, <<"order-*">>, <<"checkpointed_handler">>,
-        NextPosition, self()
+        StartFrom, self()
     ),
 
-    {ok, #{store_id => StoreId, last_position => NextPosition - 1}}.
+    {ok, #{store_id => StoreId}}.
 
-%% Delivery is {events, [Event]}.
-handle_info({events, [#event{} = Event | _]}, #{store_id := StoreId} = State) ->
-    #event{version = Version, stream_id = StreamId} = Event,
+%% Delivery is {events, [Event]} - a BATCH, up to the store's read batch
+%% size. Handling only the head and acking once leaves the rest of the batch
+%% unprojected and unacknowledged; fold over every event.
+handle_info({events, Events}, #{store_id := StoreId} = State) ->
+    [handle_event(StoreId, Event) || Event <- Events],
+    {noreply, State};
+handle_info(_Other, State) ->
+    {noreply, State}.
 
-    %% Process the event
-    handle_event(Event),
+handle_event(StoreId, #event{stream_id = StreamId, version = Version} = Event) ->
+    do_something_with(Event),
 
-    %% Acknowledge and checkpoint. Two things to know:
-    %%
-    %% - the ack takes a map, not the record;
-    %% - the Position it carries is a position in the store's GLOBAL order,
-    %%   which is what save_subscription/6's StartFrom is compared against.
-    %%   #event.version is the event's version IN ITS STREAM - a different
-    %%   number in a different space - and handing it back as a start
-    %%   position resumes the wrong subscription at the wrong place.
-    %%
-    %% A #event{} record does not carry the global position today, so a
-    %% direct subscriber that checkpoints per event has to take it from its
-    %% own delivery order (count the events it has consumed, exactly as the
-    %% gateway's own subscriptions do). The gateway-side subscription acks
-    %% for you; a raw pubsub consumer does not get that for free.
+    %% The ack takes a MAP, not the record, and it names the event by STREAM
+    %% and stream version: that is what ack_event/4 is for.
     {ok, _} = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, self(),
-                                         #{stream_id => StreamId, version => Position}),
-    save_checkpoint(StoreId, Position + 1),
-
-    {noreply, State#{last_position => Position}}.
+                                         #{stream_id => StreamId, version => Version}).
 ```
+
+**What this example cannot do, and why.** Resuming correctly needs the
+subscription's own global position saved per event, and an `#event{}` record
+has no field for it: `version` is the event's version in its stream, a
+different number in a different space, and the store's catch-up advances by
+raw batch offset and then drops what the selector does not match - so a
+subscriber cannot derive its global position by counting what it received
+either. Nothing acks on a subscriber's behalf: the gateway acks only when a
+*client* calls `ack_event`, which a raw subscriber is not.
+
+That is reckon-db-org/reckon-db#7 (a stable global sequence carried on the
+event). Until it lands, a direct subscriber can process every event and ack
+it by stream and version, and a subscription that is re-registered under the
+same name catches up from its STORED checkpoint and ignores the new
+`StartFrom` - but a per-event resume point cannot be computed here. Do not
+write a counting recipe that pretends otherwise.
 
 ### Pool of Handlers
 
@@ -275,25 +273,57 @@ handle_info({events, [#event{} = Event | _]}, #{store_id := StoreId} = State) ->
 -module(handler_pool).
 
 start_pool(StoreId, PoolSize) ->
-    %% Create subscription. The subscriber is undefined: the pool's workers
-    %% read through the PubSub channel, not this subscription.
-    {ok, _} = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, <<"order-*">>, <<"handler_pool">>, 0, undefined
-    ),
+    Workers = [begin
+                   {ok, Pid} = handler_worker:start_link(StoreId, N),
+                   Pid
+               end || N <- lists:seq(1, PoolSize)],
 
-    %% Start worker processes
-    [begin
-        {ok, Pid} = handler_worker:start_link(StoreId, N),
-        Pid
-    end || N <- lists:seq(1, PoolSize)].
+    %% ONE subscription, and its subscriber is the dispatcher: a subscription
+    %% delivers to the pid it was given and to nothing else. `undefined'
+    %% means "deliver to nobody", not "broadcast" - the emitting side is
+    %% reckon-db's own pg group (scope reckon_db_pg), which nothing in
+    %% reckon-gater joins.
+    Dispatcher = spawn_link(fun() -> dispatcher_loop(Workers) end),
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_pattern, <<"order-*">>, <<"handler_pool">>, 0, Dispatcher
+    ),
+    Dispatcher.
+
+%% Round-robin each event of each batch across the pool.
+dispatcher_loop(Workers) ->
+    receive
+        {events, Events} ->
+            dispatcher_loop(deliver(Events, Workers))
+    end.
+
+deliver([], Workers) ->
+    Workers;
+deliver([Event | Rest], [Worker | Others]) ->
+    Worker ! {event, Event},
+    deliver(Rest, Others ++ [Worker]).
 
 -module(handler_worker).
+-behaviour(gen_server).
+
+start_link(StoreId, WorkerId) ->
+    gen_server:start_link(?MODULE, [StoreId, WorkerId], []).
 
 init([StoreId, WorkerId]) ->
-    %% Subscribe to PubSub for load-balanced delivery
-    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"*">>, self()),
     {ok, #{store_id => StoreId, worker_id => WorkerId}}.
+
+handle_info({event, Event}, State) ->
+    handle_event(Event),
+    {noreply, State}.
+
+handle_event(_Event) ->
+    ok.
 ```
+
+The fan-out is yours to write; what it must not do is what this example used
+to do, which was give the subscription `undefined` as its subscriber and let
+the workers subscribe to `reckon_gater_channel_events`. That channel is the
+application's own pubsub (`reckon_gater_channel_server:publish/3`); nothing
+publishes store events onto it, so those workers received nothing at all.
 
 ## Catch-Up Subscriptions
 

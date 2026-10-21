@@ -58,10 +58,14 @@ When an event handler or process manager reacts to an event and produces new
 events, it must forward both IDs to maintain the chain:
 
 ```erlang
-%% Delivery is {events, [#event{}]}: the record, not a map.
-handle_info({events, [#event{} = OrderPlaced | _]}, State) ->
-    #event{event_id = EventId, metadata = Meta} = OrderPlaced,
-    CorrelationId = maps:get(<<"correlation_id">>, Meta),
+%% Delivery is {events, [#event{}]} - a BATCH, the record, not a map.
+handle_info({events, Events}, State) ->
+    [request_payment(OrderPlaced) || #event{event_type = <<"order_placed_v1">>} = OrderPlaced
+                                        <- Events],
+    {noreply, State}.
+
+request_payment(#event{event_id = EventId, metadata = Meta}) ->
+    CorrelationId = maps:get(<<"correlation_id">>, Meta, undefined),
     NewEvent = #{
         event_type => <<"payment_requested_v1">>,
         data       => ...,
@@ -89,9 +93,15 @@ There **is** a built-in primitive: `reckon_gater_api:read_by_metadata/3`.
 
 It is an indexed read when the store declares the `{meta, Key}` secondary
 index for that key, and a whole-store scan otherwise - so declare the index
-for the keys you actually query. The key is matched **as stored**: metadata
-keys go through the adapter as binaries, which is the spelling the index is
-built from.
+for the keys you actually query.
+
+The key is matched **as stored**, and the store keeps metadata exactly as it
+was appended. Write the keys as BINARIES (`<<"causation_id">>`, as every
+example here does) and query them the same way: an atom key is stored under
+the atom, is invisible to a query for the binary, and the query answers
+`{ok, []}` rather than telling you the spelling is wrong. (reckon-evoq's
+adapter renames the three reserved lineage keys to their binary spelling on
+the way in; a direct gater writer has no such translation.)
 
 The store does not interpret the key. Walking a multi-hop causation chain,
 building the graph from the correlation set, and deciding which of your keys

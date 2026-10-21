@@ -17,7 +17,7 @@
 %%
 %%   {ok, Key} = reckon_gater_api:save_subscription(
 %%       my_store, by_stream, Selector, Name, 0, self()).
-%%   ok = reckon_gater_api:remove_subscription(my_store, by_stream, Selector, Name).
+%%   {ok, _} = reckon_gater_api:remove_subscription(my_store, by_stream, Selector, Name).
 %%
 %% == Snapshot Operations ==
 %%

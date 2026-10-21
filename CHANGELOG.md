@@ -7,20 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Fixed: ack_event/4's spec said ok, the function has always answered {ok, _}
+### Fixed: three specs said ok, the functions have always answered {ok, _}
 
-`-spec ack_event/4` declared `ok | {error, term()}`. The worker replies `ok`
-and `route_call` wraps it, so the function returns `{ok, ok}`: a caller
-matching the documented `ok` got no match at all, and a caller trusting the
-spec (the evoq adapter) believed something about the result that was never
-true. The spec and the doc now say `{ok, term()} | {error, term()}`, which is
-what every other call in this module returns and what its callers already
-matched. No behaviour change; one dialyzer baseline finding struck.
+`-spec ack_event/4`, `-spec remove_subscription/4` and `-spec delete_stream/2`
+declared `ok | {error, term()}`. The worker replies `ok` and `route_call`
+wraps it, so they return `{ok, ok}`: a caller matching the documented `ok`
+got no match at all, and a caller trusting the spec (the evoq adapter)
+believed something about the result that was never true. The specs and the
+docs now say `{ok, term()} | {error, term()}`, which is what every other call
+in this module returns and what its callers already matched. No behaviour
+change; three dialyzer baseline findings struck.
 
-### Docs: lineage is queryable, and ack_event takes the event
+**Callers that followed the old spec will badmatch.** The 3.x guide told
+readers to write `ok = remove_subscription(StoreId, Type, Selector, Name)`;
+that line raises `{badmatch, {ok, ok}}` against any version that has behaved
+this way, which is all of them. Match `{ok, _}`.
 
-Two guide statements that the code contradicts (reckon-db-org/evoq#22):
+### Docs: the guides now match the code (reckon-db-org/evoq#22)
 
+What was wrong, and is not any more:
+
+- Delivery is `{events, [#event{}]}`: a **batch**, and `#event{}` records,
+  not `{event, Event}` and not maps. Every handler example showed the head of
+  a batch or a single event; they fold over the batch now.
+- The channel server is the **application's own** pubsub. Nothing publishes
+  store events onto `reckon_gater_channel_events`, so the pool example -
+  `undefined` as the subscriber, workers listening on that channel - received
+  nothing at all. It has one subscription, whose subscriber is a dispatcher
+  that fans the batch out to the workers.
+- A subscription that is re-registered under the same name catches up from
+  its STORED checkpoint, ignoring the `StartFrom` just passed.
+- Checkpointing a raw subscriber is not possible yet: `#event{}` has no
+  global position, and counting what was delivered does not produce one (the
+  catch-up reads by raw batch offset and drops what the selector does not
+  match). That is reckon-db#7; the guide says so instead of offering a
+  counting recipe.
 - `guides/causation.md` said there is no built-in API to query by
   `causation_id` / `correlation_id`. There is:
   `reckon_gater_api:read_by_metadata/3`, indexed when the store declares the
@@ -40,10 +61,13 @@ Two guide statements that the code contradicts (reckon-db-org/evoq#22):
   two reversed.
 - Metadata keys must be **binaries**. The store keeps metadata as appended,
   and the `{meta, Key}` index and the `read_by_metadata/3` scan match the
-  binary spelling: atom keys are stored and never found. The causation
-  examples now use binary keys, delivery is shown as the `#event{}` record it
-  actually is, and the guide says events appended with atom keys before
-  reckon-evoq 2.9.0 are not findable by `read_by_metadata/3`.
+  binary spelling: atom keys are stored and never found (and the query
+  answers `{ok, []}`, which is the only sign you get). The causation examples
+  now use binary keys, as does every ack, and the guide says events appended
+  with atom keys before reckon-evoq 2.9.0 are not findable by
+  `read_by_metadata/3`.
+- `quick_health_check/1` returns `{ok, map()}`; the README showed
+  `ok = ...`, which badmatches.
 
 ### Notes
 

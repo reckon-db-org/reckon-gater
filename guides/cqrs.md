@@ -152,27 +152,28 @@ start_link(StoreId) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, StoreId, []).
 
 init(StoreId) ->
+    %% #event{} comes from reckon_gater_types.hrl.
     %% Create ETS table for read model
     ets:new(?TABLE, [named_table, public, {read_concurrency, true}]),
 
-    %% Subscribe to order events via gateway
+    %% Subscribe to order events via the gateway. The argument order is
+    %% (StoreId, Type, Selector, Name, StartFrom, Subscriber): an integer
+    %% start position, then the pid. There is no options map.
     {ok, _} = reckon_gater_api:save_subscription(
         StoreId,
         event_pattern,
         <<"order-*">>,
         <<"order_dashboard_projection">>,
-        self(),
-        #{}
+        0,
+        self()
     ),
-
-    %% Also subscribe to PubSub channel for real-time delivery
-    ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"order.*">>, self()),
 
     {ok, #{store_id => StoreId}}.
 
-%% Handle events from subscription
-handle_info({event, Event}, State) ->
-    project_event(Event),
+%% Delivery is {events, [Event]} - a batch of #event{} records, not one map
+%% and not one event.
+handle_info({events, Events}, State) ->
+    lists:foreach(fun project_event/1, Events),
     {noreply, State}.
 
 %% Query interface
@@ -188,8 +189,7 @@ list_customer_orders(CustomerId) ->
     {ok, [Order || {_, Order} <- Orders]}.
 
 %% Project events into read model
-project_event(#{event_type := <<"OrderPlaced">>} = Event) ->
-    Data = maps:get(data, Event),
+project_event(#event{event_type = <<"order_placed_v1">>, data = Data}) ->
     OrderId = maps:get(order_id, Data),
     CustomerId = maps:get(customer_id, Data),
 

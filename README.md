@@ -61,13 +61,16 @@ Events = [#{type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
 %% Read events from a stream
 {ok, EventList} = reckon_gater_api:stream_forward(my_store, <<"users-123">>, 0, 100).
 
-%% Subscribe to PubSub channel
-ok = reckon_gater_channel_server:subscribe(reckon_gater_channel_events, <<"user.*">>, self()).
+%% The channel server is the APPLICATION's own pubsub: subscribe and
+%% publish to it yourself. Store events do not flow through it - a store
+%% subscription delivers to the pid it was given, as {events, Events}.
+ok = reckon_gater_api:save_subscription(
+    my_store, event_pattern, <<"user-*">>, <<"user_notifier">>, 0, self()).
 
-%% Receive channel messages
+%% Receive store events (a batch of #event{} records)
 receive
-    {channel_message, reckon_gater_channel_events, _Topic, Event} ->
-        handle_event(Event)
+    {events, Events} ->
+        [handle_event(E) || E <- Events]
 end.
 ```
 
@@ -99,13 +102,16 @@ reckon_gater_api:get_streams(StoreId) -> {ok, [StreamId]} | {error, term()}.
 ### Subscription Operations
 
 ```erlang
-%% Create a subscription
+%% Create a subscription. Answers {ok, Key}; StartFrom is an inclusive
+%% global position (0 = from the beginning), and the subscriber is the pid
+%% deliveries go to or `undefined' for none.
 reckon_gater_api:save_subscription(StoreId, Type, Selector, Name, StartFrom, Subscriber) ->
-    ok | {error, term()}.
+    {ok, Key} | {error, term()}.
 
-%% Remove a subscription
+%% Remove a subscription. The worker replies ok and the call wraps it, so
+%% this answers {ok, ok} - matching `ok' badmatches.
 reckon_gater_api:remove_subscription(StoreId, Type, Selector, Name) ->
-    ok | {error, term()}.
+    {ok, term()} | {error, term()}.
 
 %% Acknowledge event processing. The fourth argument is a map, not the
 %% #event{} record: #{stream_id => S, version => V}.
@@ -140,7 +146,7 @@ reckon_gater_api:list_snapshots(StoreId, SourceUuid, StreamUuid) ->
 
 ```erlang
 reckon_gater_api:health() -> healthy | {degraded, Reason} | {unhealthy, Reason}.
-reckon_gater_api:quick_health_check(StoreId) -> ok | {error, term()}.
+reckon_gater_api:quick_health_check(StoreId) -> {ok, map()} | {error, term()}.
 ```
 
 ### Temporal Queries
@@ -527,7 +533,7 @@ ok = reckon_gater_api:delete_snapshot(my_store, SourceUuid, StreamUuid, Version)
 
 %% Health check
 healthy = reckon_gater_api:health().
-ok = reckon_gater_api:quick_health_check(my_store).
+{ok, Health} = reckon_gater_api:quick_health_check(my_store).
 ```
 
 ### Deployment
