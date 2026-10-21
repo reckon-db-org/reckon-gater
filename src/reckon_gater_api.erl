@@ -488,13 +488,15 @@ ack_event(StoreId, SubscriptionName, SubscriberPid, Event) ->
 %%====================================================================
 
 %% @doc Record a snapshot
--spec record_snapshot(atom(), binary(), binary(), non_neg_integer(), map()) -> ok.
+%% SourceUuid is the application's own name for the writer (the guides pass
+%% an atom); StreamUuid is the stream's id.
+-spec record_snapshot(atom(), atom() | binary(), binary(), non_neg_integer(), map()) -> ok.
 record_snapshot(StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord) ->
     route_cast(StoreId, {record_snapshot, StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord}),
     ok.
 
 %% @doc Delete a snapshot
--spec delete_snapshot(atom(), binary(), binary(), non_neg_integer()) -> ok.
+-spec delete_snapshot(atom(), atom() | binary(), binary(), non_neg_integer()) -> ok.
 delete_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     route_cast(StoreId, {delete_snapshot, StoreId, SourceUuid, StreamUuid, Version}),
     ok.
@@ -503,13 +505,13 @@ delete_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
 %%
 %% Answers the store's `#snapshot{}' record, not a map: `data' is what the
 %% writer put in a map's `data' field (see record_snapshot/5).
--spec read_snapshot(atom(), binary(), binary(), non_neg_integer()) ->
+-spec read_snapshot(atom(), atom() | binary(), binary(), non_neg_integer()) ->
     {ok, #snapshot{}} | {error, term()}.
 read_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     route_call(StoreId, {read_snapshot, StoreId, SourceUuid, StreamUuid, Version}).
 
 %% @doc List a stream's snapshots, ordered by version, oldest first.
--spec list_snapshots(atom(), binary() | any, binary() | any) ->
+-spec list_snapshots(atom(), atom() | binary(), binary() | any) ->
     {ok, [#snapshot{}]} | {error, term()}.
 list_snapshots(StoreId, SourceUuid, StreamUuid) ->
     route_call(StoreId, {list_snapshots, StoreId, SourceUuid, StreamUuid}).

@@ -327,9 +327,12 @@ snapshot_of(#account{} = Account) ->
 ```
 
 Each block is its own module body, because one module cannot define
-`snapshot_of/1` twice. What the Good block leaves out is the version alone:
-`load/2` takes it from the `#snapshot{}` record, not from the data, and seeks
-from it. The rest of `#account{}` is what a snapshot is for - one that
+`snapshot_of/1` twice. Both hand the gateway the map shape it stores,
+`#{data => State}`, so the two agree on that half; what the Good block leaves
+out is the version alone, which is why the Bad block's copy of it is
+redundant - `load/2` above already moved the state's version with the append,
+and it takes the version back from the `#snapshot{}` record, not from the
+data. The rest of `#account{}` is what a snapshot is for - one that
 dropped the balance would have to replay every event to get it back.
 
 ### 2. Version Your Snapshot Schema

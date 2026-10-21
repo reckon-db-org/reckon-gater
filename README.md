@@ -368,7 +368,10 @@ reckon_gater_pubsub_security:set_secret(Secret) -> ok.
 
 ```erlang
 %% There is no config constructor: default_config/0 answers the record, and
-%% with_retry/3 takes the store, the fun, and that record.
+%% with_retry/3 takes the store, the fun, and that record. The defaults come
+%% from reckon_gater's application environment, and default_config/0 reads
+%% exactly three keys: {retry, [{base_delay_ms, 100}, {max_delay_ms, 30000},
+%% {max_retries, 10}]}.
 Config = reckon_gater_retry:default_config(),
 StreamId = <<"orders-019d7a4f3c2a7d8c9e0f1234567890ab">>,
 reckon_gater_retry:with_retry(my_store,
@@ -427,11 +430,12 @@ The gateway provides 10 dedicated PubSub channels:
         {multicast_addr, {239, 255, 0, 2}}
     ]},
 
-    %% Retry defaults
+    %% Retry defaults. default_config/0 reads these three keys by name:
+    %% max_attempts is not one of them and would be ignored.
     {retry, [
         {base_delay_ms, 100},
         {max_delay_ms, 30000},
-        {max_attempts, 10}
+        {max_retries, 10}
     ]},
 
     %% Channel configuration
