@@ -64,7 +64,7 @@ Events = [#{type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
 %% The channel server is the APPLICATION's own pubsub: subscribe and
 %% publish to it yourself. Store events do not flow through it - a store
 %% subscription delivers to the pid it was given, as {events, Events}.
-ok = reckon_gater_api:save_subscription(
+{ok, _} = reckon_gater_api:save_subscription(
     my_store, event_pattern, <<"user-*">>, <<"user_notifier">>, 0, self()).
 
 %% Receive store events (a batch of #event{} records)

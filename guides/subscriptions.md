@@ -6,9 +6,11 @@ Subscriptions enable real-time event delivery to consumers. This guide covers ma
 
 ![Subscription Flow](assets/subscription_flow.svg)
 
-The gateway provides two ways to receive events:
-1. **Persistent Subscriptions** - Managed subscriptions with checkpointing
-2. **PubSub Channels** - Real-time event broadcasting
+Events reach a consumer one way: a **subscription**, delivered to the
+subscriber pid as `{events, [#event{}]}`. The gateway also runs a channel
+server, but that is the application's own pubsub - nothing publishes store
+events onto it, so subscribing a worker to it and expecting events gets it
+nothing (see PubSub Channels below).
 
 ## Gateway Subscription API
 
@@ -108,15 +110,25 @@ that order. There is no options map: `start_from` is the integer itself, and
 ```
 
 The fourth argument is a **map**, not the `#event{}` record and not a bare
-version number. The gateway reads the position and the stream from it:
+version number:
 
 | Key | Read as |
 |-----|---------|
-| `event_stream_id`, or `stream_id` | the stream to acknowledge in |
-| `event_number`, or `version` | the position to acknowledge |
+| `event_number`, or `version` | **the subscription's GLOBAL checkpoint** - the offset the next catch-up reads from |
+| `event_stream_id`, or `stream_id` | ignored by the store today (`reckon_db_subscriptions:ack/4` takes it and does not use it) |
 
 A record where a map is expected is a `badmap` and takes the gateway worker
 down with it.
+
+**The number you ack is the subscription's resume position, in the store's
+global order**, the same order `save_subscription/6`'s `StartFrom` is in. It
+is not an event's version in its stream. Acking a stream version moves the
+subscription's checkpoint to that number: a checkpoint of 3 for a stream
+whose events are at global positions 900-903 resumes at 3, and the next
+catch-up replays the store from there. `#event{}` carries no global position
+yet (reckon-db#7 adds one), so a subscriber that consumes a subscription
+directly and wants to resume per event CANNOT compute a correct value here
+today. Do not ack from a raw subscriber until it can.
 
 `ack_event/4` answers `{ok, _}` on success and
 `{error, {subscription_not_found, _}}` when the subscription has been
@@ -126,13 +138,16 @@ to it.
 
 ## PubSub Channels
 
-For real-time event delivery, use the gateway's built-in PubSub channels:
+The channel server is a general-purpose pubsub the gateway hosts for the
+application. It does NOT carry store events: a consumer that wants events
+subscribes to a subscription and receives `{events, Events}`. Publish to a
+channel yourself if you want to broadcast something of your own:
 
 ### Available Channels
 
 | Channel | Priority | Purpose |
 |---------|----------|---------|
-| `reckon_gater_channel_events` | high | Business events |
+| `reckon_gater_channel_events` | high | The application's own events (nothing publishes store events here) |
 | `reckon_gater_channel_alerts` | critical | System alerts |
 | `reckon_gater_channel_system` | normal | System notifications |
 | `reckon_gater_channel_metrics` | normal | Performance metrics |
@@ -234,38 +249,39 @@ init([StoreId]) ->
     {ok, #{store_id => StoreId}}.
 
 %% Delivery is {events, [Event]} - a BATCH, up to the store's read batch
-%% size. Handling only the head and acking once leaves the rest of the batch
-%% unprojected and unacknowledged; fold over every event.
-handle_info({events, Events}, #{store_id := StoreId} = State) ->
-    [handle_event(StoreId, Event) || Event <- Events],
+%% size. Folding over every event is the point: handling only the head drops
+%% the rest of the batch.
+handle_info({events, Events}, State) ->
+    [handle_event(Event) || Event <- Events],
     {noreply, State};
 handle_info(_Other, State) ->
     {noreply, State}.
 
-handle_event(StoreId, #event{stream_id = StreamId, version = Version} = Event) ->
-    do_something_with(Event),
-
-    %% The ack takes a MAP, not the record, and it names the event by STREAM
-    %% and stream version: that is what ack_event/4 is for.
-    {ok, _} = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, self(),
-                                         #{stream_id => StreamId, version => Version}).
+%% NO ACK HERE, ON PURPOSE. ack_event's `version' IS the subscription's global
+%% checkpoint - the offset the next catch-up reads from - and #event.version
+%% is the event's version IN ITS STREAM. Acking one as the other moves the
+%% checkpoint into a different number space, and the store resumes there
+%% without complaining (a new stream's first event would even reset it to 0).
+%% #event{} carries no global position yet (reckon-db#7), so a subscriber
+%% that wants a per-event resume point cannot compute one today. Nor does
+%% anything ack for it: the gateway acks only when a CLIENT calls ack_event.
+handle_event(Event) ->
+    do_something_with(Event).
 ```
 
 **What this example cannot do, and why.** Resuming correctly needs the
 subscription's own global position saved per event, and an `#event{}` record
-has no field for it: `version` is the event's version in its stream, a
-different number in a different space, and the store's catch-up advances by
-raw batch offset and then drops what the selector does not match - so a
-subscriber cannot derive its global position by counting what it received
-either. Nothing acks on a subscriber's behalf: the gateway acks only when a
-*client* calls `ack_event`, which a raw subscriber is not.
+has no field for it: `version` is the event's version in its stream, and the
+store's catch-up advances by raw batch offset and then drops what the selector
+does not match - so a subscriber cannot derive its global position by counting
+what it received either. Nothing acks on a subscriber's behalf: the gateway
+acks only when a *client* calls `ack_event`, which a raw subscriber is not.
 
 That is reckon-db-org/reckon-db#7 (a stable global sequence carried on the
-event). Until it lands, a direct subscriber can process every event and ack
-it by stream and version, and a subscription that is re-registered under the
-same name catches up from its STORED checkpoint and ignores the new
-`StartFrom` - but a per-event resume point cannot be computed here. Do not
-write a counting recipe that pretends otherwise.
+event). Until it lands a direct subscriber can process every event but cannot
+checkpoint one, and a subscription that is re-registered under the same name
+catches up from its STORED checkpoint, ignoring the `StartFrom` just passed.
+Do not write a counting recipe that pretends otherwise.
 
 ### Pool of Handlers
 

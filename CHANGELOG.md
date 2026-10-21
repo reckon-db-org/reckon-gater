@@ -63,9 +63,15 @@ What was wrong, and is not any more:
   and the `{meta, Key}` index and the `read_by_metadata/3` scan match the
   binary spelling: atom keys are stored and never found (and the query
   answers `{ok, []}`, which is the only sign you get). The causation examples
-  now use binary keys, as does every ack, and the guide says events appended
-  with atom keys before reckon-evoq 2.9.0 are not findable by
-  `read_by_metadata/3`.
+  now use binary keys, and the guide says events appended with atom keys
+  before reckon-evoq 2.9.0 are not findable by `read_by_metadata/3`.
+- An `ack_event` map is ATOM-keyed (`#{stream_id => ..., version => ...}`):
+  the worker reads atoms, so a binary-keyed map acks position 0 and resets the
+  subscription's checkpoint. The guide says that, and says what the number is
+  - the subscription's global resume position, NOT an event's stream version -
+  which is why the checkpointed-handler example no longer acks at all: with no
+  global position on `#event{}` yet (reckon-db#7), a raw subscriber cannot
+  compute a correct value.
 - `quick_health_check/1` returns `{ok, map()}`; the README showed
   `ok = ...`, which badmatches.
 

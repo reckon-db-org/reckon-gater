@@ -140,10 +140,14 @@ Projections transform events into read models. They run asynchronously and subsc
 
 ```erlang
 -module(order_dashboard_projection).
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 -behaviour(gen_server).
 
 -export([start_link/1, get_order/1, list_customer_orders/1]).
--export([init/1, handle_info/2, handle_call/3]).
+%% The queries are called directly on the ETS table below, so this process
+%% needs no handle_call/3 of its own; a gen_server with an exported callback
+%% that is not defined does not compile.
+-export([init/1, handle_info/2]).
 
 %% Read model stored in ETS for fast lookups
 -define(TABLE, order_dashboard).
@@ -188,8 +192,10 @@ list_customer_orders(CustomerId) ->
     Orders = ets:match_object(?TABLE, Pattern),
     {ok, [Order || {_, Order} <- Orders]}.
 
-%% Project events into read model
-project_event(#event{event_type = <<"order_placed_v1">>, data = Data}) ->
+%% Project events into read model. Delivery is #event{} records, so that is
+%% what the clauses match; matching a map silently never fires.
+project_event(#event{event_type = <<"order_placed_v1">>,
+                     data = Data, timestamp = At}) ->
     OrderId = maps:get(order_id, Data),
     CustomerId = maps:get(customer_id, Data),
 
@@ -200,8 +206,8 @@ project_event(#event{event_type = <<"order_placed_v1">>, data = Data}) ->
         items => maps:get(items, Data),
         total => maps:get(total, Data),
         status => <<"Placed">>,
-        status_history => [#{status => <<"Placed">>, at => Event#event.timestamp}],
-        placed_at => Event#event.timestamp
+        status_history => [#{status => <<"Placed">>, at => At}],
+        placed_at => At
     },
 
     %% Store by order ID
@@ -210,8 +216,8 @@ project_event(#event{event_type = <<"order_placed_v1">>, data = Data}) ->
     %% Index by customer for listing
     ets:insert(?TABLE, {{customer_order, CustomerId, OrderId}, ReadModel});
 
-project_event(#{event_type := <<"OrderShipped">>} = Event) ->
-    Data = maps:get(data, Event),
+project_event(#event{event_type = <<"order_shipped_v1">>,
+                     data = Data, timestamp = At}) ->
     OrderId = maps:get(order_id, Data),
 
     %% Update existing read model
@@ -220,11 +226,11 @@ project_event(#{event_type := <<"OrderShipped">>} = Event) ->
             Updated = Order#{
                 status => <<"Shipped">>,
                 status_history => [
-                    #{status => <<"Shipped">>, at => Event#event.timestamp}
+                    #{status => <<"Shipped">>, at => At}
                     | maps:get(status_history, Order)
                 ],
                 tracking_number => maps:get(tracking_number, Data, undefined),
-                shipped_at => Event#event.timestamp
+                shipped_at => At
             },
             ets:insert(?TABLE, {Key, Updated}),
 
@@ -249,9 +255,9 @@ The same events can drive multiple specialized read models:
 %% Analytics projection - aggregates for dashboards
 -module(order_analytics_projection).
 
-project_event(#{event_type := <<"OrderPlaced">>} = Event) ->
-    Data = maps:get(data, Event),
-    Date = date_from_timestamp(Event#event.timestamp),
+project_event(#event{event_type = <<"order_placed_v1">>,
+                     data = Data, timestamp = At}) ->
+    Date = date_from_timestamp(At),
     Total = maps:get(total, Data),
     Region = get_customer_region(maps:get(customer_id, Data)),
 
@@ -262,15 +268,15 @@ project_event(#{event_type := <<"OrderPlaced">>} = Event) ->
 %% Inventory projection - tracks stock levels
 -module(inventory_projection).
 
-project_event(#{event_type := <<"OrderPlaced">>} = Event) ->
-    Items = maps:get(items, maps:get(data, Event)),
+project_event(#event{event_type = <<"order_placed_v1">>, data = Data}) ->
+    Items = maps:get(items, Data),
     lists:foreach(fun(#{product_id := ProductId, quantity := Qty}) ->
         %% Decrement reserved stock
         ets:update_counter(?INVENTORY_TABLE, {reserved, ProductId}, Qty, {{reserved, ProductId}, 0})
     end, Items);
 
-project_event(#{event_type := <<"OrderShipped">>} = Event) ->
-    Items = maps:get(items, maps:get(data, Event)),
+project_event(#event{event_type = <<"order_shipped_v1">>, data = Data}) ->
+    Items = maps:get(items, Data),
     lists:foreach(fun(#{product_id := ProductId, quantity := Qty}) ->
         %% Move from reserved to shipped
         ets:update_counter(?INVENTORY_TABLE, {reserved, ProductId}, -Qty),
