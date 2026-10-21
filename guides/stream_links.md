@@ -215,6 +215,7 @@ Links create streams prefixed with `$link:`:
 
 ### Compound Filters
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -246,6 +247,7 @@ filter => #{
 
 ### Add Static Fields
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 transform => #{
     add_fields => #{
@@ -257,6 +259,7 @@ transform => #{
 
 ### Add Dynamic Fields
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 transform => #{
     add_fields => #{
@@ -268,6 +271,7 @@ transform => #{
 
 ### Remove Fields (Sanitize)
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 transform => #{
     remove_fields => [<<"internal_id">>, <<"debug_info">>, <<"password_hash">>]
@@ -276,6 +280,7 @@ transform => #{
 
 ### Rename Fields
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 transform => #{
     rename_fields => #{
@@ -365,6 +370,7 @@ reckon_gater_api:create_link(my_store, #{
 
 ### 1. Overly Broad Patterns
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 %% BAD: Watching everything can be expensive
 source => #{type => stream_pattern, pattern => <<"*">>}
@@ -375,6 +381,7 @@ source => #{type => stream_pattern, pattern => <<"orders-*">>}
 
 ### 2. Complex Filters on Hot Paths
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 %% BAD: Regex on every event is expensive
 filter => #{field => <<"data">>, op => matches, value => complex_regex}
@@ -385,6 +392,7 @@ filter => #{field => <<"type">>, op => '=', value => <<"payment">>}
 
 ### 3. Not Monitoring Lag
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 %% BAD: Ignoring link health
 reckon_gater_api:create_link(my_store, #{...}).
@@ -402,6 +410,7 @@ check_link_health(LinkName) ->
 
 ### 4. Transforming Critical Data
 
+<!-- doc_snippets: skip a fragment of the link spec, showing one key of it -->
 ```erlang
 %% BAD: Removing fields you might need later
 transform => #{remove_fields => [<<"metadata">>]}

@@ -251,7 +251,8 @@ Always keep some recent events regardless of timestamp:
 
 %% GOOD: Take a snapshot first, then scavenge
 {ok, State} = reconstruct_aggregate(StreamId),
-{ok, Version} = reckon_gater_api:save_snapshot(my_store, StreamId, State),
+{ok, Version} = reckon_gater_api:get_version(my_store, StreamId),
+ok = reckon_gater_api:record_snapshot(my_store, my_source, StreamId, Version, #{data => State}),
 {ok, _} = reckon_gater_api:scavenge(my_store, StreamId, #{
     before => Timestamp,
     require_snapshot => true
@@ -272,13 +273,13 @@ GoodCutoff = erlang:system_time(microsecond) - (30 * 24 * 60 * 60 * 1000000).
 
 ```erlang
 %% BAD: Scavenging production data without preview
-reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{...}).
+reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{before => Cutoff}).
 
 %% GOOD: Always dry run first
-{ok, Preview} = reckon_gater_api:scavenge_dry_run(prod_store, <<"important-stream">>, #{...}),
+{ok, Preview} = reckon_gater_api:scavenge_dry_run(prod_store, <<"important-stream">>, #{before => Cutoff}),
 logger:info("Would delete ~p events", [maps:get(would_delete, Preview)]),
 %% Review preview, then proceed if acceptable
-reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{...}).
+reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{before => Cutoff}).
 ```
 
 ---

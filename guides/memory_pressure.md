@@ -131,6 +131,7 @@ Configure thresholds in `sys.config`:
 
 Reduce processing load when memory is constrained:
 
+<!-- doc_snippets: skip the application's own process_event/1 does the work; this block shows the batch size it picks -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -183,6 +184,7 @@ handle_memory_pressure(critical) ->
 
 Reject expensive operations when memory is scarce:
 
+<!-- doc_snippets: skip the application's own process_large_report/1 does the work; this block shows the guard around it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -216,6 +218,7 @@ handle_request(Req) ->
 
 Pause saga processing during pressure:
 
+<!-- doc_snippets: skip the application's own do_handle_event/2 does the work; this block shows where it is deferred -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION (process manager)
@@ -281,18 +284,19 @@ handle_pressure_change(
 
 ```erlang
 %% BAD: Processing without checking memory
-process_all_events(StoreId) ->
-    {ok, Events} = reckon_gater_api:stream_forward(StoreId, Stream, 0, 10000),
+process_all_events(StoreId, StreamId) ->
+    {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, 10000),
     lists:foreach(fun process/1, Events).  %% May OOM!
-
+```
+```erlang
 %% GOOD: Respect memory pressure
-process_all_events(StoreId) ->
+process_all_events(StoreId, StreamId) ->
     {ok, Level} = reckon_gater_api:get_memory_level(StoreId),
     case Level of
         critical -> {error, memory_pressure};
         _ ->
             BatchSize = get_batch_size(Level),
-            {ok, Events} = reckon_gater_api:stream_forward(StoreId, Stream, 0, BatchSize),
+            {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, BatchSize),
             lists:foreach(fun process/1, Events)
     end.
 ```
@@ -302,14 +306,15 @@ process_all_events(StoreId) ->
 ```erlang
 %% BAD: Checking memory on every operation
 process_event(Event) ->
-    {ok, _} = reckon_gater_api:get_memory_level(Store),  %% Every event!
+    {ok, _} = reckon_gater_api:get_memory_level(my_store),  %% Every event!
     do_process(Event).
 
 %% GOOD: Check periodically or rely on telemetry
 -record(state, {memory_level = normal}).
 
 init() ->
-    telemetry:attach(..., fun update_cached_level/4, ...),
+    ok = telemetry:attach([reckon_gater, memory_level], update_cached_level,
+                          fun update_cached_level/4, #{}),
     {ok, #state{}}.
 
 process_event(Event, #state{memory_level = critical}) ->
@@ -322,13 +327,18 @@ process_event(Event, State) ->
 ### 3. Not Recovering from Pressure
 
 ```erlang
+-record(state, {degraded = false, memory_level = normal}).
+
 %% BAD: Entering degraded mode permanently
 handle_pressure(critical, State) ->
     State#state{degraded = true}.  %% Never recovers!
+```
+```erlang
+-record(state, {degraded = false, memory_level = normal}).
 
 %% GOOD: State based on current level
-handle_event(Event, State) ->
-    {ok, Level} = reckon_gater_api:get_memory_level(Store),
+handle_event(Event, #{store_id := StoreId} = State) ->
+    {ok, Level} = reckon_gater_api:get_memory_level(StoreId),
     case Level of
         critical -> {defer, Event, State};
         elevated -> process_slowly(Event, State);

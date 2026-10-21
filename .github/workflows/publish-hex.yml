@@ -120,6 +120,19 @@ jobs:
     if: github.event_name == 'push'
     uses: ./.github/workflows/lint-and-test.yml
 
+  # The published guides are part of the package: a block that no longer
+  # compiles against the tagged code is a defect in the release, so the
+  # publish waits on it too (macula-codebase-checks#8).
+  docs:
+    name: Check the docs' code blocks
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    uses: macula-io/macula-ci-images/.github/workflows/doc-snippets-erlang.yml@d25a36c1b6ba7b8e72db17873aa7c2c7793eba70
+    with:
+      otp-version: '28.4.3'
+      rebar3-version: '3.27.0'
+
 
   # The release guard (macula-ci-images#5): the tagged commit must be an
   # ancestor of the default branch, and the tag's version must be the version
@@ -132,7 +145,7 @@ jobs:
 
   publish:
     name: Publish to hex.pm
-    needs: [verify, test, release-guard]
+    needs: [verify, test, docs, release-guard]
     # Only a pushed release tag publishes, whatever the triggers above say.
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest

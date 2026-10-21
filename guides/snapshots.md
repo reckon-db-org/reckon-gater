@@ -21,10 +21,12 @@ Snapshots reduce the number of events needed to reconstruct aggregate state:
 
 Every stream id below is `type-id`: a lowercase type of 1 to 32 characters, a
 hyphen, and 32 lowercase hex characters (`reckon_gater_stream_id:validate/1`).
-`reckon_gater_stream_id:new(<<"account">>)` mints one. An id that does not
-match that shape is refused with
-`{error, {invalid_stream_id, malformed_user_id, Id}}` before it reaches the
-store, so the examples use a literal one.
+`reckon_gater_stream_id:new(<<"account">>)` mints one. The stream calls that
+validate the id (`append_events`, `stream_forward`) answer
+`{error, {invalid_stream_id, malformed_user_id, Id}}` for an id that does not
+match. The snapshot calls do not: they take the id as given and store under it,
+so a bad id there fails silently at read time instead. The examples use a
+literal id, which is valid in both halves.
 
 ### Recording Snapshots
 
@@ -73,7 +75,7 @@ case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-019d7a4f3c2a
 end.
 
 %% Load snapshot at a specific version
-{ok, Snapshot} = reckon_gater_api:read_snapshot(
+{ok, Snapshot100} = reckon_gater_api:read_snapshot(
     my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 100
 ).
 ```
@@ -92,9 +94,12 @@ Get all snapshots for a stream:
 
 %% Oldest first: the list is sorted by version, ascending.
 [
-    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 50, ...},
-    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 100, ...},
-    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 150, ...}
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>,
+              version = 50, metadata = #{}, timestamp = 1761000000000000},
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>,
+              version = 100, metadata = #{}, timestamp = 1761000000000000},
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>,
+              version = 150, metadata = #{}, timestamp = 1761000000000000}
 ]
 ```
 
@@ -208,9 +213,9 @@ execute(StoreId, AccountId, Command) ->
 
 %% Save snapshot if threshold reached. record_snapshot is a cast: it is
 %% answered before the store writes anything, so a snapshot that fails to
-%% store (a malformed stream id, say) logs and drops without the caller ever
-%% knowing. The data goes in a map's `data' field, which is the shape the
-%% gateway worker stores.
+%% store is never reported. The failure that does happen is a data shape the
+%% worker cannot unwrap - a bare term instead of a map, which is a `badmap'
+%% that kills the worker - so the data goes in a map's `data' field.
 maybe_save_snapshot(StoreId, StreamId, State, Version)
   when Version rem ?SNAPSHOT_THRESHOLD =:= 0, Version > 0 ->
     ok = reckon_gater_api:record_snapshot(
@@ -306,9 +311,9 @@ is a trimmed copy of it:
 ```erlang
 -record(account, {id, balance = 0, status = active, version = -1}).
 
-%% Good: minimal state
+%% Good: minimal state, in the map shape the gateway stores
 snapshot_of(#account{id = Id, balance = Balance, status = Status}) ->
-    #account{id = Id, balance = Balance, status = Status}.
+    #{data => #account{id = Id, balance = Balance, status = Status}}.
 ```
 
 ```erlang
@@ -318,7 +323,7 @@ snapshot_of(#account{id = Id, balance = Balance, status = Status}) ->
 %% reads it back out of the snapshot and seeks from it - so a snapshot that
 %% carries it keeps a second copy of something the events already own.
 snapshot_of(#account{} = Account) ->
-    Account.
+    #{data => Account}.
 ```
 
 Each block is its own module body, because one module cannot define
@@ -351,7 +356,9 @@ Don't keep unlimited snapshots:
 ```erlang
 cleanup_old_snapshots(StoreId, StreamId, KeepCount) ->
     {ok, Snapshots} = reckon_gater_api:list_snapshots(StoreId, my_app, StreamId),
-    ToDelete = lists:nthtail(KeepCount, Snapshots),
+    %% The list is ascending, so the newest are at the END: keep the last
+    %% KeepCount and delete what is in front of them.
+    ToDelete = lists:sublist(Snapshots, max(0, length(Snapshots) - KeepCount)),
     [reckon_gater_api:delete_snapshot(StoreId, my_app, StreamId, S#snapshot.version)
      || S <- ToDelete].
 ```
@@ -363,7 +370,8 @@ Track snapshot metrics:
 ```erlang
 save_with_metrics(StoreId, StreamId, Version, State) ->
     Start = erlang:monotonic_time(microsecond),
-    ok = reckon_gater_api:record_snapshot(StoreId, my_app, StreamId, Version, State),
+    ok = reckon_gater_api:record_snapshot(StoreId, my_app, StreamId, Version,
+                                          #{data => State}),
     Duration = erlang:monotonic_time(microsecond) - Start,
 
     telemetry:execute(

@@ -76,7 +76,7 @@ A **stream** is an ordered sequence of events sharing a common identifier (the s
 Events = [
     #{
         event_type => <<"order_placed_v1">>,
-        data => #{order_id => <<"ord-123">>, items => [...], total => 9999},
+        data => #{order_id => <<"ord-123">>, items => [], total => 9999},
         metadata => #{user_id => <<"user-456">>, correlation_id => <<"req-789">>}
     }
 ],
@@ -180,15 +180,16 @@ Events are immutable, but schemas evolve. Use explicit versions:
 %% to the schema registry (see the Schema Evolution guide).
 
 %% Shape 1 of the fact
-#{event_type => <<"order_placed_v1">>,
-  metadata => #{schema_version => 1},
-  data => #{order_id => ..., items => [...]}}
+Shape1 = #{event_type => <<"order_placed_v1">>,
+           metadata => #{schema_version => 1},
+           data => #{order_id => <<"ord-123">>, items => []}},
 
 %% Shape 2 of the SAME fact - not order_placed_v2: adding a field does not
 %% change what happened, and the name is what a subscriber selects on.
-#{event_type => <<"order_placed_v1">>,
-  metadata => #{schema_version => 2},
-  data => #{order_id => ..., items => [...], shipping_address => #{}}}
+Shape2 = #{event_type => <<"order_placed_v1">>,
+           metadata => #{schema_version => 2},
+           data => #{order_id => <<"ord-123">>, items => [],
+                     shipping_address => #{}}}
 ```
 
 Handle schema evolution in your projections:

@@ -164,6 +164,7 @@ reconstruct_at(StoreId, StreamId, Timestamp) ->
 
 Answer regulatory questions about historical state:
 
+<!-- doc_snippets: skip the report's own helpers (is_account_stream/1, reconstruct_at/3, build_timeline/1) are the application's -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -206,6 +207,7 @@ end_of_day_timestamp(Date) ->
 
 Examine what happened during a specific time window:
 
+<!-- doc_snippets: skip the report's own helpers (is_account_stream/1, reconstruct_at/3, build_timeline/1) are the application's -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION

@@ -64,8 +64,6 @@ Identities are Ed25519 keypairs. The public key is encoded as a DID (Decentraliz
 %% Purpose: Create a new identity for your service/user
 %%--------------------------------------------------------------------
 
--include_lib("reckon_gater/include/reckon_gater_capability_types.hrl").
-
 %% Generate a new Ed25519 keypair
 Identity = reckon_gater_identity:generate().
 
@@ -97,11 +95,20 @@ DID = reckon_gater_identity:did(Identity).
 %% - Encrypted at rest with a master key
 %% - Secrets management (Vault, AWS Secrets Manager)
 
-%% Example: Load from encrypted file
-load_identity(Path, MasterKey) ->
+%% Example: write it encrypted, and load it back. AES-256-GCM answers the
+%% ciphertext plus a tag, and both - with the nonce - are needed to read it.
+save_identity(Path, MasterKey, Identity) ->
+    Nonce = crypto:strong_rand_bytes(12),
+    {Encrypted, Tag} = crypto:crypto_one_time_aead(
+        aes_256_gcm, MasterKey, Nonce, term_to_binary(Identity), <<>>, true),
+    ok = file:write_file(Path, Encrypted),
+    {ok, {Nonce, Tag}}.
+
+load_identity(Path, MasterKey, Nonce, Tag) ->
     {ok, Encrypted} = file:read_file(Path),
-    Decrypted = crypto:crypto_one_time(aes_256_gcm, MasterKey, Nonce, Encrypted, false),
-    {PubKey, PrivKey} = binary_to_term(Decrypted),
+    Plain = crypto:crypto_one_time_aead(
+        aes_256_gcm, MasterKey, Nonce, Encrypted, <<>>, Tag, false),
+    {PubKey, PrivKey} = binary_to_term(Plain),
     reckon_gater_identity:from_keypair(PubKey, PrivKey).
 ```
 
@@ -130,6 +137,7 @@ Capability tokens grant specific permissions on specific resources.
 
 ### Basic Token Creation
 
+<!-- doc_snippets: skip ?ACTION_* are reckon_gater's own macros (include/reckon_gater_capability_types.hrl); the block lists grants, it is not a runnable example -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION (e.g., auth service)
@@ -217,6 +225,7 @@ Consider a microservices architecture where each service delegates to the next w
 
 ### Delegation Example
 
+<!-- doc_snippets: skip ?ACTION_* are reckon_gater's own macros (include/reckon_gater_capability_types.hrl); the block lists grants, it is not a runnable example -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION (Order Service)
@@ -246,6 +255,7 @@ SignedWorkerCap = reckon_gater_capability:sign(WorkerCap, reckon_gater_identity:
 
 These will fail verification on the server:
 
+<!-- doc_snippets: skip ?ACTION_* are reckon_gater's own macros (include/reckon_gater_capability_types.hrl); the block lists grants, it is not a runnable example -->
 ```erlang
 %% Parent grants: stream/orders-* with read
 %% INVALID: trying to add append (not in parent)
@@ -277,12 +287,14 @@ When making requests, include the token. The gater routes it to reckon-db for ve
 %% Include token in request (future API enhancement)
 %% Currently, tokens are used primarily for PubSub channels
 
-Events = [#{event_type => <<"order_placed_v1">>, data => #{...}}],
+Events = [#{event_type => <<"order_placed_v1">>,
+            data => #{order_id => <<"order-123">>}}],
 {ok, Version} = reckon_gater_api:append_events(my_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890a1">>, Events).
 ```
 
 ### PubSub Channel Operations
 
+<!-- doc_snippets: skip ?ACTION_* are reckon_gater's own macros (include/reckon_gater_capability_types.hrl); the block lists grants, it is not a runnable example -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -380,6 +392,7 @@ Cap = reckon_gater_capability:create(Iss, Aud, Grants, #{ttl => 900}).  %% 15 mi
 
 ### 2. Overly Broad Grants
 
+<!-- doc_snippets: skip ?ACTION_* are reckon_gater's own macros (include/reckon_gater_capability_types.hrl); the block lists grants, it is not a runnable example -->
 ```erlang
 %% BAD: Admin access for everything
 Grants = [reckon_gater_capability:grant(<<"esdb://myapp/*">>, ?ACTION_ADMIN_ALL)].

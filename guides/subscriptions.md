@@ -365,8 +365,15 @@ deliver([Event | Rest], [Worker | Others]) ->
     Worker ! {event, Event},
     deliver(Rest, Others ++ [Worker]).
 
+```
+```erlang
 -module(handler_worker).
 -behaviour(gen_server).
+
+%% The dispatcher above calls handler_worker:start_link/2, so it has to be
+%% exported, and gen_server calls the callbacks: a module with the callbacks
+%% defined and not exported does not compile.
+-export([start_link/2, init/1, handle_info/2]).
 
 start_link(StoreId, WorkerId) ->
     gen_server:start_link(?MODULE, [StoreId, WorkerId], []).

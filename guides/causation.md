@@ -35,7 +35,7 @@ handle_command(Command, _State) ->
 
     Event = #{
         event_type => <<"order_placed_v1">>,
-        data       => #{order_id => <<"order-123">>, items => [...]},
+        data       => #{order_id => <<"order-123">>, items => []},
         %% The keys must be BINARIES. The store keeps metadata as appended,
         %% and the {meta, Key} index and the read_by_metadata scan match the
         %% binary spelling only: atom keys are stored and never found.
@@ -44,7 +44,8 @@ handle_command(Command, _State) ->
             <<"correlation_id">> => CorrelationId   %% business-process grouping ID
         }
     },
-    reckon_gater_api:append_events(my_store, StreamId, [Event]).
+    reckon_gater_api:append_events(
+        my_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890ab">>, [Event]).
 ```
 
 That binary-key rule is the whole contract: a writer that stamps atom keys
@@ -68,13 +69,14 @@ request_payment(#event{event_id = EventId, metadata = Meta}) ->
     CorrelationId = maps:get(<<"correlation_id">>, Meta, undefined),
     NewEvent = #{
         event_type => <<"payment_requested_v1">>,
-        data       => ...,
+        data       => #{order_id => <<"order-123">>},
         metadata   => #{
             <<"causation_id">>   => EventId,        %% the upstream event caused this
             <<"correlation_id">> => CorrelationId   %% same business process
         }
     },
-    reckon_gater_api:append_events(my_store, PaymentStream, [NewEvent]).
+    reckon_gater_api:append_events(
+        my_store, <<"payments-019d7a4f3c2a7d8c9e0f1234567890ab">>, [NewEvent]).
 ```
 
 ## Querying by Causation
@@ -164,30 +166,35 @@ create_event_metadata(CausingId, CorrelationId, ActorId) ->
 ```erlang
 %% BAD: causation chain is broken
 handle_event(_OrderPlaced, _State) ->
-    NewEvent = #{event_type => <<"payment_requested_v1">>, data => ...},
-    reckon_gater_api:append_events(Store, Stream, [NewEvent]).
+    NewEvent = #{event_type => <<"payment_requested_v1">>,
+                 data => #{order_id => <<"order-123">>}},
+    reckon_gater_api:append_events(
+        my_store, <<"payments-019d7a4f3c2a7d8c9e0f1234567890ab">>, [NewEvent]).
 
+```
+```erlang
 %% GOOD: chain is preserved
 handle_event(#{id := EventId, metadata := Meta}, _State) ->
     NewEvent = #{
         event_type => <<"payment_requested_v1">>,
-        data       => ...,
+        data       => #{order_id => <<"order-123">>},
         metadata   => #{
             <<"causation_id">>   => EventId,
             <<"correlation_id">> => maps:get(<<"correlation_id">>, Meta)
         }
     },
-    reckon_gater_api:append_events(Store, Stream, [NewEvent]).
+    reckon_gater_api:append_events(
+        my_store, <<"payments-019d7a4f3c2a7d8c9e0f1234567890ab">>, [NewEvent]).
 ```
 
 ### Using event ID as correlation ID
 
 ```erlang
 %% BAD: correlation changes with each event
-metadata => #{<<"causation_id">> => EventId, <<"correlation_id">> => EventId}
+BadMetadata = #{<<"causation_id">> => EventId, <<"correlation_id">> => EventId},
 
 %% GOOD: correlation is a stable business-process ID
-metadata => #{<<"causation_id">> => EventId, <<"correlation_id">> => OrderId}
+GoodMetadata = #{<<"causation_id">> => EventId, <<"correlation_id">> => OrderId}.
 ```
 
 ## Best Practices

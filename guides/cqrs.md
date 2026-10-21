@@ -43,24 +43,24 @@ Different consumers can have different views of the same data:
 %% Same events, different read models
 
 %% Order Events Stream
-[
-    #{event_type => <<"order_placed_v1">>, data => #{...}},
-    #{event_type => <<"payment_received_v1">>, data => #{...}},
-    #{event_type => <<"order_shipped_v1">>, data => #{...}}
-]
+Events = [
+    #{event_type => <<"order_placed_v1">>, data => #{order_id => <<"ord-123">>}},
+    #{event_type => <<"payment_received_v1">>, data => #{order_id => <<"ord-123">>}},
+    #{event_type => <<"order_shipped_v1">>, data => #{order_id => <<"ord-123">>}}
+],
 
 %% Read Model 1: Customer Dashboard (optimized for display)
-#{
+Dashboard = #{
     order_id => <<"ord-123">>,
     status => <<"Shipped">>,
-    status_history => [...],
-    tracking_url => <<"https://...">>
-}
+    status_history => [#{status => <<"Placed">>}, #{status => <<"Shipped">>}],
+    tracking_url => <<"https://carrier.example/track/ord-123">>
+},
 
 %% Read Model 2: Warehouse System (optimized for picking)
-#{
+Warehouse = #{
     order_id => <<"ord-123">>,
-    items => [#{sku => ..., location => ..., quantity => ...}],
+    items => [#{sku => <<"sku-1">>, location => <<"A-01">>, quantity => 2}],
     priority => high,
     shipping_method => express
 }
@@ -81,6 +81,7 @@ Different consumers can have different views of the same data:
 
 Commands represent intentions to change state. They are validated and may produce events:
 
+<!-- doc_snippets: skip pattern sketch: validate_items/1, check_inventory/1, calculate_total/1, load_order/2 and the #order{} record are the application's own -->
 ```erlang
 -module(order_commands).
 -export([handle/2]).
@@ -257,6 +258,7 @@ project_event(_Event) ->
 
 The same events can drive multiple specialized read models:
 
+<!-- doc_snippets: skip two projections side by side: ?ANALYTICS_TABLE and ?INVENTORY_TABLE are the application's own, and one block cannot define two modules -->
 ```erlang
 %% Analytics projection - aggregates for dashboards
 -module(order_analytics_projection).
@@ -355,6 +357,7 @@ get_order_status(StoreId, OrderId) ->
 
 Projections may receive the same event multiple times (redelivery, replay). Make them idempotent:
 
+<!-- doc_snippets: skip project_event clauses shown alone: ?TABLE and its table belong to the module above -->
 ```erlang
 %% Bad: not idempotent
 project_event(#event{event_type = <<"item_added_v1">>, data = Data}) ->

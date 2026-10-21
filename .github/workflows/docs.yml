@@ -1,0 +1,38 @@
+# Every Erlang block the README and the guides publish compiles against
+# reckon-gater itself, calls only functions that exist, and runs where the doc
+# says it runs (macula-codebase-checks#8).
+#
+# ⚠ NO `paths-ignore`, on purpose. A change to a guide is exactly when this has
+# to run, and macula-codebase-checks reports a publishing repository whose docs
+# check a doc change skips. That is also why this is a workflow of its own:
+# lint-and-test.yml ignores `**.md` and `guides/**`, and removing that there
+# would run the whole suite for a typo.
+#
+# The check itself lives in macula-ci-images and travels inside that workflow,
+# pinned by full sha (the same rule as release-guard.yml). When the check is
+# fixed there, this pin moves.
+name: docs
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  snippets:
+    permissions:
+      contents: read
+    uses: macula-io/macula-ci-images/.github/workflows/doc-snippets-erlang.yml@d25a36c1b6ba7b8e72db17873aa7c2c7793eba70
+    with:
+      # From .tool-versions, which is what a developer's shell resolves here.
+      otp-version: '28.4.3'
+      rebar3-version: '3.27.0'

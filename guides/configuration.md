@@ -53,6 +53,7 @@ Controls how capability tokens are enforced across the gateway.
 
 #### Erlang Example
 
+<!-- doc_snippets: skip one sys.config entry per mode: a proplist fragment, not an expression on its own -->
 ```erlang
 %% Development - no capability checks
 {capability_mode, disabled}
@@ -107,6 +108,7 @@ Used for signing messages on critical PubSub channels.
 
 #### Erlang Example
 
+<!-- doc_snippets: skip one sys.config entry per mode: a proplist fragment, not an expression on its own -->
 ```erlang
 %% Binary secret (recommended)
 {hmac_secret, <<"my-production-secret-key-at-least-32-bytes">>}

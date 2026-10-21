@@ -84,6 +84,7 @@ end.
 
 ### Stream Operations
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Append events to a stream
 reckon_gater_api:append_events(StoreId, StreamId, Events) ->
@@ -101,12 +102,14 @@ reckon_gater_api:stream_backward(StoreId, StreamId, StartVersion, Count) ->
 
 %% Stream metadata
 reckon_gater_api:get_version(StoreId, StreamId) -> {ok, Version} | {error, term()}.
-reckon_gater_api:stream_exists(StoreId, StreamId) -> boolean().
+%% there is no per-stream exists call: get_version/2 answers
+%% {error, {stream_not_found, StreamId}} for a stream that is not there.
 reckon_gater_api:get_streams(StoreId) -> {ok, [StreamId]} | {error, term()}.
 ```
 
 ### Subscription Operations
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Create a subscription. Answers {ok, Key}; StartFrom is an inclusive
 %% global position (0 = from the beginning), and the subscriber is the pid
@@ -136,10 +139,12 @@ reckon_gater_api:get_subscriptions(StoreId) -> {ok, [Subscription]} | {error, te
 
 ### Snapshot Operations
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
-%% Record a snapshot
-reckon_gater_api:record_snapshot(StoreId, SourceUuid, StreamUuid, Version, Record) ->
-    ok | {error, term()}.
+%% Record a snapshot. It is a cast: it answers ok before the store writes,
+%% and the data must be #{data => State} - a bare term is a badmap.
+reckon_gater_api:record_snapshot(StoreId, SourceUuid, StreamUuid, Version, #{data => State}) ->
+    ok.
 
 %% Read a snapshot
 reckon_gater_api:read_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
@@ -156,6 +161,7 @@ reckon_gater_api:list_snapshots(StoreId, SourceUuid, StreamUuid) ->
 
 ### Health
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 reckon_gater_api:health() -> healthy | {degraded, Reason} | {unhealthy, Reason}.
 reckon_gater_api:quick_health_check(StoreId) -> {ok, map()} | {error, term()}.
@@ -165,6 +171,7 @@ reckon_gater_api:quick_health_check(StoreId) -> {ok, map()} | {error, term()}.
 
 Query events by timestamp for point-in-time reconstruction. See [Temporal Queries Guide](guides/temporal_queries.md).
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Read events up to a timestamp
 reckon_gater_api:read_until(StoreId, StreamId, Timestamp) ->
@@ -185,6 +192,7 @@ reckon_gater_api:version_at(StoreId, StreamId, Timestamp) ->
 
 Remove old events beyond retention, optionally archive first. See [Scavenging Guide](guides/scavenging.md).
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Scavenge a stream (delete old events)
 reckon_gater_api:scavenge(StoreId, StreamId, Opts) ->
@@ -204,6 +212,7 @@ reckon_gater_api:scavenge_dry_run(StoreId, StreamId, Opts) ->
 Conditional append with atomic consistency check. See [CCC Guide](guides/ccc.md)
 and [DCB Guide](https://github.com/reckon-db-org/reckon-db/blob/main/guides/dcb.md).
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Conditional append: write events only if no matching events appeared
 %% after seq_cutoff. Returns {ok, LastSeq} or {error, {context_changed, MaxSeq}}.
@@ -250,6 +259,7 @@ Schema registry with automatic upcasting. See [Schema Evolution Guide](guides/sc
 
 ![Schema Upcasting](assets/schema_upcasting.svg)
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Register a schema
 reckon_gater_api:register_schema(StoreId, EventType, Schema) -> ok.
@@ -273,6 +283,7 @@ reckon_gater_api:unregister_schema(StoreId, EventType) -> ok.
 
 Adaptive behavior based on system memory. See [Memory Pressure Guide](guides/memory_pressure.md).
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Get current memory pressure level
 reckon_gater_api:get_memory_level(StoreId) ->
@@ -289,6 +300,7 @@ Create derived streams from source streams. See [Stream Links Guide](guides/stre
 
 ![Stream Links](assets/stream_links.svg)
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Create a new link (filter + transform)
 reckon_gater_api:create_link(StoreId, LinkSpec) -> ok.
@@ -314,6 +326,7 @@ reckon_gater_api:link_info(StoreId, LinkName) ->
 
 ### Channels
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Subscribe to a topic
 reckon_gater_channel_server:subscribe(ChannelName, Topic, Pid) -> ok.
@@ -336,6 +349,7 @@ reckon_gater_channel_server:publish(ChannelName, Topic, Message, CapabilityToken
 
 ### Security
 
+<!-- doc_snippets: skip API signature listing for the reference section, not a runnable example -->
 ```erlang
 %% Sign a message with default secret
 reckon_gater_pubsub_security:sign(Message) -> SignedMessage.
@@ -540,7 +554,8 @@ true = reckon_gater_api:has_events(my_store).   %% per STORE, not per stream
 {ok, Subs} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Snapshot operations
-ok = reckon_gater_api:record_snapshot(my_store, SourceUuid, StreamUuid, Version, Record).
+ok = reckon_gater_api:record_snapshot(my_store, SourceUuid, StreamUuid, Version,
+                                     #{data => State}).
 {ok, Snap} = reckon_gater_api:read_snapshot(my_store, SourceUuid, StreamUuid, Version).
 ok = reckon_gater_api:delete_snapshot(my_store, SourceUuid, StreamUuid, Version).
 {ok, Snaps} = reckon_gater_api:list_snapshots(my_store, SourceUuid, StreamUuid).

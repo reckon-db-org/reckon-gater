@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added: the docs' code blocks are checked, and the wrong ones are fixed
+
+`docs.yml` runs macula-ci-images' `doc-snippets-erlang` check on every push and
+pull request, and `publish-hex.yml` waits on it: every block the README and the
+guides fence as Erlang is compiled against this package, every call it makes
+must reach a function that exists, and a `run`-marked session is executed. A
+guide is part of the package - a block that no longer runs is a defect in the
+release, not just in the doc.
+
+The first run reported 90 failures in 19 docs. What they were:
+
+- **Calls that named functions this package does not have**: `create_store/2`
+  (the index list belongs in the store's own `#store_config{}`, so the guide
+  says that), `save_snapshot/3` (`record_snapshot/5` with `#{data => State}`),
+  `stream_exists/2` (absent; `get_version/2` answers
+  `{error, {stream_not_found, StreamId}}`), and a `json:encode/1` wrapper
+  around a payload the store reads as a map.
+- **Places the docs wrote `...` or `#{...}` inside real code**: the elision is
+  a comment's job, so those blocks now carry the values they were eliding.
+- **Two modules in one block, a module's callbacks not exported, a `BAD` and a
+  `GOOD` clause under one function name**: each is now the block it should be.
+- **Blocks that are not code** - API signature listings, `sys.config` entries,
+  one-key fragments of a link spec or a schema map, and pattern sketches whose
+  helpers are the application's own - carry a `doc_snippets: skip` marker with
+  the reason, so a reader still sees them and the check is not fooled into
+  passing them.
+
+Three of the failures were defects in the check itself, fixed in
+macula-ci-images: a `-define` never parses as a form, a record's field access
+never parses as a bare expression, and the check's own emitter spaced a `.`
+into a full stop. This repository's pin moves with that fix.
+
 ### Fixed: a refused append is no longer retried for 81 seconds
 
 `is_retriable_error/1` classified every error it did not recognise as
@@ -141,8 +173,9 @@ What was wrong, and is not any more:
   (the call is a cast, so nothing was reported); and the state saved carries
   the version the snapshot is filed under, where it used to carry the one
   before it. `reckon_db_snapshot_guide_SUITE` in reckon-db runs the
-  pattern - the guide's own client module, past its threshold - against a
-  real store and its gateway, so the shape stays checked.
+  pattern - a copy of the guide's client, with a lower threshold - against a
+  real store and its gateway, so the shape stays checked. The copy is the one
+  in the suite, not a file extracted from this guide.
 - The aggregate example's record defaults `version` to `?NO_STREAM` (-1)
   rather than 0: 0 is a real version, so an aggregate that had never been
   written could never have produced the -1 a first append expects.

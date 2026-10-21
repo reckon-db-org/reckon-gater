@@ -219,6 +219,7 @@ reckon_gater_api:register_schema(my_store, <<"order_placed_v1">>, #{
 
 ### Adding Fields (Most Common)
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -234,6 +235,7 @@ upcast_from => #{
 
 ### Renaming Fields
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -250,6 +252,7 @@ upcast_from => #{
 
 ### Changing Data Types
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -267,6 +270,7 @@ upcast_from => #{
 
 ### Splitting Fields
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -289,6 +293,7 @@ upcast_from => #{
 
 ### Merging Fields
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %%--------------------------------------------------------------------
 %% This code runs in: YOUR APPLICATION
@@ -311,6 +316,7 @@ upcast_from => #{
 
 ### 1. Modifying Existing Schema Version
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %% BAD: Changing v1 schema after events are written
 reckon_gater_api:register_schema(Store, <<"Event">>, #{
@@ -328,6 +334,7 @@ reckon_gater_api:register_schema(Store, <<"Event">>, #{
 
 ### 2. Upcast Functions with Side Effects
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %% BAD: Side effects in upcast function
 upcast_from => #{
@@ -348,6 +355,7 @@ upcast_from => #{
 
 ### 3. Lossy Transformations Without Documentation
 
+<!-- doc_snippets: skip an upcast_from entry: a fragment of the schema map, showing one key of it -->
 ```erlang
 %% BAD: Silent data loss
 upcast_from => #{

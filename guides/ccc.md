@@ -93,6 +93,7 @@ The check and write are atomic. Nothing can slip between them.
 `tag_filter()` is the query language for both reads and the consistency
 condition:
 
+<!-- doc_snippets: skip type listing of the tag-filter terms: the '::' forms are the types a filter spec declares, not expressions -->
 ```erlang
 %% DCB — tag-based, zero additional index required
 {any_of, [Tag :: binary()]}           %% event carries ANY of these tags
@@ -118,14 +119,15 @@ are written. Undeclared fields are not indexed and cannot participate in
 `AppendIfNoTagMatches`.
 
 ```erlang
-%% In store startup config:
+%% The declarations go in the store's own #store_config{} (include/reckon_db.hrl)
+%% when reckon-db starts the store; the gateway reads them back through
+%% get_payload_indexes/1 and get_payload_hash_indexes/1.
 Indexes = [
     tags,                                      %% standard tag index
     event_type,                                %% standard event-type index
     {payload, <<"account_id">>},               %% single-field payload index
     {payload_hash, [<<"flight_id">>, <<"seat_no">>]}  %% composite index
-],
-reckon_gater_api:create_store(StoreId, #{indexes => Indexes}).
+].
 ```
 
 - `{payload, Key}` — indexes one top-level JSON field. Enables
@@ -150,7 +152,8 @@ is written for that event — the event is simply invisible to that filter.
 ```erlang
 %% Writer tags the event — DCB style, no payload index needed
 Tags = [<<"email:", Email/binary>>],
-Event = #{event_type => <<"user_registered_v1">>, tags => Tags, data => ...},
+Event = #{event_type => <<"user_registered_v1">>, tags => Tags,
+          data => #{email => Email}},
 
 %% 1. Read context: any event with this email tag
 EmailTag = <<"email:", Email/binary>>,
@@ -176,7 +179,7 @@ reckon_gater_api:append_if_no_tag_matches(StoreId, Filter, Cutoff, [Event]).
 %% Writer does NOT need to add tags — the store indexes the payload fields
 Event = #{
     event_type => <<"seat_reserved_v1">>,
-    data => json:encode(#{flight_id => FlightId, seat_no => SeatNo, ...})
+    data => #{flight_id => FlightId, seat_no => SeatNo}
 },
 
 %% 1. Read context: any event with this flight+seat combination
