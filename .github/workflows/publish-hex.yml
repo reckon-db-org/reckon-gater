@@ -128,7 +128,7 @@ jobs:
     if: github.event_name == 'push'
     permissions:
       contents: read
-    uses: macula-io/macula-ci-images/.github/workflows/doc-snippets-erlang.yml@d25a36c1b6ba7b8e72db17873aa7c2c7793eba70
+    uses: macula-io/macula-ci-images/.github/workflows/doc-snippets-erlang.yml@711cfee7139bc40559892f4a79b3883982047326
     with:
       otp-version: '28.4.3'
       rebar3-version: '3.27.0'
