@@ -27,7 +27,7 @@ Scavenging safely removes old events by:
 2. **Preserving recent events** - Keeps events newer than the snapshot
 3. **Dry run preview** - Shows what would be deleted before executing
 
-```
+```text
 Before scavenging:
 ┌─────────────────────────────────────────────────────────────────┐
 │ v0   v1   v2   ... v500 ... v1000 v1001 v1002 ... v1500        │

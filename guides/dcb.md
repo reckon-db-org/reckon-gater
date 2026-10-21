@@ -21,7 +21,7 @@ for payload-indexed consistency boundaries.
 
 ## The Decision Loop
 
-```
+```text
 1. Read context: fetch events matching a tag_filter(), note max observed seq
 2. Decide: apply domain logic to those events, produce new events
 3. Append conditionally: write iff no matching event has seq > observed max
@@ -71,7 +71,7 @@ end.
 
 ### HTTP endpoints
 
-```
+```text
 POST /v1/stores/:store_id/dcb/context
   Body:    {"tag_filter": {...}, "batch_size": N}
   Returns: {"events": [...], "max_seq": N}

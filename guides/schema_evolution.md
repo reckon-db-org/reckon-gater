@@ -26,7 +26,7 @@ In event sourcing, events are immutable facts. But business requirements evolve:
 
 Instead of migrating events, we transform them **on read**:
 
-```
+```text
 Write (immutable):              Read (transformed):
 ┌─────────────────────┐         ┌─────────────────────┐
 │ user_registered_v1  │         │ user_registered_v1  │
@@ -175,7 +175,7 @@ reckon_gater_api:unregister_schema(my_store, <<"deprecated_event_v1">>).
 
 When multiple schema versions exist, upcasting chains automatically:
 
-```
+```text
 v1 event → upcast_v1_v2() → v2 data → upcast_v2_v3() → v3 data (current)
 ```
 

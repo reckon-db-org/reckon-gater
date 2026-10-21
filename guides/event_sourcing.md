@@ -6,13 +6,13 @@ Event Sourcing is an architectural pattern where the state of an application is 
 
 Traditional CRUD-based systems store only the current state:
 
-```
+```text
 User Record: {id: 123, name: "Alice", email: "alice@example.com", balance: 150}
 ```
 
 Event-sourced systems store the history of changes:
 
-```
+```text
 Event 1: UserCreated {id: 123, name: "Alice", email: "alice@example.com"}
 Event 2: BalanceDeposited {user_id: 123, amount: 200}
 Event 3: BalanceWithdrawn {user_id: 123, amount: 50}
@@ -53,7 +53,7 @@ lists:foreach(fun(E) -> update_projection(E) end, Events).
 ### Decoupled Systems
 Events can be consumed by multiple subscribers independently:
 
-```
+```text
 Order Placed Event
     |
     +---> Inventory Service (decrements stock)

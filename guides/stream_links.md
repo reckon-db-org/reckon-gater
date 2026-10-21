@@ -35,7 +35,7 @@ Stream links create **derived streams** that:
 3. Optionally transform/enrich events
 4. Make results available as a regular stream
 
-```
+```text
 Source Streams:              Link:                    Derived Stream:
 ┌──────────────────┐
 │ orders-001       │─────┐   ┌───────────────────┐   ┌──────────────────┐

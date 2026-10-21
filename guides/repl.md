@@ -28,14 +28,14 @@ reckon_gater_repl:start(my_store).
 
 ### Store Commands
 
-```
+```text
 stores              List all stores
 use STORE           Set current store context
 ```
 
 Example session:
 
-```
+```text
 esdb> stores
 
 Stores:
@@ -49,7 +49,7 @@ esdb:my_store>
 
 ### Stream Commands
 
-```
+```text
 streams             List streams in current store
 stream STREAM       Set current stream context
 read [N]            Read N events (default 10)
@@ -60,7 +60,7 @@ version STREAM      Get version of stream
 
 Example session:
 
-```
+```text
 esdb:my_store> streams
 
 Streams in my_store:
@@ -93,7 +93,7 @@ Causation tracking is one of the most powerful features of the REPL. It allows y
 
 ![Causation Workflow](../assets/repl_causation_workflow.svg)
 
-```
+```text
 effects ID          Get events caused by event
 cause ID            Get event that caused this
 chain ID            Get full causation chain
@@ -103,7 +103,7 @@ dot ID FILE         Export graph as Graphviz DOT file
 
 Example session:
 
-```
+```text
 esdb:my_store> effects evt-100
 
 Events caused by evt-100:
@@ -135,7 +135,7 @@ dot -Tpng /tmp/causation.dot -o /tmp/causation.png
 
 ### Temporal Commands
 
-```
+```text
 until TS            Read events until timestamp
 range T1 T2         Read events in time range
 ```
@@ -144,7 +144,7 @@ Timestamps are Unix epoch in seconds.
 
 Example session:
 
-```
+```text
 esdb:my_store/orders> until 1703200000
 
 Events until 1703200000:
@@ -165,28 +165,28 @@ Total: 3 events
 
 ### Schema Commands
 
-```
+```text
 schemas             List all schemas
 schema TYPE         Get schema for event type
 ```
 
 ### Subscription Commands
 
-```
+```text
 subscriptions       List all subscriptions
 subscription NAME   Get subscription details
 ```
 
 ### Health Commands
 
-```
+```text
 health              Gateway health status
 memory              Memory statistics for current store
 ```
 
 Example:
 
-```
+```text
 esdb> health
 
 Gateway Health:
@@ -201,7 +201,7 @@ Gateway Health:
 
 The prompt shows your current context:
 
-```
+```text
 esdb>                           # No store selected
 esdb:my_store>                  # Store selected
 esdb:my_store/orders>           # Store + stream selected
@@ -223,7 +223,7 @@ esdb:my_store/orders>           # Store + stream selected
 
 When an event causes unexpected behavior, use causation commands to trace its origin:
 
-```
+```text
 esdb:my_store> chain problematic-event-id
 ```
 
@@ -233,7 +233,7 @@ This shows the full chain of events that led to the problematic event, helping i
 
 For issues that occurred at a specific time, use temporal queries:
 
-```
+```text
 esdb:my_store/orders> range 1703100000 1703110000
 ```
 
@@ -243,7 +243,7 @@ This shows all events in the orders stream during that 10-second window.
 
 Generate DOT files for documentation or sharing:
 
-```
+```text
 esdb:my_store> dot correlation-id-123 /tmp/saga-flow.dot
 ```
 
@@ -264,13 +264,13 @@ dot -Tpdf /tmp/saga-flow.dot -o /tmp/saga-flow.pdf
 
 Quick health check of the gateway:
 
-```
+```text
 esdb> health
 ```
 
 Check memory pressure for a specific store:
 
-```
+```text
 esdb:my_store> memory
 ```
 
@@ -287,7 +287,7 @@ The REPL is designed to fit into your development workflow:
 
 Use any of these commands to exit:
 
-```
+```text
 exit
 quit
 q

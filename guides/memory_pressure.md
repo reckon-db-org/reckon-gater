@@ -28,7 +28,7 @@ Memory pressure monitoring enables:
 2. **Graceful degradation** - Reduce load when memory is scarce
 3. **Automatic recovery** - Resume normal operation when pressure eases
 
-```
+```text
 Memory Usage:
 100% ┌─────────────────────────────────────────────────────────────┐
      │                                              ▓▓▓ CRITICAL  │

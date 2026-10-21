@@ -116,7 +116,7 @@ load_identity(Path, MasterKey, Nonce, Tag) ->
 
 DIDs (Decentralized Identifiers) are a W3C standard for self-sovereign identity. The `did:key` method encodes the public key directly in the identifier:
 
-```
+```text
 did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
         │ │
         │ └── Base58btc encoded (multicodec prefix + Ed25519 public key)
