@@ -353,15 +353,13 @@ reckon_gater_pubsub_security:set_secret(Secret) -> ok.
 ### Retry Configuration
 
 ```erlang
-%% Create custom retry config
-Config = reckon_gater_retry:new_config(
-    100,     %% base_delay_ms
-    5000,    %% max_delay_ms
-    5        %% max_attempts
-),
-
-%% Execute with custom retry
-reckon_gater_api:execute(my_store, Fun, Config).
+%% There is no config constructor: default_config/0 answers the record, and
+%% with_retry/3 takes the store, the fun, and that record.
+Config = reckon_gater_retry:default_config(),
+StreamId = <<"orders-019d7a4f3c2a7d8c9e0f1234567890ab">>,
+reckon_gater_retry:with_retry(my_store,
+                              fun() -> reckon_gater_api:get_version(my_store, StreamId) end,
+                              Config).
 ```
 
 ## PubSub Channels
@@ -528,7 +526,7 @@ Use the gateway API to access reckon-db with automatic load balancing and retry:
 {ok, Events} = reckon_gater_api:stream_forward(my_store, StreamId, 0, 100).
 {ok, Events} = reckon_gater_api:stream_backward(my_store, StreamId, 100, 50).
 {ok, Version} = reckon_gater_api:get_version(my_store, StreamId).
-true = reckon_gater_api:stream_exists(my_store, StreamId).
+true = reckon_gater_api:has_events(my_store).   %% per STORE, not per stream
 
 %% Subscription operations
 {ok, _} = reckon_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).

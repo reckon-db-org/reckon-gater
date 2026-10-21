@@ -330,7 +330,9 @@ end.
 
 **For critical queries:**
 ```erlang
-%% If consistency is critical, query the event store via gateway
+%% If consistency is critical, query the event store via gateway. OrderId
+%% is the order's own id as 32 lowercase hex characters: a stream id is
+%% <type>-<32 hex>.
 get_order_status(StoreId, OrderId) ->
     StreamId = <<"order-", OrderId/binary>>,
     {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, 1000),

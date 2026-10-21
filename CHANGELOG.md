@@ -128,15 +128,21 @@ What was wrong, and is not any more:
   with `type =>` where the store reads `event_type`; the delivery label in
   `assets/subscription_flow.svg` said `{event, E}`.
 - **The snapshot pattern compiles AND runs.** It was checked against a live
-  store this time, not only through the compiler, and three things it had
-  been doing wrong since it was written are fixed: `append_events/4` takes
-  the expected version **third**, before the events, not as an
-  `#{expected_version => N}` option; `read_snapshot/4` takes an **integer**,
-  and `0` - not the atom `latest` - asks for the newest one (`latest` is
-  `integer_to_list/1`'d in the gateway worker, which badargs and takes the
-  worker down); and a stream that does not exist answers
-  `{error, {stream_not_found, StreamId}}`, which the old
-  `{error, stream_not_found}` clause never matched.
+  store this time, not only through the compiler, and what it had been doing
+  wrong since it was written is fixed: `append_events/4` takes the expected
+  version **third**, before the events, not as an `#{expected_version => N}`
+  option; `read_snapshot/4` takes an **integer**, and `0` - not the atom
+  `latest` - asks for the newest one (`latest` is `integer_to_list/1`'d in
+  the gateway worker, which badargs and takes the worker down); a stream that
+  does not exist answers `{error, {stream_not_found, StreamId}}`, which the
+  old `{error, stream_not_found}` clause never matched; `maybe_save_snapshot/4`
+  hands the gateway `#{data => State}` rather than the bare record, because
+  the worker unwraps a map's `data` and a non-map is a `badmap` that kills it
+  (the call is a cast, so nothing was reported); and the state saved carries
+  the version the snapshot is filed under, where it used to carry the one
+  before it. `reckon_db_snapshot_guide_SUITE` in reckon-db runs the
+  pattern - the guide's own client module, past its threshold - against a
+  real store and its gateway, so the shape stays checked.
 - The aggregate example's record defaults `version` to `?NO_STREAM` (-1)
   rather than 0: 0 is a real version, so an aggregate that had never been
   written could never have produced the -1 a first append expects.
@@ -145,12 +151,14 @@ What was wrong, and is not any more:
 - **Stream ids in the examples are ids the store accepts.** A stream id is
   `<type>-<32 lowercase hex>`, `type` matching `[a-z]{1,32}`
   (`reckon_gater_stream_id:validate/1`). `<<"account-123">>`, used
-  throughout the guides, is refused with
-  `{error, {invalid_stream_id, malformed_user_id, Id}}` - there is no such
-  stream, so no example that used one could have worked. Every stream id in
-  the README and guides is now a valid one, and `snapshots.md` states the
-  grammar in one place. Payload ids (`#{order_id => ...}`) are left alone;
-  they are data, not stream names.
+  throughout the guides, is refused by the store with
+  `{error, {invalid_stream_id, malformed_user_id, Id}}`, returned to the
+  caller through the gateway: the append, scavenge and stream-read examples
+  could not have worked, while the snapshot and list calls, which never
+  reach the store's id gate, quietly did. Every stream id in the README and
+  guides is now a valid one, and `snapshots.md` states the grammar in one
+  place. Payload ids (`#{order_id => ...}`) are left alone; they are data,
+  not stream names.
 
 ### Notes
 

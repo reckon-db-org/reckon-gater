@@ -60,15 +60,16 @@ The `#snapshot{}` record stores aggregate state at a specific version for fast r
 ### Usage (Client-Side)
 
 ```erlang
-%% Save a snapshot via gateway
+%% Save a snapshot via gateway: the gateway stores a map's data field.
 State = #{balance => 1000, status => active},
-ok = reckon_gater_api:record_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 50, State).
+ok = reckon_gater_api:record_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 50, #{data => State}).
 
-%% Load latest snapshot (0 means "the most recent one")
+%% Load latest snapshot (0 asks for the most recent one)
 case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0) of
     {ok, #snapshot{version = V, data = State}} ->
-        %% Replay events from version V onwards
-        {ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, V, 1000),
+        %% Replay events AFTER the snapshot: it covers version V, so start
+        %% at V + 1. Reading from V replays that event a second time.
+        {ok, Events} = reckon_gater_api:stream_forward(my_store, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, V + 1, 1000),
         FinalState = lists:foldl(fun apply_event/2, State, Events);
     {error, not_found} ->
         %% No snapshot, replay all events

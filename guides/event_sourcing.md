@@ -42,8 +42,11 @@ Balance = lists:foldl(fun apply_event/2, 0, PastEvents).
 Rebuild read models, fix bugs in projections, or create new views of historical data:
 
 ```erlang
-%% Rebuild a projection from scratch
-{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"orders-*">>, 0, 10000),
+%% Rebuild a projection from scratch. stream_forward/4 reads ONE stream, by
+%% its exact id; a wildcard like <<"orders-*">> is not a stream id and is
+%% refused malformed_user_id. To replay every stream of a type, subscribe
+%% (subscriptions.md) or list the streams and read each.
+{ok, Events} = reckon_gater_api:stream_forward(my_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0, 10000),
 lists:foreach(fun(E) -> update_projection(E) end, Events).
 ```
 
@@ -211,7 +214,7 @@ An **aggregate** is a domain object that encapsulates state and enforces invaria
 
 ```erlang
 -module(order_aggregate).
--export([new/0, apply_event/2, place_order/2, add_item/3]).
+-export([new/0, apply_event/2, place_order/2, add_item/4]).
 
 -include_lib("reckon_gater/include/reckon_gater_types.hrl").
 
@@ -256,13 +259,15 @@ place_order(OrderId, Items) ->
         data => #{order_id => OrderId, items => Items, total => Total}
     }]}.
 
-add_item(#order{status = placed} = _Order, ProductId, Quantity) ->
-    Price = get_product_price(ProductId),
+%% The price comes in with the command: a command handler that reaches a
+%% catalogue itself is a side effect inside the aggregate, and the event it
+%% writes is then only as reproducible as the catalogue was.
+add_item(#order{status = placed} = _Order, ProductId, Quantity, Price) ->
     {ok, [#{
         event_type => <<"item_added_v1">>,
         data => #{product_id => ProductId, quantity => Quantity, price => Price}
     }]};
-add_item(#order{status = shipped}, _ProductId, _Quantity) ->
+add_item(#order{status = shipped}, _ProductId, _Quantity, _Price) ->
     {error, order_already_shipped}.
 ```
 
@@ -271,7 +276,9 @@ add_item(#order{status = shipped}, _ProductId, _Quantity) ->
 Rebuild aggregate state by reading and folding events:
 
 ```erlang
-%% Load order aggregate from event stream via gateway
+%% Load order aggregate from event stream via gateway. OrderId is the
+%% order's own id as 32 lowercase hex characters, because a stream id is
+%% <type>-<32 hex>.
 load_order(StoreId, OrderId) ->
     StreamId = <<"order-", OrderId/binary>>,
     {ok, Events} = reckon_gater_api:stream_forward(StoreId, StreamId, 0, 10000),

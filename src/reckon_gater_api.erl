@@ -500,14 +500,17 @@ delete_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     ok.
 
 %% @doc Read a snapshot
+%%
+%% Answers the store's `#snapshot{}' record, not a map: `data' is what the
+%% writer put in a map's `data' field (see record_snapshot/5).
 -spec read_snapshot(atom(), binary(), binary(), non_neg_integer()) ->
-    {ok, map()} | {error, term()}.
+    {ok, #snapshot{}} | {error, term()}.
 read_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     route_call(StoreId, {read_snapshot, StoreId, SourceUuid, StreamUuid, Version}).
 
-%% @doc List snapshots
+%% @doc List a stream's snapshots, ordered by version, oldest first.
 -spec list_snapshots(atom(), binary() | any, binary() | any) ->
-    {ok, [map()]} | {error, term()}.
+    {ok, [#snapshot{}]} | {error, term()}.
 list_snapshots(StoreId, SourceUuid, StreamUuid) ->
     route_call(StoreId, {list_snapshots, StoreId, SourceUuid, StreamUuid}).
 

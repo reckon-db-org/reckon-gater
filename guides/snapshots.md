@@ -31,14 +31,16 @@ store, so the examples use a literal one.
 Save aggregate state at a specific version:
 
 ```erlang
-%% Record a snapshot via gateway
-State = #{balance => 1000, status => active},
+%% Record a snapshot via gateway. The gateway stores a map's `data' field,
+%% so hand it one: a bare term (a record, a list) is not a map, and the
+%% gateway worker dies on it - and because record_snapshot is a cast, the
+%% caller is never told.
 ok = reckon_gater_api:record_snapshot(
     my_store,                    %% Store ID
     my_source,                   %% Source ID (your application)
     <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>,           %% Stream ID
     150,                         %% Version (event number)
-    State                        %% State to snapshot
+    #{data => State}             %% the snapshot's data
 ).
 ```
 
@@ -47,11 +49,15 @@ ok = reckon_gater_api:record_snapshot(
 Load the latest or a specific snapshot:
 
 ```erlang
-%% Load the latest snapshot. The version argument is an integer: 0 means
-%% "the most recent one" (no event has version 0, so 0 is unambiguous).
+%% Load the latest snapshot. The version argument is an integer; 0 asks the
+%% gateway for the most recent one. Events are numbered from 0, so a snapshot
+%% at version 0 can exist: it can be recorded, listed and deleted, but 0 is
+%% answered as "the latest", so a version-0 snapshot cannot be read BY VERSION
+%% once a later one exists.
 case reckon_gater_api:read_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 0) of
     {ok, Snapshot} ->
         Version = Snapshot#snapshot.version,
+        %% What was handed in as #{data => State} comes back here.
         State = Snapshot#snapshot.data,
         %% Replay events after the snapshot
         {ok, Events} = reckon_gater_api:stream_forward(
@@ -72,6 +78,10 @@ end.
 ).
 ```
 
+A snapshot's version is the version of the last event it covers, so the
+state inside it is the state after that event - replay resumes at
+`Version + 1`.
+
 ### Listing Snapshots
 
 Get all snapshots for a stream:
@@ -80,11 +90,11 @@ Get all snapshots for a stream:
 %% List all snapshots for a stream
 {ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>).
 
-%% Returns list sorted by version (newest first)
+%% Oldest first: the list is sorted by version, ascending.
 [
-    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 150, ...},
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 50, ...},
     #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 100, ...},
-    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 50, ...}
+    #snapshot{stream_id = <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, version = 150, ...}
 ]
 ```
 
@@ -96,9 +106,10 @@ Remove old snapshots to save storage:
 %% Delete a specific snapshot
 ok = reckon_gater_api:delete_snapshot(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>, 50).
 
-%% Delete old snapshots (keep only recent ones)
+%% Delete old snapshots, keeping the 3 most recent. The list is ascending, so
+%% the newest are at the END: take the oldest ones off the front.
 {ok, Snapshots} = reckon_gater_api:list_snapshots(my_store, my_source, <<"account-019d7a4f3c2a7d8c9e0f1234567890ab">>),
-OldSnapshots = lists:nthtail(3, Snapshots),  %% Keep 3 most recent
+OldSnapshots = lists:sublist(Snapshots, max(0, length(Snapshots) - 3)),
 [reckon_gater_api:delete_snapshot(my_store, my_source, S#snapshot.stream_id, S#snapshot.version)
  || S <- OldSnapshots].
 ```
@@ -178,8 +189,14 @@ execute(StoreId, AccountId, Command) ->
                 StoreId, StreamId, Account#account.version, Events
             ),
 
-            %% Apply events to get new state
-            NewState = lists:foldl(fun apply_event/2, Account, Events),
+            %% Apply events to get new state, and move its version with them:
+            %% apply_event/2 keeps the balance, and a snapshot taken from a
+            %% state whose version still pointed at the previous event would
+            %% carry the wrong number. The snapshot's version and the version
+            %% in the state it stores are the same number.
+            NewState = (lists:foldl(fun apply_event/2, Account, Events))#account{
+                version = NewVersion
+            },
 
             %% Maybe save snapshot
             maybe_save_snapshot(StoreId, StreamId, NewState, NewVersion),
@@ -189,11 +206,15 @@ execute(StoreId, AccountId, Command) ->
             {error, Reason}
     end.
 
-%% Save snapshot if threshold reached
+%% Save snapshot if threshold reached. record_snapshot is a cast: it is
+%% answered before the store writes anything, so a snapshot that fails to
+%% store (a malformed stream id, say) logs and drops without the caller ever
+%% knowing. The data goes in a map's `data' field, which is the shape the
+%% gateway worker stores.
 maybe_save_snapshot(StoreId, StreamId, State, Version)
   when Version rem ?SNAPSHOT_THRESHOLD =:= 0, Version > 0 ->
     ok = reckon_gater_api:record_snapshot(
-        StoreId, account_client, StreamId, Version, State
+        StoreId, account_client, StreamId, Version, #{data => State}
     ),
     logger:info("Saved snapshot for ~s at version ~p", [StreamId, Version]);
 maybe_save_snapshot(_StoreId, _StreamId, _State, _Version) ->
@@ -233,7 +254,8 @@ Snapshot every N events (shown above):
 
 maybe_snapshot(StoreId, StreamId, State, Version)
   when Version rem ?SNAPSHOT_EVERY =:= 0 ->
-    reckon_gater_api:record_snapshot(StoreId, my_app, StreamId, Version, State);
+    reckon_gater_api:record_snapshot(StoreId, my_app, StreamId, Version,
+                                     #{data => State});
 maybe_snapshot(_, _, _, _) ->
     ok.
 ```
@@ -258,7 +280,8 @@ handle_info(check_snapshots, #{store_id := StoreId, aggregates := Aggs} = State)
         case needs_snapshot(StoreId, StreamId, Version) of
             true ->
                 reckon_gater_api:record_snapshot(
-                    StoreId, snapshot_scheduler, StreamId, Version, CurrentState
+                    StoreId, snapshot_scheduler, StreamId, Version,
+                    #{data => CurrentState}
                 );
             false ->
                 ok
