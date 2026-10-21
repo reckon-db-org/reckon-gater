@@ -35,12 +35,12 @@
 
   <!-- Cluster supervisor -->
   <rect x="40" y="100" width="200" height="30" rx="5" fill="url(#clusterGrad)" stroke="#ff9800" stroke-width="2"/>
-  <text x="140" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#e65100">esdb_gater_cluster_sup</text>
+  <text x="140" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#e65100">reckon_gater_cluster_sup</text>
   <text x="255" y="120" font-family="Arial, sans-serif" font-size="9" fill="#666">(rest_for_one)</text>
 
   <!-- Channel supervisor -->
   <rect x="300" y="100" width="200" height="30" rx="5" fill="url(#channelGrad)" stroke="#4caf50" stroke-width="2"/>
-  <text x="400" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#2e7d32">esdb_channel_sup</text>
+  <text x="400" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#2e7d32">reckon_gater_channel_sup</text>
   <text x="515" y="120" font-family="Arial, sans-serif" font-size="9" fill="#666">(one_for_one)</text>
 
   <!-- Lines from cluster sup -->

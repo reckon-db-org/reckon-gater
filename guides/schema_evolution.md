@@ -15,7 +15,7 @@ Before reading this guide, you should understand:
 
 In event sourcing, events are immutable facts. But business requirements evolve:
 
-- New fields are added (`phone` added to `UserCreated`)
+- New fields are added (`phone` added to `user_registered_v1`)
 - Field names are renamed (`amount_cents` → `amount`)
 - Data formats change (cents as integer → dollars as decimal)
 - Fields are split (`full_name` → `first_name` + `last_name`)
@@ -27,19 +27,39 @@ In event sourcing, events are immutable facts. But business requirements evolve:
 Instead of migrating events, we transform them **on read**:
 
 ```
-Write (immutable):           Read (transformed):
-┌──────────────────┐         ┌──────────────────┐
-│ UserCreated v1   │         │ UserCreated v3   │
-│ {                │ ──────→ │ {                │
-│   name: "Alice", │ upcast  │   name: "Alice", │
-│   email: "..."   │         │   email: "...",  │
-│ }                │         │   phone: null,   │
-└──────────────────┘         │   verified: false│
-                             │ }                │
-                             └──────────────────┘
+Write (immutable):              Read (transformed):
+┌─────────────────────┐         ┌─────────────────────┐
+│ user_registered_v1  │         │ user_registered_v1  │
+│ schema_version: 1   │         │ schema_version: 3   │
+│ {                   │ ──────→ │ {                   │
+│   name: "Alice",    │ upcast  │   name: "Alice",    │
+│   email: "..."      │         │   email: "...",     │
+│ }                   │         │   phone: null,      │
+└─────────────────────┘         │   verified: false   │
+                                │ }                   │
+                                └─────────────────────┘
 ```
 
 **Key insight:** Events stay as written. Transformation happens at read time. Consumers always see the current schema.
+
+**One name, two version axes - they are not the same number.** An event
+type's NAME carries the version of the FACT: `user_registered_v1` is a
+registration as the business defines it, and it gets a new name only when
+that meaning changes. The payload's shape evolves underneath it, and that is
+the registry's `version`, carried per event as
+`#event.metadata.schema_version` (absent reads as 1). So
+`user_registered_v1` registered at `version => 3` means "the third shape of
+the same fact", not "the third kind of registration". Register under the
+stored `event_type` exactly - the registry looks the schema up by that
+binary, so a name the store never writes is a schema nothing upcasts.
+
+**Why `schema_version` is an atom key when the metadata index wants
+binaries.** The two are different readers. `reckon_db_schema` reads
+`#event.metadata` in Erlang, where the key is the atom `schema_version`
+(`reckon_db_schema.erl:206`); the metadata INDEX stores and matches binary
+keys, and it is the only place a binary spelling is required (see
+`guides/causation.md`). Write `schema_version` as an atom, and write the keys
+you intend to query with `read_by_metadata/3` as binaries.
 
 ---
 
@@ -64,7 +84,7 @@ Write (immutable):           Read (transformed):
 %% Purpose: Register initial schema version for an event type
 %%--------------------------------------------------------------------
 
-reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
+reckon_gater_api:register_schema(my_store, <<"user_registered_v1">>, #{
     version => 1,
     fields => [
         #{name => <<"name">>, type => string, required => true},
@@ -81,7 +101,7 @@ reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %% Purpose: Add new schema version with transformation from v1
 %%--------------------------------------------------------------------
 
-reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
+reckon_gater_api:register_schema(my_store, <<"user_registered_v1">>, #{
     version => 2,
     fields => [
         #{name => <<"name">>, type => string, required => true},
@@ -106,16 +126,16 @@ reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %%--------------------------------------------------------------------
 
 %% Get current schema for an event type
-{ok, Schema} = reckon_gater_api:get_schema(my_store, <<"UserCreated">>).
+{ok, Schema} = reckon_gater_api:get_schema(my_store, <<"user_registered_v1">>).
 
 %% Get current version number
-{ok, Version} = reckon_gater_api:get_schema_version(my_store, <<"UserCreated">>).
+{ok, Version} = reckon_gater_api:get_schema_version(my_store, <<"user_registered_v1">>).
 %% => {ok, 2}
 
 %% List all registered schemas
 {ok, Schemas} = reckon_gater_api:list_schemas(my_store).
 %% => [
-%%     #{event_type => <<"UserCreated">>, version => 2},
+%%     #{event_type => <<"user_registered_v1">>, version => 2},
 %%     #{event_type => <<"order_placed_v1">>, version => 3},
 %%     ...
 %% ]
@@ -146,7 +166,7 @@ reckon_gater_api:register_schema(my_store, <<"UserCreated">>, #{
 %% Purpose: Remove a deprecated event type's schema
 %%--------------------------------------------------------------------
 
-reckon_gater_api:unregister_schema(my_store, <<"DeprecatedEvent">>).
+reckon_gater_api:unregister_schema(my_store, <<"deprecated_event_v1">>).
 ```
 
 ---
@@ -353,13 +373,13 @@ upcast_from => #{
 ```erlang
 %% BAD: No way to know which version this event uses
 Event = #{
-    event_type => <<"UserCreated">>,
+    event_type => <<"user_registered_v1">>,
     data => #{name => <<"Alice">>}
 }.
 
 %% GOOD: Include schema version in metadata
 Event = #{
-    event_type => <<"UserCreated">>,
+    event_type => <<"user_registered_v1">>,
     data => #{name => <<"Alice">>},
     metadata => #{schema_version => 2}
 }.

@@ -23,7 +23,7 @@
   <!-- Client Applications -->
   <rect x="75" y="35" width="400" height="55" rx="8" fill="url(#clientGrad)" stroke="#4caf50" stroke-width="2"/>
   <text x="275" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2e7d32">Client Applications</text>
-  <text x="275" y="78" text-anchor="middle" font-family="monospace" font-size="9" fill="#388e3c">esdb_gater_api:call(my_store, {append, StreamId, -1, Events})</text>
+  <text x="275" y="78" text-anchor="middle" font-family="monospace" font-size="9" fill="#388e3c">reckon_gater_api:call(my_store, {append, StreamId, -1, Events})</text>
 
   <!-- Arrow down -->
   <line x1="275" y1="90" x2="275" y2="115" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>

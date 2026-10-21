@@ -85,7 +85,7 @@ Events = [
 Events are immutable facts that have happened. They should:
 - Be named in past tense (e.g., `order_placed_v1`, not `place_order`)
 - Contain all information needed to understand what happened
-- Be business-meaningful (e.g., `AccountOverdrawn`, not `BalanceUpdated`)
+- Be business-meaningful (`account_overdrawn_v1`, not `balance_updated_v1`)
 
 ```erlang
 %% Event structure
@@ -143,8 +143,8 @@ Use past tense verbs that describe business facts:
 |------|-----|
 | `order_placed_v1` | `CreateOrder` |
 | `payment_received_v1` | `process_payment` |
-| `ItemShipped` | `ShipItem` |
-| `AccountOverdrawn` | `UpdateBalance` |
+| `item_shipped_v1` | `ShipItem` |
+| `account_overdrawn_v1` | `UpdateBalance` |
 
 ### Event Granularity
 
@@ -155,14 +155,14 @@ Events should be atomic business facts. Avoid:
 
 ```erlang
 %% Good: Specific, meaningful events
-#{event_type => <<"AddressChanged">>, data => #{
+#{event_type => <<"address_changed_v1">>, data => #{
     old_address => OldAddr,
     new_address => NewAddr,
     reason => <<"customer_request">>
 }}
 
 %% Bad: Generic, meaningless event
-#{event_type => <<"CustomerUpdated">>, data => #{
+#{event_type => <<"customer_updated_v1">>, data => #{
     field => <<"address">>,
     value => NewAddr
 }}
@@ -173,28 +173,34 @@ Events should be atomic business facts. Avoid:
 Events are immutable, but schemas evolve. Use explicit versions:
 
 ```erlang
-%% Version 1
-#{event_type => <<"order_placed_v1">>, data => #{
-    order_id => ...,
-    items => [...]
-}}
+%% The fact's name carries the fact's version; the PAYLOAD's shape is a
+%% separate axis, carried per event in metadata.schema_version and declared
+%% to the schema registry (see the Schema Evolution guide).
 
-%% Version 2 (added shipping_address)
-#{event_type => <<"order_placed_v2">>, data => #{
-    order_id => ...,
-    items => [...],
-    shipping_address => #{}
-}}
+%% Shape 1 of the fact
+#{event_type => <<"order_placed_v1">>,
+  metadata => #{schema_version => 1},
+  data => #{order_id => ..., items => [...]}}
+
+%% Shape 2 of the SAME fact - not order_placed_v2: adding a field does not
+%% change what happened, and the name is what a subscriber selects on.
+#{event_type => <<"order_placed_v1">>,
+  metadata => #{schema_version => 2},
+  data => #{order_id => ..., items => [...], shipping_address => #{}}}
 ```
 
 Handle schema evolution in your projections:
 
 ```erlang
-handle_event(#{event_type := <<"order_placed_v1">>} = Event) ->
-    %% Default shipping address for v1 events
-    upgrade_to_v2(Event);
-handle_event(#{event_type := <<"order_placed_v2">>} = Event) ->
-    process_order(Event).
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
+
+%% Read through the registry's upcasting (reckon_db_schema:upcast/2 and
+%% reckon_gater_api:upcast_events/2). An event that has been through one of
+%% those arrives at the current shape, so a projection has one clause per
+%% event type and no version switch - but upcasting only happens when you
+%% call it. A subscription or stream_forward hands you the shape as stored.
+handle_event(#event{event_type = <<"order_placed_v1">>, data = Data}) ->
+    process_order(Data).
 ```
 
 ## Building Aggregates
@@ -208,6 +214,8 @@ An **aggregate** is a domain object that encapsulates state and enforces invaria
 -module(order_aggregate).
 -export([new/0, apply_event/2, place_order/2, add_item/3]).
 
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
+
 -record(order, {
     id,
     status = pending,
@@ -219,8 +227,7 @@ An **aggregate** is a domain object that encapsulates state and enforces invaria
 new() -> #order{}.
 
 %% Apply events to rebuild state
-apply_event(#{event_type := <<"order_placed_v1">>} = E, _Order) ->
-    Data = maps:get(data, E),
+apply_event(#event{event_type = <<"order_placed_v1">>, data = Data}, _Order) ->
     #order{
         id = maps:get(order_id, Data),
         status = placed,
@@ -228,8 +235,7 @@ apply_event(#{event_type := <<"order_placed_v1">>} = E, _Order) ->
         total = maps:get(total, Data)
     };
 
-apply_event(#{event_type := <<"ItemAdded">>} = E, Order) ->
-    Data = maps:get(data, E),
+apply_event(#event{event_type = <<"item_added_v1">>, data = Data}, Order) ->
     NewItem = #{
         product_id => maps:get(product_id, Data),
         quantity => maps:get(quantity, Data),
@@ -240,7 +246,7 @@ apply_event(#{event_type := <<"ItemAdded">>} = E, Order) ->
         total = Order#order.total + (maps:get(quantity, Data) * maps:get(price, Data))
     };
 
-apply_event(#{event_type := <<"OrderShipped">>}, Order) ->
+apply_event(#event{event_type = <<"order_shipped_v1">>}, Order) ->
     Order#order{status = shipped}.
 
 %% Commands that produce events
@@ -254,7 +260,7 @@ place_order(OrderId, Items) ->
 add_item(#order{status = placed} = _Order, ProductId, Quantity) ->
     Price = get_product_price(ProductId),
     {ok, [#{
-        event_type => <<"ItemAdded">>,
+        event_type => <<"item_added_v1">>,
         data => #{product_id => ProductId, quantity => Quantity, price => Price}
     }]};
 add_item(#order{status = shipped}, _ProductId, _Quantity) ->

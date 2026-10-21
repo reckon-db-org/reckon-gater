@@ -45,7 +45,7 @@
   <text x="370" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e65100">Execute Operation</text>
 
   <rect x="290" y="55" width="160" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
-  <text x="370" y="74" text-anchor="middle" font-family="monospace" font-size="9" fill="#1565c0">esdb_gater_api:execute()</text>
+  <text x="370" y="74" text-anchor="middle" font-family="monospace" font-size="9" fill="#1565c0">reckon_gater_api:execute()</text>
 
   <line x1="370" y1="83" x2="370" y2="100" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
 

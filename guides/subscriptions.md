@@ -20,12 +20,12 @@ nothing (see PubSub Channels below).
 %% Create a subscription via gateway
 {ok, _} = reckon_gater_api:save_subscription(
     my_store,                    %% Store ID
-    stream,                      %% Type: stream | event_type | event_pattern
-                                 %%       | event_payload | by_tags
+    stream,                      %% Type: stream | event_type | by_tags
+                                 %%       | event_pattern | event_payload
     <<"order-123">>,             %% Selector
     <<"order_handler">>,         %% Subscription name
-    0,                           %% Start position: an integer offset in the
-                                 %%   store's global log; 0 = the beginning
+    0,                           %% Start position: a position in the
+                                 %%   store's global order; 0 = the beginning
     self()                       %% Subscriber PID, or undefined
 ).
 ```
@@ -40,9 +40,9 @@ that order. There is no options map: `start_from` is the integer itself, and
 |------|----------|----------|
 | `stream` | Stream ID | Single aggregate events |
 | `event_type` | Event type name | Cross-cutting concerns |
-| `event_pattern` | A map, e.g. `#{event_type => <<"order_placed_v1">>}` | Category projections (see the caveat below) |
-| `event_payload` | Match map | Conditional processing |
-| `by_tags` | Tag list | Events sharing a tag (the store's name for it; `tags` is not a subscription type and reaches no clause) |
+| `event_pattern` | A map, e.g. `#{event_type => <<"order_placed_v1">>}` | Category projections - **accepted, does not fire live yet** (see the caveat below) |
+| `event_payload` | A map over the event's data, matching when every key given has that value | Conditional processing - **accepted, does not fire live yet** (see the caveat below) |
+| `by_tags` | Tag list | **Catch-up only today**: the replay filters by tag, but the live trigger has no tag condition, so live it delivers every created event (reckon-db#11). `tags` is not a subscription type and reaches no clause |
 
 #### Stream Subscription
 
@@ -64,10 +64,14 @@ that order. There is no options map: `start_from` is the integer itself, and
 
 #### Pattern Subscription
 
-The selector is a **map**, not a glob binary: a binary is refused by the
-store's filter (`reckon_db_filters:by_event_pattern/1` takes a map only), and
-through the gateway the refusal arrives as a killed worker and an error after
-the retries rather than as a clear one.
+The selector is a **map**, not a glob binary: `reckon_db_filters:by_event_pattern/1`
+takes a map only. A binary selector does **not** come back as an error. The
+gateway worker dies on it, the retry layer reads the exit as transient, the
+retry is answered `{already_exists}` because the first attempt stored the
+draft, and the worker maps that to `{ok, Name}`: the caller is told the
+subscription was created and nothing is ever delivered (filed as
+reckon-db-org/reckon-db#9). Use a map, and check for delivery, not for the
+call's answer.
 
 ```erlang
 %% Subscribe to the order-placed events
@@ -87,11 +91,20 @@ and filter in your handler.
 #### Payload Subscription
 
 ```erlang
-%% Subscribe to high-value orders
+%% Subscribe to high-value orders.
+%% The map matches when every key given has that value in the event's data, and it is not an expression: there is
+%% no operator syntax, so {gt, 10000} is a literal two-tuple that never
+%% matches a number. To filter by value, subscribe by event_type and compare
+%% in the handler.
 {ok, _} = reckon_gater_api:save_subscription(
-    my_store, event_payload, #{total => {gt, 10000}}, <<"high_value_handler">>, 0, self()
+    my_store, event_payload, #{total => 10000}, <<"high_value_handler">>, 0, self()
 ).
 ```
+
+**Same caveat as `event_pattern`**: `event_payload` is compiled into the same
+data-match condition and matches nothing that is stored today
+(reckon-db-org/reckon-db#8). Subscribe by `event_type` and filter in the
+handler.
 
 ### Listing Subscriptions
 
@@ -107,9 +120,13 @@ and filter in your handler.
 ### Removing Subscriptions
 
 ```erlang
-%% Remove a subscription
+%% Remove a subscription. The TYPE and the NAME identify it, and the
+%% selector argument is ignored - the store's worker unsubscribes by type and
+%% name (reckon_db_gateway_worker:dispatch({remove_subscription, _, Type,
+%% _Selector, Name}, ...) does not read the selector). Pass the selector it
+%% was created with anyway, so the call reads as the subscription it means.
 {ok, _} = reckon_gater_api:remove_subscription(
-    my_store, event_pattern, #{event_type => <<"order_placed_v1">>},
+    my_store, event_type, <<"order_placed_v1">>,
     <<"order_projection">>
 ).
 ```
@@ -119,11 +136,13 @@ and filter in your handler.
 ```erlang
 %% Acknowledge event processing (for at-least-once delivery).
 %%   ack_event(StoreId, SubscriptionName, SubscriberPid, EventMap)
-%% version is the store's GLOBAL position for this delivery, not the event's
-%% version in its stream; stream_id is accepted and ignored.
+%% `version' is the subscription's GLOBAL checkpoint - where the next
+%% catch-up starts - and not the event's version in its stream. The keys are
+%% atoms. `stream_id' is accepted and ignored, so it is not passed here.
+%% The 904 below is a number the CLIENT keeps; a raw subscriber cannot
+%% compute one today (see "The number you ack is..." below and reckon-db#7).
 {ok, _} = reckon_gater_api:ack_event(my_store, <<"order_projection">>, self(),
-                                     #{stream_id => StreamId,
-                                       version => GlobalPosition}).
+                                     #{version => 904}).
 ```
 
 The fourth argument is a **map**, not the `#event{}` record and not a bare
@@ -231,8 +250,14 @@ start_link(StoreId) ->
 init([StoreId]) ->
     %% Create subscription via gateway. The subscriber is this process: that
     %% is what makes deliveries arrive as {events, Events}.
+    %% One subscription per event type this handler cares about: a
+    %% subscription's selector is a single type (or stream, or tag), and the
+    %% handler below reads two of them.
     {ok, _} = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, #{event_type => <<"order_placed_v1">>}, <<"order_handler">>, 0, self()
+        StoreId, event_type, <<"order_placed_v1">>, <<"order_handler_placed">>, 0, self()
+    ),
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_type, <<"order_shipped_v1">>, <<"order_handler_shipped">>, 0, self()
     ),
     {ok, #{store_id => StoreId}}.
 
@@ -254,6 +279,7 @@ handle_event(_Event) ->
 ```erlang
 -module(checkpointed_handler).
 -behaviour(gen_server).
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 
 init([StoreId]) ->
     %% The subscription's start position is a position in the store's GLOBAL
@@ -262,7 +288,7 @@ init([StoreId]) ->
     %% to and including C, ask for C + 1.
     StartFrom = 0,
     {ok, _} = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, #{event_type => <<"order_placed_v1">>}, <<"checkpointed_handler">>,
+        StoreId, event_type, <<"order_placed_v1">>, <<"checkpointed_handler">>,
         StartFrom, self()
     ),
 
@@ -322,7 +348,7 @@ start_pool(StoreId, PoolSize) ->
     %% reckon-gater joins.
     Dispatcher = spawn_link(fun() -> dispatcher_loop(Workers) end),
     {ok, _} = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, #{event_type => <<"order_placed_v1">>}, <<"handler_pool">>, 0, Dispatcher
+        StoreId, event_type, <<"order_placed_v1">>, <<"handler_pool">>, 0, Dispatcher
     ),
     Dispatcher.
 
@@ -369,12 +395,12 @@ Process historical events before receiving live events:
 ```erlang
 %% Start from beginning (catch up on all history): position 0
 {ok, _} = reckon_gater_api:save_subscription(
-    my_store, event_pattern, #{event_type => <<"order_placed_v1">>}, <<"new_projection">>, 0, self()
+    my_store, event_type, <<"order_placed_v1">>, <<"new_projection">>, 0, self()
 ).
 
 %% Resume from a specific position
 {ok, _} = reckon_gater_api:save_subscription(
-    my_store, event_pattern, #{event_type => <<"order_placed_v1">>}, <<"resumed_projection">>, 12345, self()
+    my_store, event_type, <<"order_placed_v1">>, <<"resumed_projection">>, 12345, self()
 ).
 ```
 
@@ -414,12 +440,31 @@ check_lag(StoreId, StreamId, ProcessedVersion) ->
 Clean up subscriptions on shutdown:
 
 ```erlang
-terminate(_Reason, #{store_id := StoreId, subscription := Name}) ->
-    %% The STORE subscription, not a channel: a channel subscription is the
-    %% application's own pubsub and outlives nothing here.
-    {ok, _} = reckon_gater_api:remove_subscription(StoreId, event_pattern,
-                                                  #{event_type => <<"order_placed_v1">>},
-                                                  Name),
+init([StoreId]) ->
+    %% terminate/2 runs only if the process traps exits; a gen_server that
+    %% does not is killed on a supervisor shutdown and its subscriptions stay
+    %% behind.
+    process_flag(trap_exit, true),
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_type, <<"order_placed_v1">>,
+        <<"order_handler_placed">>, 0, self()),
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_type, <<"order_shipped_v1">>,
+        <<"order_handler_shipped">>, 0, self()),
+    {ok, #{store_id => StoreId}}.
+
+terminate(_Reason, #{store_id := StoreId}) ->
+    %% The STORE subscriptions, not channels: a channel subscription is the
+    %% application's own pubsub and outlives nothing here. EVERY name the
+    %% handler registered goes - one remove per subscription, and the
+    %% selector argument is ignored, so the type and the name are what the
+    %% call identifies.
+    Names = [{<<"order_placed_v1">>, <<"order_handler_placed">>},
+             {<<"order_shipped_v1">>, <<"order_handler_shipped">>}],
+    [begin
+         {ok, _} = reckon_gater_api:remove_subscription(
+                     StoreId, event_type, Selector, Name)
+     end || {Selector, Name} <- Names],
     ok.
 ```
 

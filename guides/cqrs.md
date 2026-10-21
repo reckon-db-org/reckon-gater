@@ -163,13 +163,19 @@ init(StoreId) ->
     %% Subscribe to order events via the gateway. The argument order is
     %% (StoreId, Type, Selector, Name, StartFrom, Subscriber): an integer
     %% start position, then the pid. There is no options map.
+    %%
+    %% ONE SUBSCRIPTION PER EVENT TYPE the projection handles: a
+    %% subscription's selector names a single type, and project_event/1
+    %% below handles both of these. A selector for only the first would
+    %% leave every order_shipped_v1 event undelivered - the projection
+    %% would compile, run, and silently never see the shipment.
     {ok, _} = reckon_gater_api:save_subscription(
-        StoreId,
-        event_pattern,
-        #{event_type => <<"order_placed_v1">>},
-        <<"order_dashboard_projection">>,
-        0,
-        self()
+        StoreId, event_type, <<"order_placed_v1">>,
+        <<"order_dashboard_projection_placed">>, 0, self()
+    ),
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_type, <<"order_shipped_v1">>,
+        <<"order_dashboard_projection_shipped">>, 0, self()
     ),
 
     {ok, #{store_id => StoreId}}.

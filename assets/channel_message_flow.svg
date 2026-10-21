@@ -32,7 +32,7 @@
 
   <!-- channel_server:publish -->
   <rect x="75" y="90" width="200" height="28" rx="5" fill="url(#stepGrad)" stroke="#2196f3" stroke-width="1.5"/>
-  <text x="175" y="109" text-anchor="middle" font-family="monospace" font-size="10" fill="#1565c0">esdb_channel_server:publish()</text>
+  <text x="175" y="109" text-anchor="middle" font-family="monospace" font-size="10" fill="#1565c0">reckon_gater_channel_server:publish()</text>
 
   <line x1="175" y1="118" x2="175" y2="138" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
 

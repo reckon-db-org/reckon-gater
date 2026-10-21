@@ -3,7 +3,15 @@
 
 -module(reckon_gater_retry_tests).
 
+%% EUnit auto-exports every *_test/0 fun it finds, so a module that also
+%% lists them in a generator runs each of them twice. The generator below is
+%% the only place they are declared; this stops the duplicates.
+-define(EUNIT_NOAUTO, true).
 -include_lib("eunit/include/eunit.hrl").
+
+%% The one entry point EUnit runs: with auto-export off, the generator has to
+%% be exported by hand.
+-export([retry_test_/0]).
 -include("reckon_gater.hrl").
 
 %%====================================================================
@@ -34,9 +42,7 @@ retry_test_() ->
         {"version_conflict is non-retriable (fails fast)",
          fun retry_skips_version_conflict_test/0},
         {"version_unverifiable is non-retriable (fails fast)",
-         fun retry_skips_version_unverifiable_test/0},
-        {"invalid_metadata_key is non-retriable (fails fast)",
-         fun retry_skips_invalid_metadata_key_test/0}
+         fun retry_skips_version_unverifiable_test/0}
      ]}.
 
 setup() ->
@@ -158,13 +164,14 @@ retry_skips_version_conflict_test() ->
     assert_fails_fast({version_conflict, -2, 418}).
 
 retry_skips_version_unverifiable_test() ->
+    %% The reason is what the store refuses with: khepri's own error, whose
+    %% third element is a props map - node_name and node_path are the keys
+    %% khepri_tree:walk_down_the_tree1/1 builds for it (khepri_tree.erl:
+    %% 1055-1056 in khepri 0.17.11) - carried through untouched.
     assert_fails_fast({version_unverifiable, 418,
-                       {khepri, node_not_found, [streams, <<"orders-1">>, 0]}}).
-
-%% reckon-evoq 2.9.0 refuses a non-binary metadata query itself; the store's
-%% query takes binaries, so the answer never changes.
-retry_skips_invalid_metadata_key_test() ->
-    assert_fails_fast({invalid_metadata_key, causation_id}).
+                       {khepri, node_not_found,
+                        #{node_name => <<"0">>,
+                          node_path => [streams, <<"orders-1">>, 0]}}}).
 
 %% The error goes back as it came, unwrapped, after exactly one call.
 assert_fails_fast(Err) ->

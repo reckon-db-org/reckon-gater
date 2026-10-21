@@ -329,8 +329,8 @@ reckon_gater_api:create_link(my_store, #{
     source => #{type => stream_pattern, pattern => <<"*">>},
     filter => #{field => <<"event_type">>, op => in, value => [
         <<"payment_received_v1">>,
-        <<"PaymentFailed">>,
-        <<"RefundIssued">>
+        <<"payment_failed_v1">>,
+        <<"refund_issued_v1">>
     ]}
 }).
 ```

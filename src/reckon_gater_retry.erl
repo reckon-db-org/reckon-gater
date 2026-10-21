@@ -140,11 +140,6 @@ is_retriable_error({context_changed, _}) -> false;
 %% it was told. Both reach the caller unchanged.
 is_retriable_error({version_conflict, _, _}) -> false;
 is_retriable_error({version_unverifiable, _, _}) -> false;
-%% reckon-evoq 2.9.0 refuses a metadata query whose key or value is not a
-%% binary before it reaches the store; the store's query takes binaries, so
-%% the same argument answers the same error however often it is sent.
-is_retriable_error({invalid_metadata_key, _}) -> false;
-is_retriable_error({invalid_metadata_value, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 

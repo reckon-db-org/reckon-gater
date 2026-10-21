@@ -224,8 +224,8 @@ Pause saga processing during pressure:
 
 -module(order_saga).
 
-handle_event(Event, State) ->
-    {ok, Level} = reckon_gater_api:get_memory_level(State#state.store_id),
+handle_event(Event, #{store_id := StoreId} = State) ->
+    {ok, Level} = reckon_gater_api:get_memory_level(StoreId),
     case Level of
         critical ->
             %% Defer processing until memory recovers

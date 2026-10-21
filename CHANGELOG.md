@@ -13,18 +13,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 transient, so the store's newest refusals went through the full ladder - ten
 retries, 100 ms doubling to 30 s, about 81 seconds - before the caller was
 told, and then as `{error, {retries_exhausted, Reason}}` rather than as the
-error itself. Four clauses now answer `false`:
+error itself. Two clauses now answer `false`:
 
 - `{version_conflict, _, _}` - the append lost its version race on every one
   of the store's sixty attempts (reckon-db 5.11.13);
-- `{version_unverifiable, _, _}` - the store refused because the stream's
-  older versions were scavenged, or the stream was deleted under the append;
-- `{invalid_metadata_key, _}` and `{invalid_metadata_value, _}` - a metadata
-  query that is not binary-keyed, refused by reckon-evoq 2.9.0 before it
-  reaches the store.
+- `{version_unverifiable, _, _}` - the store refused the append because it
+  could not verify the version it was built from. Its causes, by release:
+  - **5.11.13, two of them.** A stream deleted between the read and the
+    write, so the predecessor node the transaction checks is gone; and a
+    stream whose older versions were scavenged, where that node, or the one
+    the batch would take, is not where the count says. The scavenged shape
+    answers `{version_unverifiable, Version, target_occupied}` when it is the
+    target that is taken.
+  - **5.12.0, two of them.** A stream a 5.11.x append wrote past after a
+    rollback, where the tree moved and the counter did not: the store
+    reconciles the counter with the tree, and answers
+    `{version_unverifiable, Version, target_occupied}` when there is nothing
+    to reconcile. And a store that cannot answer the version check at all,
+    which answers the same tag with that read error as the reason.
 
-None of them gets better by trying again. Each reaches the caller on the
-first call, unchanged.
+  The clause covers both releases. Retrying any of them changes nothing.
+
+Neither gets better by trying again. Each reaches the caller on the first
+call, unchanged.
 
 ### Fixed: three specs said ok, the functions have always answered {ok, _}
 
@@ -94,10 +105,13 @@ What was wrong, and is not any more:
 - `quick_health_check/1` returns `{ok, map()}`; the README showed
   `ok = ...`, which badmatches.
 - `event_pattern`'s selector is a **map**, not a glob: the store's filter is
-  `by_event_pattern/1` and takes a map only, so every guide example passing
-  `<<"order-*">>` crashed the gateway worker and left a subscription behind
-  whose creation the caller never saw succeed. The examples pass
-  `#{event_type => <<"order_placed_v1">>}` now.
+  `by_event_pattern/1` and takes a map only. A binary selector is worse than
+  a crash: the worker dies on it, the retry is answered `{already_exists}`
+  because the first attempt stored the draft, and that maps to `{ok, Name}` -
+  the caller is told the subscription was created and nothing is ever
+  delivered (filed as reckon-db#9). The worked examples subscribe by
+  `event_type`, which delivers; `#{event_type => <<"order_placed_v1">>}`
+  appears only where the caveat is stated.
 - **That map does not match anything yet.** The store compiles it into its
   trigger's data-match condition, and the payload the store holds is an
   `#event{}` record, which no map pattern matches; the catch-up path

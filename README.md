@@ -65,8 +65,11 @@ Events = [#{event_type => <<"user_registered_v1">>, data => #{name => <<"Alice">
 %% The channel server is the APPLICATION's own pubsub: subscribe and
 %% publish to it yourself. Store events do not flow through it - a store
 %% subscription delivers to the pid it was given, as {events, Events}.
-%% The selector is a map, not a glob: a binary selector is refused by the
-%% store's filter (see "Subscription operations" below).
+%% Selector by type: event_type takes the event type binary, stream takes a
+%% stream id, and by_tags takes a tag list - all three deliver. The two
+%% pattern selectors (event_pattern takes a map, not a glob binary;
+%% event_payload the same) are accepted and do not fire live yet: see
+%% "Pattern Subscription" in guides/subscriptions.md.
 {ok, _} = reckon_gater_api:save_subscription(
     my_store, event_type, <<"user_registered_v1">>, <<"user_notifier">>, 0, self()).
 
@@ -117,10 +120,13 @@ reckon_gater_api:remove_subscription(StoreId, Type, Selector, Name) ->
     {ok, term()} | {error, term()}.
 
 %% Acknowledge event processing. The fourth argument is a map, not the
-%% #event{} record: #{stream_id => S, version => V}, where version is the
-%% event's GLOBAL position in the store's log, not its version within the
-%% stream. That global position is what the subscription's checkpoint holds,
-%% so acking a stream version moves the checkpoint to the wrong place.
+%% #event{} record: #{version => V}, where version is the subscription's
+%% GLOBAL checkpoint - where the next catch-up starts - and not the event's
+%% version within its stream. Acking a stream version moves the checkpoint
+%% into a different number space and the store resumes there without
+%% complaining. A raw subscriber CANNOT compute this number today: #event{}
+%% carries no global position (reckon-db#7), so ack only from a client that
+%% tracks the checkpoint itself. stream_id is accepted and ignored.
 reckon_gater_api:ack_event(StoreId, SubscriptionName, SubscriberPid, EventMap) ->
     {ok, term()} | {error, term()}.
 
@@ -527,11 +533,12 @@ true = reckon_gater_api:stream_exists(my_store, StreamId).
 %% Subscription operations
 {ok, _} = reckon_gater_api:save_subscription(my_store, stream, StreamId, <<"my_sub">>, 0, self()).
 {ok, _} = reckon_gater_api:remove_subscription(my_store, stream, StreamId, <<"my_sub">>).
-%% The ack names the event's GLOBAL position, not its version in the stream:
-%% that is what the checkpoint holds.
+%% The ack names the subscription's GLOBAL checkpoint, not the event's
+%% version in its stream - that is what the next catch-up reads from. The
+%% number comes from the CLIENT's own record: a raw subscriber cannot compute
+%% one today, because #event{} carries no global position (reckon-db#7).
 {ok, _} = reckon_gater_api:ack_event(my_store, <<"my_sub">>, self(),
-                                     #{stream_id => StreamId,
-                                       version => GlobalPosition}).
+                                     #{version => 904}).
 {ok, Subs} = reckon_gater_api:get_subscriptions(my_store).
 
 %% Snapshot operations

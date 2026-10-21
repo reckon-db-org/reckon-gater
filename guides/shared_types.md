@@ -30,7 +30,7 @@ The `#event{}` record represents an immutable fact stored in an event stream.
 ```erlang
 %% Creating an event for append via gateway
 Event = #{
-    event_type => <<"UserCreated">>,
+    event_type => <<"user_registered_v1">>,
     data => #{user_id => <<"usr-123">>, email => <<"alice@example.com">>},
     metadata => #{correlation_id => <<"req-456">>}
 },
@@ -83,7 +83,8 @@ The `#subscription{}` record tracks subscription state for event delivery.
 ```erlang
 -record(subscription, {
     id                :: binary(),            %% Unique subscription ID
-    type              :: subscription_type(), %% stream | event_type | event_pattern | event_payload
+    type              :: subscription_type(), %% stream | event_type | by_tags
+                                              %% | event_pattern | event_payload
     selector          :: binary() | map(),    %% What to match
     subscription_name :: binary(),            %% Human-readable name
     subscriber_pid    :: pid() | undefined,   %% Process receiving events
@@ -93,7 +94,7 @@ The `#subscription{}` record tracks subscription state for event delivery.
     options           :: map()                %% Additional options
 }).
 
--type subscription_type() :: stream | event_type | event_pattern | event_payload.
+-type subscription_type() :: stream | event_type | by_tags | event_pattern | event_payload.
 ```
 
 ### Subscription Types
@@ -102,8 +103,9 @@ The `#subscription{}` record tracks subscription state for event delivery.
 |------|----------|-------------|
 | `stream` | Stream ID binary | Events from a specific stream |
 | `event_type` | Event type binary | Events of a specific type across all streams |
-| `event_pattern` | Pattern binary | Events matching a wildcard pattern |
-| `event_payload` | Match map | Events with matching payload fields |
+| `event_pattern` | A map, e.g. `#{event_type => <<"order_placed_v1">>}` | Accepted, but it does not fire live yet (reckon-db#8) - subscribe by `event_type` and filter in the handler |
+| `event_payload` | A map over the event's data, matching when every key given has that value | Accepted, same caveat as `event_pattern` |
+| `by_tags` | A tag list | Tags as a selector: the catch-up replay filters by tag, the live trigger does not, so live it delivers every created event (reckon-db#11). `tags` is not a subscription type |
 
 ### Usage (Client-Side)
 

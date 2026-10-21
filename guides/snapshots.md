@@ -130,8 +130,14 @@ load(StoreId, AccountId) ->
     case reckon_gater_api:stream_forward(StoreId, StreamId, StartVersion, 10000) of
         {ok, Events} ->
             FinalState = lists:foldl(fun apply_event/2, InitialState, Events),
+            %% The state's version is the version of the last event it holds:
+            %% the last one replayed, or - with nothing to replay - the one
+            %% below the point the replay started from. That is the
+            %% snapshot's own version, and -1 (no stream yet) when there was
+            %% no snapshot. execute/3 appends with this number as its
+            %% expected version.
             NewVersion = case Events of
-                [] -> StartVersion;
+                [] -> StartVersion - 1;
                 _ -> (lists:last(Events))#event.version
             end,
             {ok, FinalState#account{version = NewVersion}};
@@ -182,17 +188,17 @@ maybe_save_snapshot(_StoreId, _StreamId, _State, _Version) ->
 handle_command({deposit, Amount}, #account{status = active} = Account)
   when Amount > 0 ->
     {ok, [#{
-        event_type => <<"MoneyDeposited">>,
+        event_type => <<"money_deposited_v1">>,
         data => #{amount => Amount, balance_after => Account#account.balance + Amount}
     }]};
 handle_command({deposit, _Amount}, #account{status = frozen}) ->
     {error, account_frozen}.
 
 %% Event application
-apply_event(#event{event_type = <<"MoneyDeposited">>, data = Data}, Account) ->
+apply_event(#event{event_type = <<"money_deposited_v1">>, data = Data}, Account) ->
     Amount = maps:get(amount, Data),
     Account#account{balance = Account#account.balance + Amount};
-apply_event(#event{event_type = <<"MoneyWithdrawn">>, data = Data}, Account) ->
+apply_event(#event{event_type = <<"money_withdrawn_v1">>, data = Data}, Account) ->
     Amount = maps:get(amount, Data),
     Account#account{balance = Account#account.balance - Amount}.
 ```
@@ -220,6 +226,7 @@ Snapshot at regular intervals:
 ```erlang
 -module(snapshot_scheduler).
 -behaviour(gen_server).
+-include_lib("reckon_gater/include/reckon_gater_types.hrl").
 
 -define(INTERVAL_MS, 60000).  %% Every minute
 
@@ -251,24 +258,32 @@ needs_snapshot(StoreId, StreamId, CurrentVersion) ->
 
 ### 1. Keep Snapshots Small
 
-Store only essential state:
+Store only essential state. The state above is `#account{}`, so the snapshot
+is a trimmed copy of it:
 
 ```erlang
-%% Good: Minimal state
-snapshot_data(#account{} = A) ->
-    #{
-        balance => A#account.balance,
-        status => A#account.status
-    }.
+-record(account, {id, balance = 0, status = active, version = 0}).
 
-%% Bad: Including derived/cached data
-snapshot_data(#account{} = A) ->
-    #{
-        balance => A#account.balance,
-        transaction_history => A#account.history,  %% Can be replayed
-        monthly_totals => A#account.totals         %% Derived data
-    }.
+%% Good: minimal state
+snapshot_of(#account{id = Id, balance = Balance, status = Status}) ->
+    #account{id = Id, balance = Balance, status = Status}.
 ```
+
+```erlang
+-record(account, {id, balance = 0, status = active, version = 0}).
+
+%% Bad: the whole record, version included. The version is derived - load/2
+%% reads it back out of the snapshot and seeks from it - so a snapshot that
+%% carries it keeps a second copy of something the events already own.
+snapshot_of(#account{} = Account) ->
+    Account.
+```
+
+Each block is its own module body, because one module cannot define
+`snapshot_of/1` twice. What the Good block leaves out is the version alone:
+`load/2` takes it from the `#snapshot{}` record, not from the data, and seeks
+from it. The rest of `#account{}` is what a snapshot is for - one that
+dropped the balance would have to replay every event to get it back.
 
 ### 2. Version Your Snapshot Schema
 
