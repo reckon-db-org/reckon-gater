@@ -120,7 +120,7 @@ history per conversation - the read-model pattern is still the right tool:
    given correlation group.
 
 ```erlang
-%% Projection example — insert into your read-model as events flow in.
+%% Projection example: insert into your read-model as events flow in.
 %% The stored metadata is the map the writer appended, so a writer that used
 %% binary keys reads binary keys here. `maps:get' on the atom spelling would
 %% miss it silently: that is the whole reason to pick one spelling.
