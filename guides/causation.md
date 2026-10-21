@@ -36,13 +36,21 @@ handle_command(Command, _State) ->
     Event = #{
         event_type => <<"order_placed_v1">>,
         data       => #{order_id => <<"order-123">>, items => [...]},
+        %% The keys must be BINARIES. The store keeps metadata as appended,
+        %% and the {meta, Key} index and the read_by_metadata scan match the
+        %% binary spelling only: atom keys are stored and never found.
         metadata   => #{
-            causation_id   => CommandId,       %% this command caused this event
-            correlation_id => CorrelationId    %% business-process grouping ID
+            <<"causation_id">>   => CommandId,      %% this command caused this event
+            <<"correlation_id">> => CorrelationId   %% business-process grouping ID
         }
     },
     reckon_gater_api:append_events(my_store, StreamId, [Event]).
 ```
+
+That binary-key rule is the whole contract: a writer that stamps atom keys
+has written metadata nothing can query. (Before reckon-evoq 2.8.1 the evoq
+adapter did exactly that, so events appended through it before that release
+are not findable by `read_by_metadata/3`; new ones are.)
 
 ## Propagating Causation in Event Handlers
 
@@ -50,14 +58,16 @@ When an event handler or process manager reacts to an event and produces new
 events, it must forward both IDs to maintain the chain:
 
 ```erlang
-handle_event(#{id := EventId, metadata := Meta} = _OrderPlaced, _State) ->
-    CorrelationId = maps:get(correlation_id, Meta),
+%% Delivery is {events, [#event{}]}: the record, not a map.
+handle_info({events, [#event{} = OrderPlaced | _]}, State) ->
+    #event{event_id = EventId, metadata = Meta} = OrderPlaced,
+    CorrelationId = maps:get(<<"correlation_id">>, Meta),
     NewEvent = #{
         event_type => <<"payment_requested_v1">>,
         data       => ...,
         metadata   => #{
-            causation_id   => EventId,        %% the upstream event caused this
-            correlation_id => CorrelationId   %% same business process
+            <<"causation_id">>   => EventId,        %% the upstream event caused this
+            <<"correlation_id">> => CorrelationId   %% same business process
         }
     },
     reckon_gater_api:append_events(my_store, PaymentStream, [NewEvent]).

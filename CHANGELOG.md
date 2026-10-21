@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed: ack_event/4's spec said ok, the function has always answered {ok, _}
+
+`-spec ack_event/4` declared `ok | {error, term()}`. The worker replies `ok`
+and `route_call` wraps it, so the function returns `{ok, ok}`: a caller
+matching the documented `ok` got no match at all, and a caller trusting the
+spec (the evoq adapter) believed something about the result that was never
+true. The spec and the doc now say `{ok, term()} | {error, term()}`, which is
+what every other call in this module returns and what its callers already
+matched. No behaviour change; one dialyzer baseline finding struck.
+
 ### Docs: lineage is queryable, and ack_event takes the event
 
 Two guide statements that the code contradicts (reckon-db-org/evoq#22):
@@ -18,11 +28,22 @@ Two guide statements that the code contradicts (reckon-db-org/evoq#22):
   not interpret the key - walking a chain or building a graph is the
   application's job - but finding events by their own metadata does not need
   a read model.
-- `ack_event/4` takes `(StoreId, SubscriptionName, SubscriberPid, Event)`,
-  in that order and with the event rather than a version number. The guide
-  and README showed `(Store, StreamId, SubscriptionName, EventNumber)`, and
-  it also answers `{error, {subscription_not_found, _}}` for a removed
-  subscription rather than silently doing nothing.
+- `ack_event/4` takes `(StoreId, SubscriptionName, SubscriberPid, EventMap)`,
+  in that order, and the fourth argument is a **map** - `#{stream_id => ...,
+  version => ...}` - not the `#event{}` record and not a version number. A
+  record where the map is expected is a `badmap` in the gateway worker. The
+  guide and README showed `(Store, StreamId, SubscriptionName, EventNumber)`,
+  which was wrong in both the order and the argument.
+- `save_subscription/6` takes `(StoreId, Type, Selector, Name, StartFrom,
+  Subscriber)`: the fifth argument is an integer offset, not the pid, and
+  there is no options map. Every example in `subscriptions.md` had the last
+  two reversed.
+- Metadata keys must be **binaries**. The store keeps metadata as appended,
+  and the `{meta, Key}` index and the `read_by_metadata/3` scan match the
+  binary spelling: atom keys are stored and never found. The causation
+  examples now use binary keys, delivery is shown as the `#event{}` record it
+  actually is, and the guide says events appended with atom keys before
+  reckon-evoq 2.9.0 are not findable by `read_by_metadata/3`.
 
 ### Notes
 

@@ -16,15 +16,21 @@ The gateway provides two ways to receive events:
 
 ```erlang
 %% Create a subscription via gateway
-ok = reckon_gater_api:save_subscription(
+{ok, _} = reckon_gater_api:save_subscription(
     my_store,                    %% Store ID
-    stream,                      %% Type: stream | event_type | event_pattern | event_payload
+    stream,                      %% Type: stream | event_type | event_pattern
+                                 %%       | event_payload | tags
     <<"order-123">>,             %% Selector
     <<"order_handler">>,         %% Subscription name
-    self(),                      %% Subscriber PID
-    #{}                          %% Options
+    0,                           %% Start position: an integer offset in the
+                                 %%   store's global log; 0 = the beginning
+    self()                       %% Subscriber PID, or undefined
 ).
 ```
+
+The fifth and sixth arguments are the start position and the subscriber, in
+that order. There is no options map: `start_from` is the integer itself, and
+`pool_size` and the like are not read here.
 
 ### Subscription Types
 
@@ -34,13 +40,14 @@ ok = reckon_gater_api:save_subscription(
 | `event_type` | Event type name | Cross-cutting concerns |
 | `event_pattern` | Wildcard pattern | Category projections |
 | `event_payload` | Match map | Conditional processing |
+| `tags` | Tag list | Events sharing a tag |
 
 #### Stream Subscription
 
 ```erlang
 %% Subscribe to a single order's events
-ok = reckon_gater_api:save_subscription(
-    my_store, stream, <<"order-123">>, <<"order_handler">>, self(), #{}
+{ok, _} = reckon_gater_api:save_subscription(
+    my_store, stream, <<"order-123">>, <<"order_handler">>, 0, self()
 ).
 ```
 
@@ -48,8 +55,8 @@ ok = reckon_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to all PaymentReceived events
-ok = reckon_gater_api:save_subscription(
-    my_store, event_type, <<"PaymentReceived">>, <<"payment_processor">>, self(), #{}
+{ok, _} = reckon_gater_api:save_subscription(
+    my_store, event_type, <<"PaymentReceived">>, <<"payment_processor">>, 0, self()
 ).
 ```
 
@@ -57,8 +64,8 @@ ok = reckon_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to all order streams
-ok = reckon_gater_api:save_subscription(
-    my_store, event_pattern, <<"order-*">>, <<"order_projection">>, self(), #{}
+{ok, _} = reckon_gater_api:save_subscription(
+    my_store, event_pattern, <<"order-*">>, <<"order_projection">>, 0, self()
 ).
 ```
 
@@ -66,8 +73,8 @@ ok = reckon_gater_api:save_subscription(
 
 ```erlang
 %% Subscribe to high-value orders
-ok = reckon_gater_api:save_subscription(
-    my_store, event_payload, #{total => {gt, 10000}}, <<"high_value_handler">>, self(), #{}
+{ok, _} = reckon_gater_api:save_subscription(
+    my_store, event_payload, #{total => {gt, 10000}}, <<"high_value_handler">>, 0, self()
 ).
 ```
 
@@ -95,15 +102,27 @@ ok = reckon_gater_api:remove_subscription(
 
 ```erlang
 %% Acknowledge event processing (for at-least-once delivery).
-%% The fourth argument is the event itself, not a version number:
-%%   ack_event(StoreId, SubscriptionName, SubscriberPid, Event)
-ok = reckon_gater_api:ack_event(my_store, <<"order_projection">>, self(), Event).
+%%   ack_event(StoreId, SubscriptionName, SubscriberPid, EventMap)
+{ok, _} = reckon_gater_api:ack_event(my_store, <<"order_projection">>, self(),
+                                     #{stream_id => StreamId, version => Version}).
 ```
 
-`ack_event/4` answers `{error, {subscription_not_found, _}}` when the
-subscription has been removed. That is a caller error and is surfaced, not
-swallowed: acking a dead subscription does nothing, and the events will be
-delivered again.
+The fourth argument is a **map**, not the `#event{}` record and not a bare
+version number. The gateway reads the position and the stream from it:
+
+| Key | Read as |
+|-----|---------|
+| `event_stream_id`, or `stream_id` | the stream to acknowledge in |
+| `event_number`, or `version` | the position to acknowledge |
+
+A record where a map is expected is a `badmap` and takes the gateway worker
+down with it.
+
+`ack_event/4` answers `{ok, _}` on success and
+`{error, {subscription_not_found, _}}` when the subscription has been
+removed. That one is a caller error and is surfaced rather than swallowed:
+the ack did nothing, the subscription is gone, and nothing will be delivered
+to it.
 
 ## PubSub Channels
 
@@ -176,8 +195,8 @@ start_link(StoreId) ->
 
 init([StoreId]) ->
     %% Create subscription via gateway
-    ok = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, <<"order-*">>, <<"order_handler">>, self(), #{}
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_pattern, <<"order-*">>, <<"order_handler">>, 0, self()
     ),
 
     %% Also subscribe to PubSub for real-time delivery
@@ -213,19 +232,23 @@ init([StoreId]) ->
     LastPosition = load_checkpoint(StoreId),
 
     %% Subscribe starting from checkpoint
-    ok = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, <<"order-*">>, <<"checkpointed_handler">>, self(),
-        #{start_from => LastPosition}
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_pattern, <<"order-*">>, <<"checkpointed_handler">>,
+        LastPosition, self()
     ),
 
     {ok, #{store_id => StoreId, last_position => LastPosition}}.
 
-handle_info({event, #event{version = Version} = Event}, #{store_id := StoreId} = State) ->
+%% Delivery is {events, [Event]}.
+handle_info({events, [#event{} = Event | _]}, #{store_id := StoreId} = State) ->
+    #event{version = Version, stream_id = StreamId} = Event,
+
     %% Process the event
     handle_event(Event),
 
-    %% Acknowledge and checkpoint
-    ok = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, self(), Event),
+    %% Acknowledge and checkpoint. The ack takes a map, not the record.
+    {ok, _} = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, self(),
+                                         #{stream_id => StreamId, version => Version}),
     save_checkpoint(StoreId, Version),
 
     {noreply, State#{last_position => Version}}.
@@ -237,10 +260,10 @@ handle_info({event, #event{version = Version} = Event}, #{store_id := StoreId} =
 -module(handler_pool).
 
 start_pool(StoreId, PoolSize) ->
-    %% Create subscription
-    ok = reckon_gater_api:save_subscription(
-        StoreId, event_pattern, <<"order-*">>, <<"handler_pool">>, undefined,
-        #{pool_size => PoolSize}
+    %% Create subscription. The subscriber is undefined: the pool's workers
+    %% read through the PubSub channel, not this subscription.
+    {ok, _} = reckon_gater_api:save_subscription(
+        StoreId, event_pattern, <<"order-*">>, <<"handler_pool">>, 0, undefined
     ),
 
     %% Start worker processes
@@ -262,16 +285,14 @@ init([StoreId, WorkerId]) ->
 Process historical events before receiving live events:
 
 ```erlang
-%% Start from beginning (catch up on all history)
-ok = reckon_gater_api:save_subscription(
-    my_store, event_pattern, <<"order-*">>, <<"new_projection">>, self(),
-    #{start_from => 0}
+%% Start from beginning (catch up on all history): position 0
+{ok, _} = reckon_gater_api:save_subscription(
+    my_store, event_pattern, <<"order-*">>, <<"new_projection">>, 0, self()
 ).
 
 %% Resume from a specific position
-ok = reckon_gater_api:save_subscription(
-    my_store, event_pattern, <<"order-*">>, <<"resumed_projection">>, self(),
-    #{start_from => 12345}
+{ok, _} = reckon_gater_api:save_subscription(
+    my_store, event_pattern, <<"order-*">>, <<"resumed_projection">>, 12345, self()
 ).
 ```
 

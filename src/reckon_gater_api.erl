@@ -470,10 +470,16 @@ remove_subscription(StoreId, Type, Selector, SubscriptionName) ->
 
 %% @doc Acknowledge receipt of an event by a subscriber.
 %%
-%% Returns `ok' on success, `{error, {subscription_not_found, _}}' if
-%% the subscription has been removed (acking a dead subscription is a
-%% caller error; surface it). Non-retriable.
--spec ack_event(atom(), binary(), pid(), map()) -> ok | {error, term()}.
+%% Returns `{ok, _}' on success - like every other call here, the reply is
+%% wrapped - and `{error, {subscription_not_found, _}}' if the subscription
+%% has been removed (acking a dead subscription is a caller error; surface
+%% it). Non-retriable.
+%%
+%% The spec said `ok' and the code has never returned it: the worker replies
+%% `ok', and route_call wraps that as `{ok, ok}'. A caller matching `ok' got
+%% no match at all, which is how this was found (the evoq adapter trusted
+%% the spec and believed every ack succeeded).
+-spec ack_event(atom(), binary(), pid(), map()) -> {ok, term()} | {error, term()}.
 ack_event(StoreId, SubscriptionName, SubscriberPid, Event) ->
     route_call(StoreId, {ack_event, StoreId, SubscriptionName, SubscriberPid, Event}).
 
