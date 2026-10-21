@@ -1,5 +1,5 @@
 # Known dialyzer findings, recorded as a ratchet. See scripts/dialyzer_ratchet.sh.
-# dialyzer reported 57 when this was written (files for lint, warnings for dialyzer).
+# dialyzer reported 58 when this was written (files for lint, warnings for dialyzer).
 # A new finding fails CI. A fixed finding should have its line deleted here.
 src/reckon_gater_api.erl	5abc21d1d9a6	Type specification reckon_gater_api:do_route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()}
 src/reckon_gater_api.erl	6fd9012c8bf2	Type specification reckon_gater_api:route_call(atom(),term()) -> {'ok',term()} | {'error',term()} is a superty
@@ -7,6 +7,7 @@ src/reckon_gater_api.erl	77d1dc20bb07	Type specification reckon_gater_api:health
 src/reckon_gater_api.erl	80457bd27b35	Type specification reckon_gater_api:route_cast(atom(),term()) -> 'ok' is a supertype of the success typing: re
 src/reckon_gater_api.erl	fce4c0786fd7	Type specification reckon_gater_api:route_call(atom(),term(),timeout()) -> {'ok',term()} | {'error',term()} is
 src/reckon_gater_canonical.erl	2179ffa0055a	Type specification reckon_gater_canonical:encode_for_mac('event' | 'snapshot',term()) -> iolist() is a superty
+src/reckon_gater_canonical.erl	24d408c283a8	Type specification reckon_gater_canonical:encode_for_mac_v2('event' | 'snapshot',atom() | binary(),binary(),te
 src/reckon_gater_canonical.erl	67f4b1bef4d1	Type specification reckon_gater_canonical:encode_for_chain(term(),binary()) -> iolist() is a supertype of the 
 src/reckon_gater_capability.erl	4b60bfba2193	Type specification reckon_gater_capability:jsx_decode(binary()) -> map() is a supertype of the success typing:
 src/reckon_gater_capability.erl	5f21ff9aa55b	Type specification reckon_gater_capability:compute_cid(capability()) -> binary() is a supertype of the success
@@ -34,11 +35,11 @@ src/reckon_gater_identity.erl	538abcee85ec	Type specification reckon_gater_ident
 src/reckon_gater_identity.erl	80b1314bc63b	Type specification reckon_gater_identity:decode_base58_int(binary(),non_neg_integer()) -> {'ok',non_neg_intege
 src/reckon_gater_identity.erl	8f19ffd90215	Type specification reckon_gater_identity:encode_did(binary()) -> binary() is a supertype of the success typing
 src/reckon_gater_identity.erl	ef68778a798b	Type specification reckon_gater_identity:base58_decode_erlang(binary()) -> {'ok',binary()} | {'error',term()} 
-src/reckon_gater_integrity.erl	87845085c0cb	Type specification reckon_gater_integrity:verify_event(#event{},binary(),key()) -> 'ok' | integrity_violation(
 src/reckon_gater_integrity.erl	8f3167b3cbb2	Type specification reckon_gater_integrity:compute_snapshot_mac(#snapshot{},key()) -> {key_id(),binary()} is a 
-src/reckon_gater_integrity.erl	9c37c6f80e21	Type specification reckon_gater_integrity:verify_snapshot(#snapshot{},binary(),key()) -> 'ok' | integrity_viol
 src/reckon_gater_integrity.erl	a1271bcafa66	Type specification reckon_gater_integrity:genesis_prev_hash() -> binary() is a supertype of the success typing
+src/reckon_gater_integrity.erl	c1bf2699a836	Type specification reckon_gater_integrity:verify_event(#event{},binary(),key()) -> 'ok' | integrity_violation(
 src/reckon_gater_integrity.erl	f04779029dc1	Type specification reckon_gater_integrity:compute_event_mac(#event{},key()) -> {key_id(),binary()} is a supert
+src/reckon_gater_integrity.erl	f0aada947422	Type specification reckon_gater_integrity:verify_snapshot(#snapshot{},binary(),key()) -> 'ok' | integrity_viol
 src/reckon_gater_pubsub_security.erl	5d108afef085	Type specification reckon_gater_pubsub_security:sign(map()) -> map() is a supertype of the success typing: rec
 src/reckon_gater_pubsub_security.erl	669e4ac538cd	Type specification reckon_gater_pubsub_security:verify(map(),binary()) -> 'ok' | {'error',term()} is a superty
 src/reckon_gater_pubsub_security.erl	9fdd81c6dcfe	Type specification reckon_gater_pubsub_security:verify(map()) -> 'ok' | {'error',term()} is a supertype of the

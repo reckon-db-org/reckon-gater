@@ -112,21 +112,31 @@ encode_for_mac(snapshot, SnapMinusMac) ->
 %% another store, or into a later life of the same stream id, therefore
 %% does not verify: the bytes the MAC was computed over are not there.
 %%
-%% The store may be given as an atom or a binary; it is encoded
-%% unambiguously (a length-prefixed atom-vs-binary distinction is not
-%% needed because both sides derive it the same way from the same stored
-%% value).
+%% The store may be given as an atom or a binary; it is normalised to a
+%% binary first, and each bound field then carries its own length, so the
+%% input is injective: a pair (Store, Life) always produces bytes no other
+%% pair can produce. Separators are deliberately not used for that. A store
+%% id and a life token are both arbitrary bytes (the life is a tree value
+%% anyone who can write the tree may set), so a store ending in "|" and a
+%% life beginning with one would otherwise collide with a different pair
+%% and let an event MAC'd in one store verify in another.
 -spec encode_for_mac_v2(event | snapshot, atom() | binary(), binary(), term()) -> iolist().
 encode_for_mac_v2(event, StoreId, Life, EventMinusMac) ->
-    [?EVT2_TAG, store_bytes(StoreId), <<"|">>, Life, <<"|">>,
-     encode(EventMinusMac)];
+    [?EVT2_TAG, bound_fields(StoreId, Life), encode(EventMinusMac)];
 encode_for_mac_v2(snapshot, StoreId, Life, SnapMinusMac) ->
-    [?SNAP2_TAG, store_bytes(StoreId), <<"|">>, Life, <<"|">>,
-     encode(SnapMinusMac)].
+    [?SNAP2_TAG, bound_fields(StoreId, Life), encode(SnapMinusMac)].
+
+%% @private
+bound_fields(StoreId, Life) ->
+    [length_prefixed(store_bytes(StoreId)), length_prefixed(Life)].
 
 %% @private
 store_bytes(StoreId) when is_atom(StoreId) -> atom_to_binary(StoreId, utf8);
 store_bytes(StoreId) when is_binary(StoreId) -> StoreId.
+
+%% @private
+length_prefixed(Bin) when is_binary(Bin) ->
+    <<(byte_size(Bin)):32, Bin/binary>>.
 
 %% @doc Canonical bytes to feed into the chain hash computation.
 %%

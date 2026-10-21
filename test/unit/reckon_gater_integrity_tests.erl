@@ -391,3 +391,83 @@ v2_snapshot_verifies_with_its_context_test() ->
                  reckon_gater_integrity:verify_snapshot(
                    Snap, <<7:256>>, K,
                    #{store_id => store_b, life => <<"life-1">>})).
+
+%% A stored MAC that is not 32 bytes is answered as a violation, never a
+%% crash. The field is tree-writable, so every shape an attacker can put
+%% there has to come back as an answer.
+malformed_event_mac_is_a_violation_test_() ->
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    K = key(),
+    Ctx = #{store_id => store_a, life => <<"life-1">>},
+    Shapes = [{1, <<1>>}, {1, nope}, {v2, 1, <<1>>}, {v2, 1, nope}],
+    [?_assertMatch({integrity_violation,
+                    #{kind := mac_mismatch,
+                      context := #{detail := malformed_mac}}},
+                   reckon_gater_integrity:verify_event(
+                     (base_event())#event{prev_event_hash = Genesis, mac = M},
+                     Genesis, K, Ctx))
+     || M <- Shapes].
+
+malformed_snapshot_mac_is_a_violation_test_() ->
+    K = key(),
+    Ctx = #{store_id => store_a, life => <<"life-1">>},
+    Shapes = [{1, <<1>>}, {1, nope}, {v2, 1, <<1>>}, {v2, 1, nope}],
+    [?_assertMatch({integrity_violation,
+                    #{kind := snapshot_mac_mismatch,
+                      context := #{detail := malformed_mac}}},
+                   reckon_gater_integrity:verify_snapshot(
+                     (base_snapshot())#snapshot{anchor_hash = <<7:256>>, mac = M},
+                     <<7:256>>, K, Ctx))
+     || M <- Shapes].
+
+%% A store id and a life token are both arbitrary bytes, so the MAC input
+%% carries each one's length: a store id ending in a separator and a life
+%% beginning with one cannot be swapped for a different pair.
+v2_mac_input_is_injective_test() ->
+    Life = <<"life-1">>,
+    {Signed, K} = make_signed_v2_event('x|y', Life),
+    Genesis = reckon_gater_integrity:genesis_prev_hash(),
+    ?assertEqual(ok, reckon_gater_integrity:verify_event(
+                       Signed, Genesis, K,
+                       #{store_id => 'x|y', life => Life})),
+    ?assertMatch({integrity_violation, #{kind := mac_mismatch}},
+                 reckon_gater_integrity:verify_event(
+                   Signed, Genesis, K,
+                   #{store_id => 'x', life => <<"y|", Life/binary>>})).
+
+%% base_snapshot is version 99: scheme 1 is allowed below v2_from and
+%% refused at or above it.
+scheme_1_snapshot_mac_is_refused_at_or_above_v2_from_test() ->
+    Snap0 = (base_snapshot())#snapshot{anchor_hash = <<7:256>>},
+    K = key(),
+    Snap = Snap0#snapshot{
+             mac = reckon_gater_integrity:compute_snapshot_mac(Snap0, K)},
+    ?assertEqual(ok, reckon_gater_integrity:verify_snapshot(
+                       Snap, <<7:256>>, K, #{v2_from => 100})),
+    ?assertMatch({integrity_violation,
+                  #{kind := snapshot_mac_mismatch,
+                    context := #{detail := scheme_1_at_or_above_v2_from}}},
+                 reckon_gater_integrity:verify_snapshot(
+                   Snap, <<7:256>>, K, #{v2_from => 99})).
+
+v2_snapshot_does_not_verify_under_another_life_test() ->
+    Snap0 = (base_snapshot())#snapshot{anchor_hash = <<7:256>>},
+    K = key(),
+    Snap = Snap0#snapshot{
+             mac = reckon_gater_integrity:compute_snapshot_mac(
+                   Snap0, K, #{store_id => store_a, life => <<"life-1">>})},
+    ?assertMatch({integrity_violation, #{kind := snapshot_mac_mismatch}},
+                 reckon_gater_integrity:verify_snapshot(
+                   Snap, <<7:256>>, K,
+                   #{store_id => store_a, life => <<"life-2">>})).
+
+v2_snapshot_with_no_context_is_a_violation_test() ->
+    Snap0 = (base_snapshot())#snapshot{anchor_hash = <<7:256>>},
+    K = key(),
+    Snap = Snap0#snapshot{
+             mac = reckon_gater_integrity:compute_snapshot_mac(
+                   Snap0, K, #{store_id => store_a, life => <<"life-1">>})},
+    ?assertMatch({integrity_violation,
+                  #{kind := snapshot_mac_mismatch,
+                    context := #{detail := mac_context_absent}}},
+                 reckon_gater_integrity:verify_snapshot(Snap, <<7:256>>, K)).

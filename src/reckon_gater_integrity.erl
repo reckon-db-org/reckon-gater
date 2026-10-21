@@ -49,13 +49,6 @@
 %% @end
 -module(reckon_gater_integrity).
 
-%% The MAC shape is read back from stored data, which is not typed: a shape
-%% this version does not recognise is answered as a violation rather than
-%% crashing the caller. Dialyzer cannot see that, because it only knows the
-%% declared record type, so it reports the clause as unreachable.
--dialyzer({nowarn_function, verify_event_mac/3}).
--dialyzer({nowarn_function, verify_snapshot_mac/3}).
-
 -include("reckon_gater_types.hrl").
 
 -export([
@@ -71,6 +64,12 @@
     verify_event/4,
     verify_snapshot/3,
     verify_snapshot/4,
+
+    %% Shape dispatch over a stored (untyped) mac, exported so its term()
+    %% spec is the contract dialyzer checks against: a local function would
+    %% be narrowed by its call sites and the untyped clause reported dead.
+    verify_event_mac_shape/4,
+    verify_snapshot_mac_shape/4,
 
     %% Predicates
     is_legacy_event/1,
@@ -314,13 +313,24 @@ verify_event_chain(#event{prev_event_hash = StoredPrev} = Event, ExpectedPrev) -
                              expected => bin_summary(ExpectedPrev)})
     end.
 
-verify_event_mac(#event{mac = undefined} = Event, _Key, _Ctx) ->
+verify_event_mac(#event{mac = Mac} = Event, Key, Ctx) ->
+    verify_event_mac_shape(Mac, Event, Key, Ctx).
+
+%% @private The MAC is read back from stored data, which is not typed: a
+%% shape this version does not recognise is answered as a violation rather
+%% than crashing the caller. Taking it as term() is what lets dialyzer see
+%% that clause, so the whole verification path stays under the ratchet
+%% instead of being switched off with a nowarn.
+-spec verify_event_mac_shape(term(), #event{}, key(), mac_context()) ->
+    ok | integrity_violation().
+verify_event_mac_shape(undefined, Event, _Key, _Ctx) ->
     violation(storage, Event, missing_integrity, #{detail => mac_absent});
-verify_event_mac(#event{mac = {v2, _KeyId, StoredMac}} = Event, Key, Ctx) ->
+verify_event_mac_shape({v2, _KeyId, StoredMac}, Event, Key, Ctx) ->
     verify_event_mac_v2(Event, StoredMac, Key, Ctx);
-verify_event_mac(#event{mac = {_KeyId, StoredMac}, version = Version} = Event, Key, Ctx) ->
+verify_event_mac_shape({_KeyId, StoredMac}, #event{version = Version} = Event,
+                       Key, Ctx) ->
     verify_event_mac_v1(Event, StoredMac, Version, Key, Ctx);
-verify_event_mac(#event{} = Event, _Key, _Ctx) ->
+verify_event_mac_shape(_Mac, Event, _Key, _Ctx) ->
     violation(storage, Event, mac_mismatch, #{detail => unknown_mac_shape}).
 
 %% @private Scheme 1 is refused at or above the stream's v2_from: a value
@@ -358,12 +368,20 @@ verify_snapshot_anchor(#snapshot{anchor_hash = Stored} = Snap, Actual) ->
                              actual => bin_summary(Actual)})
     end.
 
-verify_snapshot_mac(#snapshot{mac = {v2, _KeyId, StoredMac}} = Snap, Key, Ctx) ->
+verify_snapshot_mac(#snapshot{mac = Mac} = Snap, Key, Ctx) ->
+    verify_snapshot_mac_shape(Mac, Snap, Key, Ctx).
+
+%% @private See verify_event_mac_shape/4.
+-spec verify_snapshot_mac_shape(term(), #snapshot{}, key(), mac_context()) ->
+    ok | integrity_violation().
+verify_snapshot_mac_shape({v2, _KeyId, StoredMac}, Snap, Key, Ctx) ->
     verify_snapshot_mac_v2(Snap, StoredMac, Key, Ctx);
-verify_snapshot_mac(#snapshot{mac = {_KeyId, StoredMac}, version = Version} = Snap, Key, Ctx) ->
+verify_snapshot_mac_shape({_KeyId, StoredMac}, #snapshot{version = Version} = Snap,
+                          Key, Ctx) ->
     verify_snapshot_mac_v1(Snap, StoredMac, Version, Key, Ctx);
-verify_snapshot_mac(#snapshot{} = Snap, _Key, _Ctx) ->
-    violation(snapshot, Snap, snapshot_mac_mismatch, #{detail => unknown_mac_shape}).
+verify_snapshot_mac_shape(_Mac, Snap, _Key, _Ctx) ->
+    violation(snapshot, Snap, snapshot_mac_mismatch,
+              #{detail => unknown_mac_shape}).
 
 %% @private
 verify_snapshot_mac_v1(Snap, StoredMac, Version, Key, Ctx) ->
@@ -403,13 +421,23 @@ mac_context(#{store_id := StoreId, life := Life}) when is_binary(Life) ->
 mac_context(_Ctx) ->
     error.
 
-%% @private
+%% @private A stored MAC that is not 32 bytes is a violation, never a crash:
+%% crypto:hash_equals/2 raises badarg on a size mismatch or a non-binary, and
+%% the field is tree-writable, so a tampered store must answer like any other
+%% tamper.
 compare_mac(StoredMac, Bytes, Key, Layer, Value, Kind) ->
     Expected = crypto:mac(hmac, sha256, Key, Bytes),
+    compare_mac_bytes(StoredMac, Expected, Layer, Value, Kind).
+
+%% @private
+compare_mac_bytes(StoredMac, Expected, Layer, Value, Kind)
+        when is_binary(StoredMac), byte_size(StoredMac) =:= byte_size(Expected) ->
     case crypto:hash_equals(StoredMac, Expected) of
         true  -> ok;
         false -> violation(Layer, Value, Kind, #{})
-    end.
+    end;
+compare_mac_bytes(_StoredMac, _Expected, Layer, Value, Kind) ->
+    violation(Layer, Value, Kind, #{detail => malformed_mac}).
 
 %%====================================================================
 %% Internal -- helpers

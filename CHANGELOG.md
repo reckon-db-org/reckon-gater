@@ -18,10 +18,15 @@ store's tree, and it is what drives this addition.
 (`#{store_id, life}`) and return a **tagged three-tuple** `{v2, KeyId, Bytes}`:
 the MAC then covers the store id and, for an event, the life token of the
 stream it was written under. The old two-tuple `{KeyId, Bytes}` keeps its
-meaning forever — a MAC over the value alone — so every value already stored
+meaning forever: a MAC over the value alone. Every value already stored
 verifies exactly as before. The key id is untouched: it keeps meaning the
 writer's key (which the gateway publishes for rotation), and the scheme lives
 in the tuple's shape instead.
+
+The store id is normalised to one type and each bound field carries its own
+length in the MAC input, so no store id and life token can produce the bytes
+of a different pair: a store id ending in a separator byte, or a life token
+beginning with one, cannot be swapped for another store's.
 
 `verify_event/4` and `verify_snapshot/4` take a context
 (`#{store_id, life, v2_from}`). A scheme-2 MAC is verified against the store
