@@ -94,9 +94,16 @@ ok = reckon_gater_api:remove_subscription(
 ### Acknowledging Events
 
 ```erlang
-%% Acknowledge event processing (for at-least-once delivery)
-ok = reckon_gater_api:ack_event(my_store, SubscriptionName, StreamId, EventVersion).
+%% Acknowledge event processing (for at-least-once delivery).
+%% The fourth argument is the event itself, not a version number:
+%%   ack_event(StoreId, SubscriptionName, SubscriberPid, Event)
+ok = reckon_gater_api:ack_event(my_store, <<"order_projection">>, self(), Event).
 ```
+
+`ack_event/4` answers `{error, {subscription_not_found, _}}` when the
+subscription has been removed. That is a caller error and is surfaced, not
+swallowed: acking a dead subscription does nothing, and the events will be
+delivered again.
 
 ## PubSub Channels
 
@@ -218,7 +225,7 @@ handle_info({event, #event{version = Version} = Event}, #{store_id := StoreId} =
     handle_event(Event),
 
     %% Acknowledge and checkpoint
-    ok = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, Event#event.stream_id, Version),
+    ok = reckon_gater_api:ack_event(StoreId, <<"checkpointed_handler">>, self(), Event),
     save_checkpoint(StoreId, Version),
 
     {noreply, State#{last_position => Version}}.

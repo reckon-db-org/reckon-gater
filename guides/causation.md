@@ -15,10 +15,12 @@ Every event record exposes two lineage fields:
 | `correlation_id` | A shared ID grouping **all** events in one business process | `"order-12345"` |
 
 These fields are writer-set metadata — the store records them as-is alongside
-the event payload. There is no built-in query API that indexes by them. If you
-need to query "all events caused by X" or "all events in order 12345", build a
-read-model projection that indexes by these fields as events flow through
-subscriptions.
+the event payload and does not interpret them. It does index them when asked
+to: declare the `{meta, Key}` secondary index and
+`reckon_gater_api:read_by_metadata/3` answers "all events caused by X" or
+"all events in order 12345" directly (see Querying by Causation below). A
+read-model projection is only needed when the query is more than key
+equality.
 
 ![Causation Chain](assets/causation_chain.svg)
 
@@ -61,10 +63,33 @@ handle_event(#{id := EventId, metadata := Meta} = _OrderPlaced, _State) ->
     reckon_gater_api:append_events(my_store, PaymentStream, [NewEvent]).
 ```
 
-## Querying by Causation (Read-Model Pattern)
+## Querying by Causation
 
-There is no built-in API to query events by `causation_id` or `correlation_id`.
-Lineage queries are a read-model concern. The recommended pattern:
+There **is** a built-in primitive: `reckon_gater_api:read_by_metadata/3`.
+
+```erlang
+%% Events directly caused by one message
+{ok, Effects} = reckon_gater_api:read_by_metadata(my_store,
+                                                  <<"causation_id">>, EventId),
+
+%% Everything in one conversation
+{ok, Conversation} = reckon_gater_api:read_by_metadata(my_store,
+                                                       <<"correlation_id">>, CorrId).
+```
+
+It is an indexed read when the store declares the `{meta, Key}` secondary
+index for that key, and a whole-store scan otherwise - so declare the index
+for the keys you actually query. The key is matched **as stored**: metadata
+keys go through the adapter as binaries, which is the spelling the index is
+built from.
+
+The store does not interpret the key. Walking a multi-hop causation chain,
+building the graph from the correlation set, and deciding which of your keys
+are worth indexing are still the application's job. What you do not need to
+do is maintain a read model just to find events by their own metadata.
+
+If a query needs more than key equality - joins, aggregates, a shaped
+history per conversation - the read-model pattern is still the right tool:
 
 1. Subscribe to the store's event stream.
 2. In the projection, index `causation_id` and `correlation_id` into a local

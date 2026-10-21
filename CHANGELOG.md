@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Docs: lineage is queryable, and ack_event takes the event
+
+Two guide statements that the code contradicts (reckon-db-org/evoq#22):
+
+- `guides/causation.md` said there is no built-in API to query by
+  `causation_id` / `correlation_id`. There is:
+  `reckon_gater_api:read_by_metadata/3`, indexed when the store declares the
+  `{meta, Key}` secondary index and a scan otherwise. The store still does
+  not interpret the key - walking a chain or building a graph is the
+  application's job - but finding events by their own metadata does not need
+  a read model.
+- `ack_event/4` takes `(StoreId, SubscriptionName, SubscriberPid, Event)`,
+  in that order and with the event rather than a version number. The guide
+  and README showed `(Store, StreamId, SubscriptionName, EventNumber)`, and
+  it also answers `{error, {subscription_not_found, _}}` for a removed
+  subscription rather than silently doing nothing.
+
 ### Notes
 
 - **The `v5.5.0` tag was deleted on 2026-09-22.** It never named a 5.x release:
