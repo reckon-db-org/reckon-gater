@@ -102,8 +102,9 @@ reckon_gater_api:stream_backward(StoreId, StreamId, StartVersion, Count) ->
 
 %% Stream metadata
 reckon_gater_api:get_version(StoreId, StreamId) -> {ok, Version} | {error, term()}.
-%% there is no per-stream exists call: get_version/2 answers
-%% {error, {stream_not_found, StreamId}} for a stream that is not there.
+%% there is no per-stream exists call. get_version/2 answers {ok, -1}
+%% (?NO_STREAM) for a stream that is not there; stream_forward/4 answers
+%% {error, {stream_not_found, StreamId}}.
 reckon_gater_api:get_streams(StoreId) -> {ok, [StreamId]} | {error, term()}.
 ```
 

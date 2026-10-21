@@ -24,9 +24,10 @@ hyphen, and 32 lowercase hex characters (`reckon_gater_stream_id:validate/1`).
 `reckon_gater_stream_id:new(<<"account">>)` mints one. The stream calls that
 validate the id (`append_events`, `stream_forward`) answer
 `{error, {invalid_stream_id, malformed_user_id, Id}}` for an id that does not
-match. The snapshot calls do not: they take the id as given and store under it,
-so a bad id there fails silently at read time instead. The examples use a
-literal id, which is valid in both halves.
+match. The snapshot calls do not: they take the id as given and never validate
+it, so a typo there stores and reads a different id instead of being refused -
+a read of an id that was never written simply answers `{error, not_found}`.
+The examples use a literal id, which is valid everywhere.
 
 ### Recording Snapshots
 

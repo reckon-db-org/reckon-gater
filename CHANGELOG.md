@@ -21,7 +21,8 @@ The first run reported 90 failures in 19 docs. What they were:
 - **Calls that named functions this package does not have**: `create_store/2`
   (the index list belongs in the store's own `#store_config{}`, so the guide
   says that), `save_snapshot/3` (`record_snapshot/5` with `#{data => State}`),
-  `stream_exists/2` (absent; `get_version/2` answers
+  `stream_exists/2` (absent; `get_version/2` answers `{ok, -1}` for a stream
+  that is not there, and `stream_forward/4` answers
   `{error, {stream_not_found, StreamId}}`), and a `json:encode/1` wrapper
   around a payload the store reads as a map.
 - **Places the docs wrote `...` or `#{...}` inside real code**: the elision is
