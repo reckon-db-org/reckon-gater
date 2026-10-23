@@ -147,6 +147,12 @@ is_retriable_error({version_unverifiable, _, _}) -> false;
 %% mistake, the same on every attempt.
 is_retriable_error({invalid_cursor, _}) -> false;
 is_retriable_error({invalid_page_request, _}) -> false;
+%% A snapshot version that is not a non-negative integer. reckon-db answers
+%% `{invalid_version, V}' for it (reckon-db#14) and answers the same on every
+%% attempt, so a retry loop only turned the caller's own bad argument into
+%% `{retries_exhausted, {invalid_version, V}}' after the whole backoff, which
+%% reads as an unreachable store.
+is_retriable_error({invalid_version, _}) -> false;
 %% A store that does not implement the request (older than the caller,
 %% e.g. a paged read against reckon-db < 5.11.14) answers the same on every
 %% attempt; retrying only delays the answer by the whole retry budget.

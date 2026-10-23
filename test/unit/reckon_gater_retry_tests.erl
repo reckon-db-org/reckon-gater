@@ -48,7 +48,9 @@ retry_test_() ->
         {"the paged-read errors and unknown_request are non-retriable (fail fast)",
          fun retry_skips_paged_read_errors_and_unknown_request_test/0},
         {"an integrity refusal is non-retriable (fails fast)",
-         fun retry_skips_integrity_refusals_test/0}
+         fun retry_skips_integrity_refusals_test/0},
+        {"invalid_version is non-retriable (fails fast)",
+         fun retry_skips_invalid_version_test/0}
      ]}.
 
 setup() ->
@@ -227,3 +229,14 @@ retry_skips_integrity_refusals_test() ->
                    {integrity_violation, #{layer => snapshot, reason => snapshot_mac_mismatch}},
                    {snapshot_anchor_unavailable, #{stream_id => <<"order-1">>, version => 41,
                                                    reason => event_not_found}}]).
+
+%% A snapshot version that is not a non-negative integer is answered by
+%% reckon-db with `{invalid_version, V}' and can never become valid by asking
+%% again (reckon-db#14's shape). Retried, it reached the caller as
+%% `{retries_exhausted, {invalid_version, V}}' after the whole backoff, which
+%% reads as an unreachable store rather than as the caller's own mistake.
+retry_skips_invalid_version_test() ->
+    lists:foreach(fun assert_fails_fast/1,
+                  [{invalid_version, -1},
+                   {invalid_version, <<"latest">>},
+                   {invalid_version, 1.5}]).

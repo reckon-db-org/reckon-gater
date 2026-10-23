@@ -5,6 +5,19 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.15.2] - unreleased
+
+### Fixed: an invalid snapshot version came back after the whole backoff, as retries_exhausted
+
+A snapshot version that is not a non-negative integer is answered by reckon-db
+with `{invalid_version, V}` (reckon-db#14). `reckon_gater_retry` did not know
+that reason, so `read_snapshot/4` and the `*_snapshot_sync` calls retried an
+argument that cannot become valid on the next attempt, and the caller was told
+`{error, {retries_exhausted, {invalid_version, V}}}` once the backoff ran out —
+a shape that reads as an unreachable store rather than as the caller's own
+mistake. `{invalid_version, _}` is now non-retriable, beside `invalid_cursor`
+and `invalid_page_request`, and reaches the caller unchanged and at once.
+
 ## [3.15.1] - 2026-10-23
 
 ### Fixed: an integrity refusal came back after the whole backoff, as retries_exhausted
