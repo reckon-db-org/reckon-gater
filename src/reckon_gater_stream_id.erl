@@ -67,9 +67,10 @@
 %% `check/1' is `validate/1' shaped for a write path: it returns
 %% `{error, {invalid_stream_id, Reason, StreamId, Rule}}', where `Rule'
 %% is `explain(Reason)', a sentence stating what a valid id looks like,
-%% how to make one, and where the rule is documented. reckon-db's
-%% append returns it as is, so the person who sent the id reads the rule
-%% in the error itself, on every surface that shows the error.
+%% how to make one, and where the rule is documented. A store that
+%% builds its error with check/1 hands the person who sent the id the
+%% rule in the error itself. reckon-db 5.12 and older build the
+%% three-tuple `{invalid_stream_id, Reason, StreamId}' instead.
 %%
 %% The rule is documented in the Stream Ids guide:
 %% https://hexdocs.pm/reckon_gater/stream_ids.html
@@ -108,7 +109,9 @@
 %% prefix in isolation, so it cannot produce that variant.
 
 %% Compile the regexes once at module load via persistent_term so
-%% the hot path doesn't pay for re:compile per call.
+%% the hot path doesn't pay for re:compile per call. Each one ends in
+%% \z, not $: in PCRE $ also matches before a final newline, so
+%% <<"order-<32 hex>\n">> would pass.
 -define(USER_RE,   {?MODULE, user_re}).
 -define(SYSTEM_RE, {?MODULE, system_re}).
 -define(PREFIX_RE, {?MODULE, prefix_re}).
@@ -295,7 +298,7 @@ to_prefix_bin(Prefix) when is_atom(Prefix)   -> atom_to_binary(Prefix, utf8).
 user_re() ->
     case persistent_term:get(?USER_RE, undefined) of
         undefined ->
-            {ok, MP} = re:compile(<<"^[a-z]{1,32}-[a-f0-9]{32}$">>),
+            {ok, MP} = re:compile(<<"^[a-z]{1,32}-[a-f0-9]{32}\\z">>),
             persistent_term:put(?USER_RE, MP),
             MP;
         MP ->
@@ -306,7 +309,7 @@ system_re() ->
     case persistent_term:get(?SYSTEM_RE, undefined) of
         undefined ->
             {ok, MP} = re:compile(
-                <<"^\\$[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9_.-]*$">>),
+                <<"^\\$[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9_.-]*\\z">>),
             persistent_term:put(?SYSTEM_RE, MP),
             MP;
         MP ->
@@ -316,7 +319,7 @@ system_re() ->
 prefix_re() ->
     case persistent_term:get(?PREFIX_RE, undefined) of
         undefined ->
-            {ok, MP} = re:compile(<<"^[a-z]{1,32}$">>),
+            {ok, MP} = re:compile(<<"^[a-z]{1,32}\\z">>),
             persistent_term:put(?PREFIX_RE, MP),
             MP;
         MP ->

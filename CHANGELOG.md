@@ -23,6 +23,12 @@ page.
 - `reckon_gater_stream_id:explain/1` gives that sentence for each validation
   reason: the shape, an example, how to make one, and the guide's link.
 
+### Fixed: an id followed by a newline is refused
+
+The user, system and prefix patterns ended in `$`, which in PCRE also matches
+before a final newline, so `<<"order-<32 hex>\n">>` validated and `parts/1`
+returned a 33-byte suffix. They end in `\z` now.
+
 ### Changed: the invalid-stream-id error carries the rule
 
 A store builds the error with `check/1`, so it is the four-tuple

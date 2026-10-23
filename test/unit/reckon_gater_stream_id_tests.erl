@@ -309,3 +309,19 @@ explain_system_example_is_itself_valid_test() ->
     {match, [Example]} = re:run(Rule, <<"\\$[a-z]+:[a-z-]+">>,
                                 [{capture, first, binary}]),
     ?assertEqual(ok, reckon_gater_stream_id:validate(Example)).
+
+%%====================================================================
+%% A trailing newline is not part of a valid id ($ matches before one)
+%%====================================================================
+
+trailing_newline_is_rejected_test_() ->
+    [
+        ?_assertEqual({error, malformed_user_id}, reckon_gater_stream_id:validate(
+            <<"order-018f6a7b8c9d4e5f60718293a4b5c6d7\n">>)),
+        ?_assertEqual({error, malformed_system_id}, reckon_gater_stream_id:validate(
+            <<"$link:high-value-orders\n">>)),
+        ?_assertEqual({error, malformed}, reckon_gater_stream_id:parts(
+            <<"order-018f6a7b8c9d4e5f60718293a4b5c6d7\n">>)),
+        ?_assertError({invalid_prefix, <<"order\n">>},
+            reckon_gater_stream_id:new(<<"order\n">>))
+    ].

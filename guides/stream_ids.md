@@ -19,8 +19,8 @@ order-018f6a7b8c9d4e5f60718293a4b5c6d7
 - `<prefix>` is 1 to 32 lowercase ASCII letters: no digits, no hyphens, no
   uppercase. It names what the stream is about (`order`, `account`, `sess`).
 - `-` is exactly one hyphen.
-- `<hex>` is exactly 32 lowercase hexadecimal digits: 128 bits, one UUID's
-  worth.
+- `<hex>` is exactly 32 lowercase hexadecimal digits, and nothing follows
+  them (not even a newline): 128 bits, one UUID's worth.
 
 **A system stream** is for operational streams the stack itself keeps, such as
 stream links:
@@ -94,10 +94,13 @@ error carries the rule it broke:
 ```
 
 `Rule` is a sentence naming the shape, an example, how to make an id, and a link
-to this page. reckon-db's append returns this error as is. The gateway's HTTP
-surface returns it in its `error` field; its gRPC surface answers
-`INVALID_ARGUMENT` and logs the same error, because the gRPC transport it uses
-cannot carry a reason to the client.
+to this page. A store returns this error from the reckon-db release that builds
+it with `check/1` (reckon-gater#5); reckon-db 5.12 and older return
+`{invalid_stream_id, Reason, StreamId}`, which names the input but not the rule.
+The gateway passes the store's error on: its HTTP surface returns it in the
+`error` field, and its gRPC surface answers `INVALID_ARGUMENT`. Whether a gRPC
+client also sees the reason as the status message depends on the gateway
+version; one that sends only the status code logs the error on the server.
 
 Reads apply the same rule: the store lays streams out by prefix and suffix, so
 an id of any other shape names no stream it can hold.
