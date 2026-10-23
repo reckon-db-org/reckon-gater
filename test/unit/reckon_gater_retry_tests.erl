@@ -37,6 +37,8 @@ retry_test_() ->
          fun default_config_test/0},
         {"invalid_stream_id is non-retriable (fails fast)",
          fun retry_skips_invalid_stream_id_test/0},
+        {"the three-tuple invalid_stream_id of reckon-db 5.12 and older is non-retriable",
+         fun retry_skips_legacy_invalid_stream_id_test/0},
         {"invalid_filter is non-retriable (fails fast)",
          fun retry_skips_invalid_filter_test/0},
         {"version_conflict is non-retriable (fails fast)",
@@ -126,10 +128,21 @@ default_config_test() ->
 %% Validator-style errors must short-circuit immediately — they will
 %% never become valid through retries, and the gRPC client would
 %% otherwise hit its deadline before the retry loop gave up.
-retry_skips_invalid_stream_id_test() ->
+retry_skips_legacy_invalid_stream_id_test() ->
     Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
     CallCount = counters:new(1, []),
     Err = {invalid_stream_id, malformed_user_id, <<"partition$abc">>},
+    Fun = fun() ->
+        counters:add(CallCount, 1, 1),
+        {error, Err}
+    end,
+    ?assertEqual({error, Err}, reckon_gater_retry:with_retry(test_store, Fun, Config)),
+    ?assertEqual(1, counters:get(CallCount, 1)).
+
+retry_skips_invalid_stream_id_test() ->
+    Config = #retry_config{base_delay_ms = 10, max_delay_ms = 50, max_retries = 5},
+    CallCount = counters:new(1, []),
+    {error, Err} = reckon_gater_stream_id:check(<<"partition$abc">>),
     Fun = fun() ->
         counters:add(CallCount, 1, 1),
         {error, Err}

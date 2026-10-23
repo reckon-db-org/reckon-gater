@@ -832,7 +832,7 @@ route_cast(StoreId, Request) ->
     end,
     ok.
 
-%% @doc Pure worker-selection policy behind {@link select_worker/1}.
+%% @doc Pure worker-selection policy behind select_worker/1.
 %%
 %% Prefers workers on the caller's own node when any exist; falls
 %% back to cluster-wide round-robin only when no local worker is

@@ -96,9 +96,10 @@ handle_call_result({error, Reason} = Error, StoreId, Fun, Config, Attempt, MaxRe
 %% - not_found: Resource doesn't exist
 %% - invalid_stream_id: Validation rejection — the id will never become
 %%   valid no matter how many times we retry. Wrapping shape:
-%%   `{invalid_stream_id, Reason, StreamId}'. Emitted by
-%%   `reckon_gater_stream_id' (moved here from reckon-db in 2.2.0;
-%%   was `reckon_db_stream_id' in reckon-db 2.3.3+); whitelisted
+%%   `{invalid_stream_id, Reason, StreamId, Rule}', built by
+%%   `reckon_gater_stream_id:check/1' (3.14.0+). reckon-db 5.12 and
+%%   older return `{invalid_stream_id, Reason, StreamId}' and float onto
+%%   this gater, so both shapes are permanent; whitelisted
 %%   here so the gRPC client sees `InvalidArgument' immediately
 %%   instead of timing out after exponential backoff.
 %%
@@ -109,6 +110,7 @@ is_retriable_error({stream_not_found, _}) -> false;
 is_retriable_error({wrong_expected_version, _}) -> false;
 is_retriable_error({wrong_expected_version, _, _}) -> false;
 is_retriable_error(not_found) -> false;
+is_retriable_error({invalid_stream_id, _, _, _}) -> false;
 is_retriable_error({invalid_stream_id, _, _}) -> false;
 %% Subscription-filter validation errors come back from
 %% reckon_db_subscriptions:subscribe/5 via the newly-synchronous

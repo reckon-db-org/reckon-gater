@@ -273,13 +273,13 @@ GoodCutoff = erlang:system_time(microsecond) - (30 * 24 * 60 * 60 * 1000000).
 
 ```erlang
 %% BAD: Scavenging production data without preview
-reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{before => Cutoff}).
+reckon_gater_api:scavenge(prod_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890a1">>, #{before => Cutoff}).
 
 %% GOOD: Always dry run first
-{ok, Preview} = reckon_gater_api:scavenge_dry_run(prod_store, <<"important-stream">>, #{before => Cutoff}),
+{ok, Preview} = reckon_gater_api:scavenge_dry_run(prod_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890a1">>, #{before => Cutoff}),
 logger:info("Would delete ~p events", [maps:get(would_delete, Preview)]),
 %% Review preview, then proceed if acceptable
-reckon_gater_api:scavenge(prod_store, <<"important-stream">>, #{before => Cutoff}).
+reckon_gater_api:scavenge(prod_store, <<"orders-019d7a4f3c2a7d8c9e0f1234567890a1">>, #{before => Cutoff}).
 ```
 
 ---

@@ -267,3 +267,45 @@ parts_roundtrips_new_test_() ->
     [?_assertMatch({user, P, _Hex},
         reckon_gater_stream_id:parts(reckon_gater_stream_id:new(P)))
      || P <- Prefixes].
+
+%%====================================================================
+%% check/1 and explain/1 — the error a writer returns carries the rule
+%%====================================================================
+
+check_accepts_valid_ids_test_() ->
+    [
+        ?_assertEqual(ok, reckon_gater_stream_id:check(
+            <<"order-018f6a7b8c9d4e5f60718293a4b5c6d7">>)),
+        ?_assertEqual(ok, reckon_gater_stream_id:check(<<"$link:hot-orders">>))
+    ].
+
+check_rejects_with_reason_id_and_rule_test_() ->
+    Cases = [
+        {<<"user-123">>, malformed_user_id},
+        {<<"$Link:x">>, malformed_system_id},
+        {<<>>, empty},
+        {"user-123", not_binary}
+    ],
+    [?_assertEqual(
+        {error, {invalid_stream_id, Reason, Id, reckon_gater_stream_id:explain(Reason)}},
+        reckon_gater_stream_id:check(Id))
+     || {Id, Reason} <- Cases].
+
+explain_names_the_shape_an_example_and_the_guide_test_() ->
+    Guide = <<"https://hexdocs.pm/reckon_gater/stream_ids.html">>,
+    Reasons = [malformed_user_id, malformed_system_id, empty, not_binary],
+    [?_assertMatch({_, _}, binary:match(reckon_gater_stream_id:explain(R), Guide))
+     || R <- Reasons].
+
+explain_example_is_itself_valid_test() ->
+    Rule = reckon_gater_stream_id:explain(malformed_user_id),
+    {match, [Example]} = re:run(Rule, <<"[a-z]+-[a-f0-9]{32}">>,
+                                [{capture, first, binary}]),
+    ?assertEqual(ok, reckon_gater_stream_id:validate(Example)),
+    ?assertMatch({_, _}, binary:match(Rule, <<"<prefix>-<32 hex>">>)).
+
+explain_system_example_is_itself_valid_test() ->
+    Rule = reckon_gater_stream_id:explain(malformed_system_id),
+    {match, [Example]} = re:run(Rule, <<"\\$[a-z]+:[a-z-]+">>,
+                                [{capture, first, binary}]),
+    ?assertEqual(ok, reckon_gater_stream_id:validate(Example)).

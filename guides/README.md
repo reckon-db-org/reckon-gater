@@ -11,6 +11,7 @@ suggested orders below.
 | Guide | What it covers |
 |---|---|
 | [Configuration](configuration.md) | All configuration options for both Erlang (sys.config) and Elixir (config.exs): cluster, retry, channels, security, telemetry. |
+| [Stream Ids](stream_ids.md) | The two id shapes every store accepts, how to make one, why aggregate ids are stream ids, and the error a rejected id returns. |
 | [Event Sourcing](event_sourcing.md) | Streams, append/read, versioning, optimistic concurrency, and event metadata through the gateway API. |
 | [CQRS](cqrs.md) | Command/query separation; building read models from event streams. |
 | [Interactive REPL](repl.md) | The reckon-gater shell for exploring stores, streams, causation chains, and temporal queries. |
@@ -43,9 +44,10 @@ suggested orders below.
 **I am building on reckon-gater for the first time:**
 
 1. [Configuration](configuration.md)
-2. [Event Sourcing](event_sourcing.md)
-3. [Shared Types](shared_types.md)
-4. [Subscriptions](subscriptions.md), then [Snapshots](snapshots.md)
+2. [Stream Ids](stream_ids.md)
+3. [Event Sourcing](event_sourcing.md)
+4. [Shared Types](shared_types.md)
+5. [Subscriptions](subscriptions.md), then [Snapshots](snapshots.md)
 
 **I am applying CQRS:**
 

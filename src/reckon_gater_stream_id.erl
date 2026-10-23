@@ -43,10 +43,9 @@
 %% downstream tooling. Lowercase + fixed-length 32-hex suffix gives
 %% every user id 128 bits of entropy and a predictable length.
 %%
-%% Migration: previously stored ids that don't conform are still
-%% readable (`validate/1' is only called from `reckon_db_streams:append/4');
-%% they just can't accept new events. Since reckon-db has no production
-%% deployments at this point, no migration path is required.
+%% Migration: none. reckon-db lays streams out by the parts of the id
+%% (`parts/1'), so it validates on reads as well as appends, and an id
+%% of any other shape names no stream it can hold.
 %%
 %% == Rejected (returns `{error, Reason}') ==
 %%
@@ -62,11 +61,25 @@
 %% Rejected examples: `a-0' (suffix too short), `Order-DEADBEEF'
 %% (uppercase + suffix too short), `account-' (empty suffix),
 %% `-deadbeef' (empty prefix), `test$basic-stream' (mid-string `$').
+%%
+%% == The error a writer returns ==
+%%
+%% `check/1' is `validate/1' shaped for a write path: it returns
+%% `{error, {invalid_stream_id, Reason, StreamId, Rule}}', where `Rule'
+%% is `explain(Reason)', a sentence stating what a valid id looks like,
+%% how to make one, and where the rule is documented. reckon-db's
+%% append returns it as is, so the person who sent the id reads the rule
+%% in the error itself, on every surface that shows the error.
+%%
+%% The rule is documented in the Stream Ids guide:
+%% https://hexdocs.pm/reckon_gater/stream_ids.html
 
 -module(reckon_gater_stream_id).
 
 -export([
     validate/1,
+    check/1,
+    explain/1,
     is_valid/1,
     is_system/1,
     new/1,
@@ -75,7 +88,7 @@
     suffix_of/1
 ]).
 
--export_type([validation_error/0, prefix/0, parts/0]).
+-export_type([validation_error/0, invalid_stream_id/0, prefix/0, parts/0]).
 
 -type prefix() :: atom() | binary().
 -type parts() ::
@@ -87,6 +100,8 @@
     | not_binary
     | malformed_user_id
     | malformed_system_id.
+-type invalid_stream_id() ::
+    {invalid_stream_id, validation_error(), StreamId :: term(), Rule :: binary()}.
 %% Note: `invalid_prefix' is NOT a `validation_error/0' — it is the
 %% reason class raised by `new/1' via `erlang:error/1' when the
 %% supplied prefix is malformed. `validate/1' itself never sees a
@@ -97,6 +112,8 @@
 -define(USER_RE,   {?MODULE, user_re}).
 -define(SYSTEM_RE, {?MODULE, system_re}).
 -define(PREFIX_RE, {?MODULE, prefix_re}).
+
+-define(GUIDE, "https://hexdocs.pm/reckon_gater/stream_ids.html").
 
 %% @doc Validate StreamId. Returns `ok' if it matches either
 %% accepted format, or `{error, Reason}'.
@@ -115,6 +132,40 @@ validate(Id) when is_binary(Id) ->
     end;
 validate(_) ->
     {error, not_binary}.
+
+%% @doc Validate StreamId for a write. Returns `ok', or
+%% `{error, {invalid_stream_id, Reason, StreamId, Rule}}' where `Rule'
+%% is `explain(Reason)'. This is the error reckon-db's append returns.
+-spec check(term()) -> ok | {error, invalid_stream_id()}.
+check(StreamId) ->
+    check_result(validate(StreamId), StreamId).
+
+check_result(ok, _StreamId) ->
+    ok;
+check_result({error, Reason}, StreamId) ->
+    {error, {invalid_stream_id, Reason, StreamId, explain(Reason)}}.
+
+%% @doc The rule a rejected id broke, as one sentence for a person:
+%% what a valid id looks like, how to make one, and the guide's link.
+-spec explain(validation_error()) -> binary().
+explain(Reason) ->
+    iolist_to_binary([rule(Reason), <<" See ", ?GUIDE>>]).
+
+rule(malformed_user_id) ->
+    <<"a user stream id is <prefix>-<32 hex>: 1 to 32 lowercase letters, "
+      "one hyphen, then exactly 32 lowercase hex digits, for example "
+      "order-018f6a7b8c9d4e5f60718293a4b5c6d7; "
+      "reckon_gater_stream_id:new(order) makes one.">>;
+rule(malformed_system_id) ->
+    <<"a system stream id is $<namespace>:<name>: a lowercase namespace "
+      "(letters, digits, hyphens), one colon, then a name of letters, "
+      "digits, '_', '.' or '-', for example $link:high-value-orders.">>;
+rule(empty) ->
+    <<"a stream id cannot be empty: use <prefix>-<32 hex>, for example "
+      "order-018f6a7b8c9d4e5f60718293a4b5c6d7.">>;
+rule(not_binary) ->
+    <<"a stream id is a binary, for example "
+      "<<\"order-018f6a7b8c9d4e5f60718293a4b5c6d7\">>.">>.
 
 %% @doc Boolean wrapper for use in guards / list-comprehensions.
 -spec is_valid(term()) -> boolean().

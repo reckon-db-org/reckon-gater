@@ -5,6 +5,38 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.14.0] - 2026-10-23
+
+### Added: a rejected stream id says what a valid one looks like
+
+Every quick start in the stack used a stream id the store rejects, and the
+error named the input but not the rule. Now the rule is in the error and on one
+page.
+
+- `guides/stream_ids.md` (Stream Ids): the two accepted shapes, how to make an
+  id on the BEAM and in any other language, why an aggregate id is a stream id,
+  and what a rejected id returns. It is the single source the other repos'
+  docs link to (reckon-gater#5).
+- `reckon_gater_stream_id:check/1` returns `ok` or
+  `{error, {invalid_stream_id, Reason, StreamId, Rule}}`, where `Rule` is
+  `explain(Reason)`.
+- `reckon_gater_stream_id:explain/1` gives that sentence for each validation
+  reason: the shape, an example, how to make one, and the guide's link.
+
+### Changed: the invalid-stream-id error carries the rule
+
+A store builds the error with `check/1`, so it is the four-tuple
+`{invalid_stream_id, Reason, StreamId, Rule}`. `reckon_gater_retry` treats it
+as permanent, and still treats the three-tuple that reckon-db 5.12 and older
+return as permanent too: those releases float onto this one, and a retried
+invalid id would make a gRPC client wait out the backoff.
+
+### Fixed: the docs build with no warnings
+
+Changelog entries that named removed or hidden functions with an arity no
+longer ask ex_doc to link them, and `reckon_gater_api`'s worker-selection doc
+no longer links a hidden function. `rebar3 ex_doc` reports no warnings.
+
 ## [3.13.0] - 2026-10-21
 
 ### Added: a MAC that binds the store, and the stream it was written in
@@ -329,7 +361,7 @@ What was wrong, and is not any more:
 
 ### Fixed — DCB conflict was retried as a transient error, timing out the call
 
-`reckon_gater_retry:is_retriable_error/1` defaulted every unrecognised error to
+`reckon_gater_retry:is_retriable_error` defaulted every unrecognised error to
 retriable, so a DCB `append_if_no_tag_matches` conflict (`{context_changed,
 MaxSeq}`) — a deterministic consistency-boundary outcome — was retried with
 exponential backoff for the full budget (~11 attempts) and then surfaced as
@@ -426,7 +458,7 @@ confusing parentheticals.
 ### Fixed — CCC guide and decision flow diagram
 
 - `guides/ccc.md`: Three code examples called non-existent
-  `reckon_gater_api:dcb_read_context/3`. Replaced with correct API calls:
+  `reckon_gater_api:dcb_read_context` (arity 3). Replaced with correct API calls:
   - Tag-filter example → `read_by_tags/3`
   - Composite payload hash example → `ccc_read_by_payload_hash/4`
   - Mixed type+payload example → `read_by_event_types/3` + `ccc_read_by_payload/4`,
@@ -663,7 +695,7 @@ structural stream namespace (`[streams, Type, Id, Version]`).
 
 ### Removed — causation/correlation API (BREAKING)
 
-Removed `reckon_gater_api:get_effects/2`, `get_cause/2`,
+Removed `reckon_gater_api:get_effects`, `get_cause/2`,
 `get_causation_chain/2`, `get_correlated/2`, `build_causation_graph/2`
 and the corresponding REPL commands (`effects`, `cause`, `chain`,
 `graph`, `dot`).
@@ -830,7 +862,7 @@ will crash with `badmatch`.
 
 ### Added — `subscription_not_found` whitelisted in retry layer
 
-`reckon_gater_retry:is_retriable_error/1` now returns `false` for
+`reckon_gater_retry:is_retriable_error` now returns `false` for
 `{subscription_not_found, _}`. The error is caller-side (acking a
 subscription that was already removed); backoff cannot conjure the
 subscription back. Surfaces to gRPC as `InvalidArgument` in ms.
@@ -854,7 +886,7 @@ Consumers MUST update their call sites. Existing
 
 ### Added — `invalid_filter` whitelisted in retry layer
 
-`reckon_gater_retry:is_retriable_error/1` now treats
+`reckon_gater_retry:is_retriable_error` now treats
 `{invalid_filter, _}` as non-retriable. The selector is malformed
 for the requested subscription type; retrying won't help and
 would otherwise burn ~30s of exponential backoff before giving up.
@@ -873,7 +905,7 @@ break.
 
 ### Fixed — Validation errors now fail fast through the retry layer
 
-`reckon_gater_retry:is_retriable_error/1` now treats
+`reckon_gater_retry:is_retriable_error` now treats
 `{invalid_stream_id, _, _}` as non-retriable. reckon-db 2.3.3
 introduced an append-time stream-id format validator that returns
 this error shape; without this fix the retry loop treated it as a
@@ -979,7 +1011,7 @@ per-layer rollout sequence — is documented in
 
 ### Fixed
 
-- `reckon_gater_api:select_worker/1` now prefers workers on the
+- `reckon_gater_api:select_worker` now prefers workers on the
   caller's own node when any exist, falling back to the full
   cluster-wide round-robin only when no local worker is present.
 

@@ -66,10 +66,7 @@ Order Placed Event
 
 ### Streams
 
-A **stream** is an ordered sequence of events sharing a common identifier (the stream ID). Streams typically represent:
-- An aggregate (e.g., `order-123`, `user-456`)
-- A category (e.g., `orders`, `users`)
-- A partition (e.g., `orders-region-eu`)
+A **stream** is an ordered sequence of events sharing a common identifier (the stream ID). A stream usually holds one aggregate, such as one order or one user. Its id is `<prefix>-<32 hex>`, for example `order-018f6a7b8c9d4e5f60718293a4b5c6d7`; the [Stream Ids](stream_ids.md) guide states the rule and how to make one.
 
 ```erlang
 %% Append events to a stream via gateway

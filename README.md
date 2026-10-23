@@ -55,7 +55,9 @@ Pure Erlang implementation - works everywhere, no native dependencies.
 application:ensure_all_started(reckon_gater).
 
 %% Append events to a stream. An event is a map with event_type and data;
-%% the store's own reader names the field event_type, not type.
+%% the store's own reader names the field event_type, not type. A stream id
+%% is <prefix>-<32 hex>; reckon_gater_stream_id:new(users) makes one, and
+%% guides/stream_ids.md states the rule.
 Events = [#{event_type => <<"user_registered_v1">>, data => #{name => <<"Alice">>}}],
 {ok, Version} = reckon_gater_api:append_events(my_store, <<"users-019d7a4f3c2a7d8c9e0f1234567890ab">>, Events).
 
