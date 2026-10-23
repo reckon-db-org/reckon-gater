@@ -102,6 +102,8 @@
 -export([
     record_snapshot/5,
     delete_snapshot/4,
+    record_snapshot_sync/5,
+    delete_snapshot_sync/4,
     read_snapshot/4,
     list_snapshots/3
 ]).
@@ -599,6 +601,37 @@ record_snapshot(StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord) ->
 delete_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     route_cast(StoreId, {delete_snapshot, StoreId, SourceUuid, StreamUuid, Version}),
     ok.
+
+%% @doc Record a snapshot and wait for the store to have written it.
+%%
+%% record_snapshot/5 is a cast to one of the store's gateway workers: the
+%% caller learns nothing, a write with no worker to take it is dropped with a
+%% log line, and two writes from one caller can reach two workers and land
+%% in either order. That is fine for an aggregate snapshot, which only saves
+%% replay time. It is not for a projection checkpoint, which decides what is
+%% skipped after a restart: this one answers `ok' once the store has written
+%% the snapshot, or `{error, Reason}' (an invalid stream id, an integrity
+%% refusal, no worker). A store older than this request (reckon-db before
+%% 5.11.14) answers `{error, unknown_request}', which is not retried.
+%% (3.15.0+, reckon-evoq#1)
+-spec record_snapshot_sync(atom(), atom() | binary(), binary(), non_neg_integer(), map()) ->
+    ok | {error, term()}.
+record_snapshot_sync(StoreId, SourceUuid, StreamUuid, Version, SnapshotRecord) ->
+    acked(route_call(StoreId,
+                     {record_snapshot_sync, StoreId, SourceUuid, StreamUuid, Version,
+                      SnapshotRecord})).
+
+%% @doc Delete a snapshot and wait for the store to have done it. As
+%% record_snapshot_sync/5, for delete_snapshot/4. (3.15.0+)
+-spec delete_snapshot_sync(atom(), atom() | binary(), binary(), non_neg_integer()) ->
+    ok | {error, term()}.
+delete_snapshot_sync(StoreId, SourceUuid, StreamUuid, Version) ->
+    acked(route_call(StoreId, {delete_snapshot_sync, StoreId, SourceUuid, StreamUuid, Version})).
+
+%% A worker answering a plain `ok' comes back from route_call as {ok, ok}.
+acked({ok, ok}) -> ok;
+acked({error, _} = Error) -> Error;
+acked(Other) -> {error, {bad_reply, Other}}.
 
 %% @doc Read a snapshot
 %%

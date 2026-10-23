@@ -47,6 +47,31 @@ ok = reckon_gater_api:record_snapshot(
 ).
 ```
 
+### Acknowledged writes
+
+`record_snapshot/5` and `delete_snapshot/4` are casts. The caller learns
+nothing; a write with no worker to take it is dropped with a log line; and
+two writes from one caller can reach two different workers and land in
+either order. For an aggregate snapshot that is acceptable, since a lost or
+late snapshot only costs replay time.
+
+A snapshot that decides what gets skipped needs more, and a projection
+checkpoint is one. `record_snapshot_sync/5` and `delete_snapshot_sync/4` are
+calls. They answer `ok` once the store has done the write, or
+`{error, Reason}`: an invalid stream id, an integrity refusal, no worker.
+Two of them in a row land in that order. A store older than these requests
+(reckon-db before 5.11.14) answers `{error, unknown_request}`, which is not
+retried.
+
+```erlang
+case reckon_gater_api:record_snapshot_sync(
+       my_store, my_source, <<"$evoq-checkpoint:order_summary">>, 41,
+       #{data => #{checkpoint => 41}}) of
+    ok -> written;
+    {error, Reason} -> {not_written, Reason}
+end.
+```
+
 ### Reading Snapshots
 
 Load the latest or a specific snapshot:

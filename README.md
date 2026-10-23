@@ -149,6 +149,14 @@ reckon_gater_api:get_subscriptions(StoreId) -> {ok, [Subscription]} | {error, te
 reckon_gater_api:record_snapshot(StoreId, SourceUuid, StreamUuid, Version, #{data => State}) ->
     ok.
 
+%% The same write, acknowledged: ok once the store has written it, or why
+%% not. For a snapshot that decides what is skipped, like a projection
+%% checkpoint (3.15.0+, reckon-db 5.11.14+).
+reckon_gater_api:record_snapshot_sync(StoreId, SourceUuid, StreamUuid, Version, #{data => State}) ->
+    ok | {error, term()}.
+reckon_gater_api:delete_snapshot_sync(StoreId, SourceUuid, StreamUuid, Version) ->
+    ok | {error, term()}.
+
 %% Read a snapshot
 reckon_gater_api:read_snapshot(StoreId, SourceUuid, StreamUuid, Version) ->
     {ok, Snapshot} | {error, term()}.

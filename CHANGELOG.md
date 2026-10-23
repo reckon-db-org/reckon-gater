@@ -5,6 +5,63 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.15.0] - unreleased
+
+### Added: paged DCB reads by type, tag and payload, in sequence order (evoq#6, part two)
+
+`read_by_event_types/3`, `read_by_tags/3` and the two `ccc_read_by_payload`
+reads return the first Limit matching events and cannot go further, so a
+reader of more than one page could not see the rest: an evoq decision over
+a large context could read only its oldest 1000 events (evoq refuses such
+a context since 1.25.1). Four new reads page through every matching DCB
+event (the `_dcb` pseudo-stream):
+
+- `dcb_read_by_event_types_page(StoreId, EventTypes, After, Limit)`
+- `dcb_read_by_tags_page(StoreId, Tags, Match, After, Limit)`
+- `dcb_read_by_payload_page(StoreId, Key, Value, After, Limit)`
+- `dcb_read_by_payload_hash_page(StoreId, Keys, Values, After, Limit)`
+
+Each takes `start`, or the cursor the previous page of the same read
+returned, and returns `{ok, Events, Next}`. That is up to Limit matching DCB
+events with a sequence number above After's, in ascending order, plus the
+cursor for the next page or `done`. The full contract is at the paged reads
+in `reckon_gater_api`. In short: `done` is exact; an empty page comes only
+with `done`; the cursor is a stateless position, valid on any worker and
+node, and bound to its read and arguments; Limit may change per page.
+
+**Sequence order, not epoch order, and DCB events only.** The store assigns
+a DCB sequence number inside the append's transaction, so every event
+committed after a page was read sorts after that page. Paging in that order
+misses nothing, and the highest sequence number over the pages is a sound
+cutoff for `append_if_no_tag_matches/4`. Epoch order would not be:
+reckon-db stamps `epoch_us` before the transaction, so an append in flight
+while a page is read could commit behind that page's cursor and be returned
+by no page. **Stream (non-DCB) events are not paged.**
+
+Errors, none of them retried: `{invalid_cursor, Cursor}`,
+`{invalid_page_request, Reason}`, and `unknown_request`, which is what a
+store older than these reads answers (reckon-db before 5.11.14).
+`unknown_request` is no longer retried for any request: a store that does
+not implement one gives the same answer on every attempt. A reply outside
+the contract comes back as `{error, {bad_page_reply, Reply}}`. The
+limit-only reads are unchanged.
+
+First written by Neptunus on 2026-09-26 for 3.12.0 and never released; this
+release carries that work over onto 3.14.0.
+
+### Added: acknowledged snapshot writes (reckon-evoq#1)
+
+`record_snapshot/5` and `delete_snapshot/4` are casts: the caller learns
+nothing, a write with no worker is dropped, and two writes from one caller
+can land in either order. A projection checkpoint store built on them
+cannot make a rebuild's reset stick: the reset could land before the last
+checkpoint it was meant to remove, and the old checkpoint would then outrank
+the rebuild's. `record_snapshot_sync/5` and `delete_snapshot_sync/4` send
+`{record_snapshot_sync, ...}` and `{delete_snapshot_sync, ...}` as calls.
+They answer `ok` once the store has done the write, or `{error, Reason}`.
+reckon-db answers them from 5.11.14; an older store answers
+`unknown_request`, which is not retried.
+
 ## [3.14.0] - 2026-10-23
 
 ### Added: a rejected stream id says what a valid one looks like
