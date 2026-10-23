@@ -46,7 +46,9 @@ retry_test_() ->
         {"version_unverifiable is non-retriable (fails fast)",
          fun retry_skips_version_unverifiable_test/0},
         {"the paged-read errors and unknown_request are non-retriable (fail fast)",
-         fun retry_skips_paged_read_errors_and_unknown_request_test/0}
+         fun retry_skips_paged_read_errors_and_unknown_request_test/0},
+        {"an integrity refusal is non-retriable (fails fast)",
+         fun retry_skips_integrity_refusals_test/0}
      ]}.
 
 setup() ->
@@ -213,3 +215,15 @@ retry_skips_paged_read_errors_and_unknown_request_test() ->
           ?assertEqual({Err, 1}, {Err, counters:get(CallCount, 1)})
       end,
       [{invalid_cursor, <<"junk">>}, {invalid_page_request, {limit, 0}}, unknown_request]).
+
+%% A store with integrity on refuses a snapshot it cannot verify or anchor,
+%% and the same stored bytes give the same answer on every attempt. Retried,
+%% the refusal reached a projection's checkpoint load (and a sync snapshot
+%% write) after the whole backoff, wrapped in retries_exhausted, so the
+%% caller could not tell an integrity refusal from an unreachable store.
+retry_skips_integrity_refusals_test() ->
+    lists:foreach(fun assert_fails_fast/1,
+                  [{integrity_violation, unsealed_system_snapshot},
+                   {integrity_violation, #{layer => snapshot, reason => snapshot_mac_mismatch}},
+                   {snapshot_anchor_unavailable, #{stream_id => <<"order-1">>, version => 41,
+                                                   reason => event_not_found}}]).

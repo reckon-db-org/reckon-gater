@@ -151,6 +151,14 @@ is_retriable_error({invalid_page_request, _}) -> false;
 %% e.g. a paged read against reckon-db < 5.11.14) answers the same on every
 %% attempt; retrying only delays the answer by the whole retry budget.
 is_retriable_error(unknown_request) -> false;
+%% A store with integrity on refusing what it cannot verify (a snapshot or
+%% event whose MAC, anchor or seal fails) or cannot anchor (a snapshot save
+%% at a version with no integrity-bearing event): the stored bytes are the
+%% same on the next attempt, so is the answer. Retried, the caller was told
+%% retries_exhausted after the whole backoff and could not tell a refusal
+%% from an unreachable store.
+is_retriable_error({integrity_violation, _}) -> false;
+is_retriable_error({snapshot_anchor_unavailable, _}) -> false;
 %% All other errors - default to retry (transient until proven otherwise)
 is_retriable_error(_) -> true.
 

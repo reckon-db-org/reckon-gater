@@ -5,6 +5,18 @@ All notable changes to reckon-gater will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.15.1] - unreleased
+
+### Fixed: an integrity refusal came back after the whole backoff, as retries_exhausted
+
+`{integrity_violation, _}` and `{snapshot_anchor_unavailable, _}` were
+retried as transient. A store with integrity on gives the same answer for
+the same stored bytes on every attempt, so a refused snapshot load or sync
+snapshot write reached the caller only after the full retry ladder, wrapped
+in `{retries_exhausted, _}`: a projection could not tell a tampered
+checkpoint from an unreachable store. Both are now permanent and come back
+unchanged after one call (reckon-db#25, reckon-evoq#1).
+
 ## [3.15.0] - 2026-10-23
 
 ### Added: paged DCB reads by type, tag and payload, in sequence order (evoq#6, part two)
