@@ -95,7 +95,7 @@ error carries the rule it broke:
 
 `Rule` is a sentence naming the shape, an example, how to make an id, and a link
 to this page. A store returns this error from the reckon-db release that builds
-it with `check/1` (reckon-gater#5); reckon-db 5.12 and older return
+it with `check/1` (reckon-gater#5); reckon-db 5.11.13 and older return
 `{invalid_stream_id, Reason, StreamId}`, which names the input but not the rule.
 The gateway passes the store's error on: its HTTP surface returns it in the
 `error` field, and its gRPC surface answers `INVALID_ARGUMENT`. Whether a gRPC
