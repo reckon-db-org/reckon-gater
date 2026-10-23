@@ -38,6 +38,8 @@ Pure Erlang, no native dependencies.
 
 ## Installation
 
+Requires Erlang/OTP 28 (CI builds, tests and documents on 28.4.3).
+
 Add to your `rebar.config`:
 
 ```erlang
